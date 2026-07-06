@@ -107,7 +107,7 @@
         🎯 每种身份<b>胜利目标不同</b>（守位 / 曝光 / 潜伏 / 破解 / 上位…）。<br>
         📊 <b>舆论</b> 是支持率，🎖 <b>信誉</b> 影响法庭与职位。<br>
         🧾 <b>证据机制</b>：公开真证据可扳倒对手，假证据反噬信誉。<br>
-        ⚖ 每 3 轮开<b>法庭</b>，每 5 轮<b>全民选举</b>，事件牌搅动全场。
+        🎁 每 2 轮<b>空投补给</b>，⚖ 每 3 轮<b>法庭</b>，每 5 轮<b>全民选举</b>。
       </div>
       <button class="btn" id="startBtn">🎲 随机抽取身份</button>
     </div>
@@ -191,6 +191,31 @@ const EVENTS=[
   {t:"🎉 群庆典",d:"群满128人气氛火热，舆论 +5。",f:()=>op(5)},
 ];
 
+/*==================== 空投（每2轮） ====================*/
+const AIRDROP=[
+  {ico:"🛡",nm:"护盾",do:()=>{ g.shield++; return "获得 1 层护盾"; }},
+  {ico:"💰",nm:"金币空投",do:()=>{ const c=Math.floor(rand(2,5)); g.coins+=c; return "💰 +"+c; }},
+  {ico:"💊",nm:"医疗包",do:()=>{ g.inv.medkit++; return "医疗包 +1（背包）"; }},
+  {ico:"🧾",nm:"机密证据",do:()=>{ const e=makeEvidence(0.15); g.evidence.push(e); return `证据「${e.ico}${e.nm}」${e.fake?"(存疑)":""}`; }},
+  {ico:"📣",nm:"来信举报",do:()=>{ g.inv.report++; return "举报卡 +1（背包）"; }},
+  {ico:"🔇",nm:"禁言卡",do:()=>{ g.threats=Math.max(0,g.threats-1); g.shield++; return "禁言一个刺头：威胁-1，护盾+1"; }},
+  {ico:"🎟",nm:"解封卡",do:()=>{ g.hp=Math.min(g.maxhp,g.hp+1); return "❤ +1"; }},
+  {ico:"🎭",nm:"身份卡",do:()=>{ if(g.roleDef.meter&&g.roleDef.meter.bad){ addMeter(-15); return "怀疑度 -15"; } rep(1); return "信誉 +1"; }},
+  {ico:"⚡",nm:"特殊技能",do:()=>{ const r=Math.random();
+    if(r<0.4){ op(8); return "舆论 +8"; }
+    if(r<0.7 && g.roleDef.meter && !g.roleDef.meter.bad){ addMeter(15); return g.roleDef.meter.lab+" +15"; }
+    g.inv.disguise++; return "身份伪装 +1（背包）"; }},
+];
+function airdrop(){
+  const d=pick(AIRDROP);
+  sys("🎁 —— 空投来了！ —— ","event");
+  const r=d.do();
+  msg("空投·系统","🎁",`一架无人机丢下补给，你抢到了 ${d.ico}${d.nm}！`);
+  sys("✅ "+r,"good");
+  renderEv(); renderInv();
+  checkEnd();
+}
+
 /*==================== 商店 ====================*/
 const SHOP=[
   {id:"shield",nm:"护盾",price:2,ico:"🛡",d:"抵挡下一次攻击"},
@@ -246,6 +271,8 @@ function startRound(){
   // AI 行动（按身份不同威胁不同）
   if(g.disguised){ sys("🎭 你伪装成普通成员，本轮无人针对你。","good"); g.disguised=false; }
   else aiRound();
+  // 空投（每2轮，帮你回血/补给）
+  if(g.round%2===0 && !g.over) airdrop();
   // 法庭（每3轮）
   if(g.round%3===0 && !g.over) court();
   if(g.over) return;
