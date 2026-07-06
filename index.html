@@ -10,6 +10,8 @@
   *{box-sizing:border-box;} html,body{height:100%;margin:0;}
   body{background:radial-gradient(1200px 700px at 50% -10%,#1a2035,#0a0b10 62%),var(--bg);
     color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;overflow-x:hidden;}
+  .langbtn{position:fixed;top:12px;right:12px;z-index:60;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:ui-monospace,monospace;}
+  .langbtn:hover{border-color:var(--cyan-dim);color:var(--cyan);}
   #scan{position:fixed;inset:0;pointer-events:none;z-index:50;background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 3px);mix-blend-mode:multiply;}
   #vign{position:fixed;inset:0;pointer-events:none;z-index:49;box-shadow:inset 0 0 160px 40px rgba(0,0,0,.65);}
   #hub{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:40px 18px 60px;}
@@ -47,23 +49,24 @@
 </style>
 </head>
 <body>
+<button class="langbtn" id="langBtn" onclick="toggleLang()">EN</button>
 <div id="scan"></div><div id="vign"></div>
 <div id="hub">
   <div>
-    <div class="kicker">Insert Coin · 街机厅</div>
+    <div class="kicker" data-i18n="kicker">Insert Coin · 街机厅</div>
     <h1 class="title">LEO 游戏厅</h1>
-    <div class="sub">两款自制像素游戏 · 点一款开始玩 · <b>手机 / 电脑</b>都能玩</div>
+    <div class="sub" data-i18n="sub">三款自制像素游戏 · 点一款开始玩 · 手机 / 电脑都能玩</div>
   </div>
   <div class="cards">
     <a class="cab" href="clay-war.html">
       <div class="screen"><div class="clay-prev" id="clayPrev"></div><div class="glow"></div></div>
-      <div class="cabmeta"><div><div class="cabname">橡皮泥：战争塑形前线</div><div class="cabtag">15 色橡皮泥 · 塔防军团 · 天赋 & 科技树</div></div><div class="badge">策略 / 塔防</div></div>
-      <div class="play">▶ 开始游戏</div>
+      <div class="cabmeta"><div><div class="cabname" data-i18n="clayName">橡皮泥：战争塑形前线</div><div class="cabtag" data-i18n="clayTag">15 色橡皮泥 · 塔防军团 · 天赋 & 科技树</div></div><div class="badge" data-i18n="clayBadge">策略 / 塔防</div></div>
+      <div class="play" data-i18n="play">▶ 开始游戏</div>
     </a>
     <a class="cab" href="brick-breaker.html">
       <div class="screen"><div class="brick-prev" id="brickPrev"><div class="ball"></div><div class="pad"></div></div><div class="glow"></div></div>
-      <div class="cabmeta"><div><div class="cabname">方砖破坏者</div><div class="cabtag">像素打砖块 · Boss「机敏」· 全球实时排行榜</div></div><div class="badge">街机 / 弹球</div></div>
-      <div class="play">▶ 开始游戏</div>
+      <div class="cabmeta"><div><div class="cabname" data-i18n="brickName">方砖破坏者</div><div class="cabtag" data-i18n="brickTag">像素打砖块 · Boss「机敏」· 全球实时排行榜</div></div><div class="badge" data-i18n="brickBadge">街机 / 弹球</div></div>
+      <div class="play" data-i18n="play">▶ 开始游戏</div>
     </a>
     <a class="cab" href="wechat-war.html">
       <div class="screen"><div class="wx-prev">
@@ -73,13 +76,35 @@
         <div class="wxb">👥 我举报群主！</div>
         <div class="wxb me">🤝 这事我摆平了</div>
       </div><div class="glow"></div></div>
-      <div class="cabmeta"><div><div class="cabname">微信群权力战争</div><div class="cabtag">身份权谋 · 舆论/金币/护盾 · 弹劾与选举</div></div><div class="badge">策略 / 权谋</div></div>
-      <div class="play">▶ 开始游戏</div>
+      <div class="cabmeta"><div><div class="cabname" data-i18n="wxName">微信群权力战争</div><div class="cabtag" data-i18n="wxTag">身份权谋 · 舆论/金币/护盾 · 弹劾与选举</div></div><div class="badge" data-i18n="wxBadge">策略 / 权谋</div></div>
+      <div class="play" data-i18n="play">▶ 开始游戏</div>
     </a>
   </div>
-  <div class="foot">进度存档保存在你自己的浏览器里。想开启全球实时排行榜，请在 brick-breaker.html 顶部 NET_CONFIG 填入 Firebase 数据库网址。</div>
+  <div class="foot" data-i18n="foot">进度存档保存在你自己的浏览器里。想开启全球实时排行榜，请在 brick-breaker.html 顶部 NET_CONFIG 填入 Firebase 数据库网址。</div>
 </div>
 <script>
+  const I18N={
+    kicker:{zh:"Insert Coin · 街机厅",en:"Insert Coin · Arcade"},
+    sub:{zh:"三款自制像素游戏 · 点一款开始玩 · 手机 / 电脑都能玩",en:"3 handmade pixel games · tap one to play · phone & PC"},
+    clayName:{zh:"橡皮泥：战争塑形前线",en:"Clay War: Shaping Frontline"},
+    clayTag:{zh:"15 色橡皮泥 · 塔防军团 · 天赋 & 科技树",en:"15 clay colors · tower-defense army · talents & tech"},
+    clayBadge:{zh:"策略 / 塔防",en:"Strategy / TD"},
+    brickName:{zh:"方砖破坏者",en:"Brick Breaker"},
+    brickTag:{zh:"像素打砖块 · Boss「机敏」· 全球实时排行榜",en:"Pixel breaker · Boss ‘Agile’ · global live leaderboard"},
+    brickBadge:{zh:"街机 / 弹球",en:"Arcade / Ball"},
+    wxName:{zh:"微信群权力战争",en:"WeChat Group Power War"},
+    wxTag:{zh:"身份权谋 · 舆论/金币/护盾 · 弹劾与选举",en:"Hidden roles · opinion/coins/shield · impeach & elect"},
+    wxBadge:{zh:"策略 / 权谋",en:"Strategy / Intrigue"},
+    play:{zh:"▶ 开始游戏",en:"▶ Play"},
+    foot:{zh:"进度存档保存在你自己的浏览器里。想开启全球实时排行榜，请在 brick-breaker.html 顶部 NET_CONFIG 填入 Firebase 数据库网址。",
+          en:"Progress is saved in your own browser. Global live leaderboard is built in for Brick Breaker on this hosted site."},
+  };
+  let LANG=localStorage.getItem("leoLang")||"zh";
+  function applyLang(){ document.documentElement.lang=LANG==="zh"?"zh-CN":"en";
+    document.querySelectorAll("[data-i18n]").forEach(el=>{ const k=el.getAttribute("data-i18n"); if(I18N[k]) el.textContent=I18N[k][LANG]; });
+    document.getElementById("langBtn").textContent=LANG==="zh"?"EN":"中"; }
+  function toggleLang(){ LANG=LANG==="zh"?"en":"zh"; localStorage.setItem("leoLang",LANG); applyLang(); }
+  applyLang();
   const clayCols=["#8a5a3c","#f2f0ea","#f2c94c","#5fbf6a","#4d7ee0","#f48fb1","#a45ce0","#e0464b"];
   const cp=document.getElementById("clayPrev");
   clayCols.forEach(c=>{const d=document.createElement("div");d.className="blob";d.style.background=c;d.style.height=(30+Math.random()*30)+"%";cp.appendChild(d);});
