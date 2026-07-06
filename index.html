@@ -18,8 +18,7 @@
     font-size:clamp(30px,7vw,62px);margin:0;color:#fff;text-align:center;
     text-shadow:0 3px 0 #000,3px 0 0 var(--clay-b),-3px 0 0 var(--b1),0 0 22px rgba(79,227,209,.45);}
   .sub{margin-top:14px;color:var(--muted);font-size:14px;text-align:center;} .sub b{color:var(--ink);}
-  .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;width:100%;max-width:880px;}
-  @media (max-width:720px){ .cards{grid-template-columns:1fr;} }
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;width:100%;max-width:900px;}
   .cab{position:relative;background:linear-gradient(180deg,var(--panel),#0e1120);border:1px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;
     display:flex;flex-direction:column;gap:12px;text-decoration:none;color:inherit;
     box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);transition:transform .12s,border-color .12s,box-shadow .12s;}
@@ -32,6 +31,11 @@
   .brow{display:flex;gap:4px;} .brk{flex:1;height:9px;border-radius:2px;box-shadow:inset 0 2px 0 rgba(255,255,255,.25),inset 0 -2px 0 rgba(0,0,0,.3);}
   .ball{position:absolute;left:50%;bottom:26px;width:8px;height:8px;border-radius:50%;background:#fff;transform:translateX(-50%);box-shadow:0 0 8px rgba(255,255,255,.6);}
   .pad{position:absolute;left:50%;bottom:12px;width:34%;height:7px;border-radius:3px;background:#eef0f8;transform:translateX(-50%);}
+  .wx-prev{position:absolute;inset:0;background:#ededed;display:flex;flex-direction:column;gap:6px;padding:12px 12px;}
+  .wx-prev .wxbar{position:absolute;top:0;left:0;right:0;height:22px;background:#f7f7f7;border-bottom:1px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:10px;color:#333;font-weight:700;}
+  .wxb{max-width:72%;background:#fff;border-radius:5px;padding:5px 8px;font-size:10px;color:#222;box-shadow:0 1px 1px rgba(0,0,0,.06);}
+  .wxb.me{align-self:flex-end;background:#95ec69;}
+  .wx-prev .row0{margin-top:22px;}
   .cabmeta{display:flex;align-items:center;justify-content:space-between;gap:10px;}
   .cabname{font-weight:800;font-size:17px;} .cabtag{color:var(--muted);font-size:12px;margin-top:2px;}
   .badge{font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;padding:4px 8px;border-radius:6px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;}
@@ -58,7 +62,18 @@
     </a>
     <a class="cab" href="brick-breaker.html">
       <div class="screen"><div class="brick-prev" id="brickPrev"><div class="ball"></div><div class="pad"></div></div><div class="glow"></div></div>
-      <div class="cabmeta"><div><div class="cabname">方砖破坏者</div><div class="cabtag">像素打砖块 · Boss「机敏」· 天赋 / 商店 / 排行榜</div></div><div class="badge">街机 / 弹球</div></div>
+      <div class="cabmeta"><div><div class="cabname">方砖破坏者</div><div class="cabtag">像素打砖块 · Boss「机敏」· 全球实时排行榜</div></div><div class="badge">街机 / 弹球</div></div>
+      <div class="play">▶ 开始游戏</div>
+    </a>
+    <a class="cab" href="wechat-war.html">
+      <div class="screen"><div class="wx-prev">
+        <div class="wxbar">微信群权力战争 (128)</div>
+        <div class="wxb row0">📰 曝光群主私聊记录！</div>
+        <div class="wxb me">🧧 群主发了个大红包</div>
+        <div class="wxb">👥 我举报群主！</div>
+        <div class="wxb me">🤝 这事我摆平了</div>
+      </div><div class="glow"></div></div>
+      <div class="cabmeta"><div><div class="cabname">微信群权力战争</div><div class="cabtag">身份权谋 · 舆论/金币/护盾 · 弹劾与选举</div></div><div class="badge">策略 / 权谋</div></div>
       <div class="play">▶ 开始游戏</div>
     </a>
   </div>

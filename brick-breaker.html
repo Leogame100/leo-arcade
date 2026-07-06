@@ -232,22 +232,21 @@ function load(){
 function save(){try{localStorage.setItem(SKEY,JSON.stringify(SAVE));}catch(e){}}
 
 /*==================== 联网：全球游玩次数 + 真人实时排行榜 ====================
-  想让所有玩家共享排行榜/统计，需要：
-  ① 把本 HTML 传到允许联网的静态托管（GitHub Pages / Netlify / itch.io）——不是 claude.ai 分享页；
-  ② 免费开一个 Firebase 实时数据库(Realtime Database)，把它的网址粘到下面 dbUrl。
-     规则设为公开读写(测试模式)即可：{"rules":{".read":true,".write":true}}
-  未配置时自动退回本地排行榜，游戏照常运行。 */
-const NET_CONFIG = { dbUrl: "" };          // ←★把你的 Firebase 实时数据库网址粘这里
-const GAME_ID = "brick";                    // 多个游戏可用不同ID区分
+  已内置一个免费在线数据库(jsonblob，零注册)，部署到能联网的网站后即可全球共享。
+  想换成更稳的自有数据库，只改 blobUrl 即可（任意支持 GET/PUT JSON 的地址）。
+  在 claude.ai 分享页里因禁止联网会自动退回本地榜；游戏照常运行。 */
+const NET_CONFIG = { blobUrl: "https://jsonblob.com/api/jsonBlob/019f3568-97c5-7990-a260-67b959827a3c" };
 const NET = {
-  get on(){ return /^https?:\/\/.+/.test(NET_CONFIG.dbUrl); },
-  _u(p){ return NET_CONFIG.dbUrl.replace(/\/+$/,"")+p+".json"; },
-  async recordPlay(){ if(!this.on) return; try{ await fetch(this._u("/plays/"+GAME_ID),{method:"POST",body:JSON.stringify(1)}); }catch(e){} },
-  async getPlays(){ if(!this.on) return null; try{ const r=await fetch(this._u("/plays/"+GAME_ID)+"?shallow=true"); const j=await r.json(); return j?Object.keys(j).length:0; }catch(e){ return null; } },
-  async submit(name,score){ if(!this.on) return false; try{ await fetch(this._u("/scores/"+GAME_ID),{method:"POST",body:JSON.stringify({name:String(name).slice(0,10),score:score|0,ts:Date.now()})}); return true; }catch(e){ return false; } },
-  async getBoard(){ if(!this.on) return null; try{ const r=await fetch(this._u("/scores/"+GAME_ID)); const j=await r.json();
-    if(!j) return []; return Object.values(j).filter(Boolean).map(e=>({name:e.name||"玩家",score:e.score|0}))
-      .sort((a,b)=>b.score-a.score).slice(0,20); }catch(e){ return null; } },
+  get on(){ return /^https?:\/\//.test(NET_CONFIG.blobUrl); },
+  async _get(){ const r=await fetch(NET_CONFIG.blobUrl,{headers:{"Accept":"application/json"}}); return await r.json(); },
+  async _put(d){ await fetch(NET_CONFIG.blobUrl,{method:"PUT",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(d)}); },
+  async recordPlay(){ if(!this.on) return; try{ const d=await this._get(); d.plays=(d.plays||0)+1; await this._put(d); }catch(e){} },
+  async getPlays(){ if(!this.on) return null; try{ const d=await this._get(); return d.plays||0; }catch(e){ return null; } },
+  async submit(name,score){ if(!this.on) return false; try{ const d=await this._get(); d.scores=d.scores||[];
+    d.scores.push({name:String(name).slice(0,10),score:score|0,ts:Date.now()});
+    d.scores.sort((a,b)=>b.score-a.score); d.scores=d.scores.slice(0,50); await this._put(d); return true; }catch(e){ return false; } },
+  async getBoard(){ if(!this.on) return null; try{ const d=await this._get();
+    return (d.scores||[]).slice().sort((a,b)=>b.score-a.score).slice(0,20); }catch(e){ return null; } },
 };
 
 /*---------------- 天赋树 ----------------*/
@@ -1350,7 +1349,7 @@ async function refreshLb(){
   if(NET.on){ board=await NET.getBoard(); if(board!=null) online=true; }
   if(!online) board=SAVE.board;
   if(status) status.textContent = online ? "🌐 全球真人榜 · 实时更新中（每3秒）"
-    : (NET.on ? "⚠ 连接数据库中… 暂显本地榜" : "📴 本地榜（配置数据库后可全球实时·见代码顶部 NET_CONFIG）");
+    : "⚠ 暂时连不上服务器（离线/沙盒环境）· 显示本地榜";
   renderLb(board);
 }
 function renderLb(board){
