@@ -94,6 +94,22 @@
   .mpinput{flex:0 0 auto;background:#f7f7f7;border-top:1px solid #dcdcdc;padding:8px;display:flex;gap:6px;}
   .mpinput input{flex:1;border:1px solid #ddd;border-radius:18px;padding:9px 14px;font-size:14px;outline:none;}
   .mpinput button{background:var(--wx);color:#fff;border:none;border-radius:18px;padding:9px 18px;font-weight:700;cursor:pointer;}
+  /* 红包开启动画 */
+  .redanim{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.38);cursor:pointer;overflow:hidden;}
+  .redpk{width:190px;background:linear-gradient(180deg,#fa5151,#d8302f);border-radius:16px;padding:22px 16px 18px;text-align:center;position:relative;
+    box-shadow:0 14px 34px rgba(0,0,0,.5);animation:pkpop .45s cubic-bezier(.2,1.5,.4,1);}
+  .redpk .seal{width:56px;height:56px;border-radius:50%;background:radial-gradient(#ffe08a,#ffcf4a);color:#c0392b;font-size:27px;
+    display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 3px 8px rgba(0,0,0,.35);animation:sealshake .5s ease .25s;}
+  .redpk .rtxt{font-size:17px;font-weight:900;color:#fff;line-height:1.3;}
+  .redpk .rsub{font-size:11px;color:#ffe08a;margin-top:5px;}
+  @keyframes pkpop{0%{transform:scale(.25) translateY(50px);opacity:0;}60%{transform:scale(1.06);opacity:1;}100%{transform:scale(1);}}
+  @keyframes sealshake{0%,100%{transform:rotate(0);}25%{transform:rotate(-13deg);}75%{transform:rotate(13deg);}}
+  .coinfx{position:absolute;font-size:22px;pointer-events:none;animation:coinup 1s ease forwards;}
+  @keyframes coinup{0%{transform:translateY(10px) scale(.5);opacity:0;}25%{opacity:1;}100%{transform:translateY(-100px) scale(1.15);opacity:0;}}
+  .redopt{display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:10px 12px;margin-bottom:7px;cursor:pointer;transition:transform .05s;}
+  .redopt:active{transform:scale(.97);} .redopt.dis{opacity:.45;pointer-events:none;}
+  .redopt .oi{font-size:24px;} .redopt .oinfo{flex:1;} .redopt .onm{font-weight:700;font-size:14px;} .redopt .od{font-size:11px;color:var(--muted);}
+  .redopt .oc{color:var(--gold);font-weight:800;font-size:13px;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -199,6 +215,16 @@
       <button class="btn ghost" id="homeBtn2">← 返回游戏厅</button>
     </div>
   </div>
+
+  <!-- 群主红包·发放对象 -->
+  <div class="overlay hidden" id="redGiveScreen">
+    <div class="sheet">
+      <h2>🧧 群主红包</h2>
+      <div class="sub">收买人心 · 选一个发放对象（消耗金币，占本轮行动）</div>
+      <div id="redGiveList"></div>
+      <button class="btn ghost" id="redGiveCancel">取消</button>
+    </div>
+  </div>
 </div></div>
 
 <script>
@@ -210,7 +236,7 @@ const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 /*==================== 身份（随机分配） ====================*/
 const ROLES={
   qunzhu:{nm:"群主",ico:"👑",hp:5,side:"power",goal:"守住群主之位到第20轮",
-    acts:["speak","pr","kick","redpacket","reveal","buyshield"],
+    acts:["speak","pr","kick","qzred","reveal","buyshield"],
     desc:"最高权力，但媒体曝光、成员举报、官方踢人都盯着你。撑满20轮且不被弹劾/罢免即胜。"},
   admin:{nm:"管理员",ico:"🛡",hp:4,side:"power",goal:"撑到第20轮，且信誉不崩(>0)",
     acts:["speak","kick","reveal","redpacket","buyshield"],
@@ -528,6 +554,8 @@ function renderActs(){
       el.innerHTML=`<div class="ico">🛒</div><div class="nm">商店</div>`; el.onclick=openShop; box.appendChild(el); return; }
     if(id==="redpack"){ const el=document.createElement("div"); el.className="act"+(g.redpacketClaimed?" dis":"");
       el.innerHTML=`<div class="ico">🧧</div><div class="nm">领红包</div>`; el.onclick=claimRed; box.appendChild(el); return; }
+    if(id==="qzred"){ const el=document.createElement("div"); el.className="act"+(g.acted?" dis":"");
+      el.innerHTML=`<div class="ico">🧧</div><div class="nm">群主红包</div>`; el.onclick=openRedGive; box.appendChild(el); return; }
     const a=ACT_DEF[id]; if(!a) return;
     const dis=(a.cost&&g.coins<a.cost)||g.acted;
     const el=document.createElement("div"); el.className="act"+(dis?" dis":"");
@@ -649,6 +677,17 @@ function useItem(id){ if(g.over) return;
 
 /*==================== 红包 & 炸弹 ====================*/
 function randItem(){ return pick(["medkit","report","probe","disguise","mute","spam"]); }
+// 红包开启动画（纯视觉，非阻塞）
+function redAnim(text,sub){
+  const host=document.getElementById("phone"); if(!host) return;
+  const wrap=document.createElement("div"); wrap.className="redanim";
+  wrap.innerHTML=`<div class="redpk"><div class="seal">🧧</div><div class="rtxt">${text}</div>${sub?`<div class="rsub">${sub}</div>`:""}</div>`;
+  for(let i=0;i<8;i++){ const c=document.createElement("div"); c.className="coinfx"; c.textContent=pick(["💰","🪙","🧧","✨","🎁"]);
+    c.style.left=(28+Math.random()*44)+"%"; c.style.top=(38+Math.random()*22)+"%"; c.style.animationDelay=(Math.random()*0.35)+"s"; wrap.appendChild(c); }
+  wrap.onclick=()=>{ if(wrap.parentNode) wrap.remove(); };
+  host.appendChild(wrap);
+  setTimeout(()=>{ if(wrap.parentNode) wrap.remove(); },1600);
+}
 function claimRed(){
   if(g.over) return;
   if(g.redpacketClaimed){ setHint("🧧 本轮红包已领，下轮再来"); return; }
@@ -660,6 +699,7 @@ function claimRed(){
   else if(r<0.95){ g.shield++; txt="🛡 护盾×1"; }
   else { const id=randItem(); g.inv[id]=(g.inv[id]||0)+1; txt=ITEM[id].ico+ITEM[id].nm+"×1"; }
   msg("红包·群主","🧧","【发了一个拼手气红包】"); sys("🧧 你抢到红包："+txt,"good");
+  redAnim("拼手气红包", txt);
   renderInv(); renderActs(); sync();
 }
 function luckyRed(){   // 幸运红包（红包雨事件）
@@ -667,7 +707,32 @@ function luckyRed(){   // 幸运红包（红包雨事件）
   if(r<0.60){ const c=Math.floor(rand(1,6)); g.coins+=c; txt="💰 +"+c+"金币"; }
   else if(r<0.85){ const id=randItem(); g.inv[id]=(g.inv[id]||0)+1; txt=ITEM[id].ico+ITEM[id].nm+"×1"; }
   else { g.hp=Math.min(g.maxhp,g.hp+1); txt="❤ 恢复1点生命"; }
-  sys("💰 幸运红包："+txt,"good");
+  sys("💰 幸运红包："+txt,"good"); redAnim("幸运红包 🌧",txt);
+}
+/*==================== 群主红包·指定发放对象 ====================*/
+const RED_GIVE=[
+  {ico:"🌍",nm:"发给全体群友",cost:5,d:"全群感激，舆论 +15",fn:()=>{op(15);}},
+  {ico:"👥",nm:"发给普通成员",cost:3,d:"拉拢群众，舆论 +10",fn:()=>{op(10);}},
+  {ico:"🛡",nm:"发给管理层",  cost:3,d:"稳固管理，舆论 +8 · 护盾 +1",fn:()=>{op(8);g.shield++;}},
+  {ico:"📰",nm:"塞给媒体",    cost:4,d:"收买媒体，压下曝光 · 舆论 +4",fn:()=>{g.exposeQueued=0;op(4);}},
+  {ico:"💣",nm:"塞给刺头闹事者",cost:2,d:"收买刺头，威胁 -1 · 舆论 +5",fn:()=>{g.threats=Math.max(0,g.threats-1);op(5);}},
+];
+function openRedGive(){
+  if(g.acted){ setHint("本轮已行动"); return; }
+  const box=document.getElementById("redGiveList"); box.innerHTML="";
+  RED_GIVE.forEach(o=>{ const afford=g.coins>=o.cost; const el=document.createElement("div"); el.className="redopt"+(afford?"":" dis");
+    el.innerHTML=`<span class="oi">${o.ico}</span><div class="oinfo"><div class="onm">${o.nm}</div><div class="od">${o.d}</div></div><span class="oc">💰${o.cost}</span>`;
+    el.onclick=()=>pickRed(o); box.appendChild(el); });
+  document.getElementById("redGiveScreen").classList.remove("hidden");
+}
+function pickRed(o){
+  if(g.coins<o.cost){ setHint("金币不足"); return; }
+  g.coins-=o.cost; o.fn(); g.stats.redpackets++;
+  document.getElementById("redGiveScreen").classList.add("hidden");
+  meSay(`【群主发红包】🧧 ${o.nm}`); sys("🧧 群主红包："+o.d,"good");
+  redAnim("群主红包", o.nm);
+  g.acted=true; g.stats.acts++; renderActs(); sync(); checkEnd();
+  if(!g.over){ setHint("结算中…"); setTimeout(endRound,600); }
 }
 function mysteryBox(){   // 神秘红包（3金币购买）
   msg("神秘·红包","🎰","【神秘红包，点击试试手气…】");
@@ -682,6 +747,7 @@ function mysteryBox(){   // 神秘红包（3金币购买）
   else if(r<0.90){ txt="❌ 空红包，什么都没有…"; }
   else { rep(-1); txt="💥 陷阱！信誉 -1"; }
   sys("🎰 神秘红包："+txt, r>=0.90?"bad":"good");
+  redAnim("神秘红包 🎰", txt);
   checkEnd();
 }
 function fireBomb(){   // 舆论炸弹：轰炸对手阵营
@@ -802,13 +868,14 @@ function esc(s){ return String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&
 
 /* 通用 */
 $("shopClose").onclick=()=>show("shopScreen",false);
+$("redGiveCancel").onclick=()=>show("redGiveScreen",false);
 $("shopTop").onclick=()=>{ if(g&&!g.over) openShop(); };
 $("againBtn").onclick=()=>{ show("overScreen",false); buildRoleGrid(); show("roleScreen",true); };
 $("quitBtn").onclick=()=>{ location.href="index.html"; };
 $("homeBtn2").onclick=()=>{ show("overScreen",false); backToMenu(); };
 refreshAchCount();
 
-if(typeof window!=="undefined") window.__ww={get g(){return g;}, newGame, doAction, endRound, buy, useItem, ITEM, ROLE_KEYS, ACT_DEF, court, aiOne, get WSAVE(){return WSAVE;}, checkAch, ACHIEVEMENTS};
+if(typeof window!=="undefined") window.__ww={get g(){return g;}, newGame, doAction, endRound, buy, useItem, ITEM, ROLE_KEYS, ACT_DEF, court, aiOne, get WSAVE(){return WSAVE;}, checkAch, ACHIEVEMENTS, claimRed, openRedGive, pickRed, RED_GIVE};
 </script>
 </body>
 </html>
