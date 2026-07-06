@@ -137,6 +137,12 @@
   .rrow .rbar{flex:0 0 60px;height:8px;background:#eee;border-radius:5px;overflow:hidden;}
   .rrow .rbar i{display:block;height:100%;background:linear-gradient(90deg,#07c160,#39d67f);}
   .rrow .metag{font-size:9px;background:var(--wx);color:#fff;padding:1px 5px;border-radius:8px;}
+  /* 私聊 */
+  .msg .who.dm{color:var(--blue);cursor:pointer;text-decoration:underline dotted;}
+  .msg .bub.priv{background:#fff4d6;} .msg.me .bub.priv{background:#c8f0b0;}
+  .privtag{font-size:9px;color:#c99a2b;margin-left:2px;}
+  .mpmode{flex:0 0 auto;background:#fff8e6;border-bottom:1px solid #f0e2b8;padding:6px 12px;font-size:12px;color:#b8860b;display:none;align-items:center;justify-content:space-between;}
+  .mpmode b{color:#333;} .mpmode .x{cursor:pointer;color:var(--blue);font-weight:700;}
 </style>
 </head>
 <body>
@@ -216,9 +222,10 @@
         <div id="mpRolePick"></div>
         <button class="btn" id="mpEnter" style="margin-top:14px;">进群</button>
       </div>
+      <div class="mpmode" id="mpMode"><span>🔒 私聊 <b id="mpDmName"></b></span><span class="x" id="mpDmBack">← 返回群聊</span></div>
       <div class="mpchat" id="mpChat" style="display:none;"></div>
       <div class="mpinput" id="mpInputBar" style="display:none;">
-        <input id="mpText" placeholder="说点什么…" maxlength="60">
+        <input id="mpText" placeholder="点某人昵称可私聊 · 群里说点什么…" maxlength="60">
         <button id="mpSend">发送</button>
       </div>
     </div>
@@ -271,6 +278,16 @@
       <div class="sub">收买人心 · 选一个发放对象（消耗金币，占本轮行动）</div>
       <div id="redGiveList"></div>
       <button class="btn ghost" id="redGiveCancel">取消</button>
+    </div>
+  </div>
+
+  <!-- 单人·私聊群成员 -->
+  <div class="overlay hidden" id="whisperScreen">
+    <div class="sheet">
+      <h2>💬 私聊 · 结盟拉票</h2>
+      <div class="sub">悄悄私聊一位群成员，套近乎/拉票/结盟/套情报（每轮1次，不占行动）</div>
+      <div id="whisperList"></div>
+      <button class="btn ghost" id="whisperCancel">取消</button>
     </div>
   </div>
 </div></div>
@@ -375,12 +392,16 @@ function checkAch(){ const fresh=[];
 
 /*==================== 联机群聊（免费 jsonblob） ====================*/
 const CHAT_URL="https://jsonblob.com/api/jsonBlob/019f35a2-608e-768a-898e-00575ee51da5";
-const MP={ name:null, role:"👤", timer:null, lastLen:0,
-  async get(){ try{ const r=await fetch(CHAT_URL,{headers:{"Accept":"application/json"}}); const j=await r.json(); return j&&j.messages?j:{messages:[]}; }catch(e){ return null; } },
+const MP={ name:null, role:"👤", timer:null, dmWith:null,
+  async get(){ try{ const r=await fetch(CHAT_URL,{headers:{"Accept":"application/json"}}); const j=await r.json();
+    if(!j) return {messages:[],dms:[]}; if(!j.messages) j.messages=[]; if(!j.dms) j.dms=[]; return j; }catch(e){ return null; } },
   async put(d){ try{ await fetch(CHAT_URL,{method:"PUT",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(d)}); }catch(e){} },
   async send(text,sys){ const d=await this.get(); if(!d) return false;
     d.messages.push({name:this.name,role:this.role,text:String(text).slice(0,60),ts:Date.now(),sys:!!sys});
     d.messages=d.messages.slice(-60); await this.put(d); return true; },
+  async sendDM(to,text){ const d=await this.get(); if(!d) return false;
+    d.dms=d.dms||[]; d.dms.push({from:this.name,role:this.role,to,text:String(text).slice(0,60),ts:Date.now()});
+    d.dms=d.dms.slice(-200); await this.put(d); return true; },
 };
 
 const NPCS=[
@@ -468,7 +489,7 @@ function newGame(forceRole){
       meter:0, evidence:[], inv:{shield:0,medkit:0,report:0,probe:0,disguise:0,mute:0,unban:0,spam:0,revive:0},
       threats:2, acted:false, over:false, itemsLocked:false, heat:false, chaos:false, disguised:false,
       exposeQueued:0, shieldGiven80:false, bombUsed:false, silenceNext:0, muted:false, redpacketClaimed:false,
-      bmOpen:false, bmBought:false, bmStock:[], timedBomb:0, cloak:0, bribeNext:false,
+      bmOpen:false, bmBought:false, bmStock:[], timedBomb:0, cloak:0, bribeNext:false, dmUsed:false,
       pop:Object.fromEntries(POP_DEF.map(p=>[p.k,p.n])),
       stats:{acts:0,reveals:0,fakes:0,attacksTaken:0,gongguan:0,kicks:0,redpackets:0,hacks:0,exposes:0,maxop:100},
   };
@@ -495,7 +516,7 @@ function meSay(text){ const w=document.createElement("div"); w.className="msg me
 /*==================== 回合流程 ====================*/
 function startRound(){
   g.acted=false; g.itemsLocked=false; g.heat=false; g.chaos=false; g.exposeQueued=0;
-  g.muted=false; g.redpacketClaimed=false;
+  g.muted=false; g.redpacketClaimed=false; g.dmUsed=false;
   sys(`—— 第 ${g.round} 轮 ——`);
   // 定时炸弹到期引爆
   if(g.timedBomb && g.round>=g.timedBomb){ g.timedBomb=0; detonateTimed(); }
@@ -658,7 +679,7 @@ const ACT_DEF={
     else { addMeter(10); op(3); meSay("实名举报竞争对手！"); good("上位支持+10 舆论+3"); } }},
 };
 
-function actsForRole(){ return g.roleDef.acts.concat("redpack", g.bmOpen?"blackmarket":null, "shop").filter(Boolean); }
+function actsForRole(){ return g.roleDef.acts.concat("whisper","redpack", g.bmOpen?"blackmarket":null, "shop").filter(Boolean); }
 function renderActs(){
   const box=document.getElementById("acts"); box.innerHTML="";
   actsForRole().forEach(id=>{
@@ -666,6 +687,8 @@ function renderActs(){
       el.innerHTML=`<div class="ico">🛒</div><div class="nm">商店</div>`; el.onclick=openShop; box.appendChild(el); return; }
     if(id==="redpack"){ const el=document.createElement("div"); el.className="act"+(g.redpacketClaimed?" dis":"");
       el.innerHTML=`<div class="ico">🧧</div><div class="nm">领红包</div>`; el.onclick=claimRed; box.appendChild(el); return; }
+    if(id==="whisper"){ const el=document.createElement("div"); el.className="act"+(g.dmUsed?" dis":"");
+      el.innerHTML=`<div class="ico">💬</div><div class="nm">私聊</div>`; el.onclick=openWhisper; box.appendChild(el); return; }
     if(id==="qzred"){ const el=document.createElement("div"); el.className="act"+(g.acted?" dis":"");
       el.innerHTML=`<div class="ico">🧧</div><div class="nm">群主红包</div>`; el.onclick=openRedGive; box.appendChild(el); return; }
     if(id==="blackmarket"){ const el=document.createElement("div"); el.className="act"+((g.acted||g.bmBought)?" dis":"");
@@ -871,6 +894,38 @@ function pickRed(o){
   if(!g.over){ setHint("结算中…"); setTimeout(endRound,600); }
 }
 
+/*==================== 💬 单人·私聊群成员（结盟/拉票/套情报） ====================*/
+// 按头像判定阵营，给不同私聊收益
+function whisperEffect(npc){
+  const a=npc.a;
+  if(a==="🛡"||a==="⭐"){ g.threats=Math.max(0,g.threats-1); return {reply:"结盟！我帮你盯着那帮闹事的。", txt:"🤝 结盟成功：威胁 -1"}; }
+  if(a==="📰"){ const e=makeEvidence(0.1); g.evidence.push(e); renderEv(); return {reply:"给你个独家料，别说是我给的。", txt:`📰 套到情报：${e.ico}${e.nm}`}; }
+  if(a==="🏢"||a==="💼"){ g.exposeQueued=0; op(3); return {reply:"官方那边的关系，我帮你打点。", txt:"🏢 打点官方：压下曝光，舆论 +3"}; }
+  if(a==="👀"){ g.coins+=1; return {reply:"嘿嘿，红包拿来我就帮你摇旗！", txt:"👀 打赏游客：💰 +1"}; }
+  if(a==="🕵️"||a==="👻"){ op(2); return {reply:"…你什么都没看见。", txt:"🕵️ 试探一番：舆论 +2"}; }
+  // 成员/组长/核心/普通：拉票
+  if(g.role==="member"){ addMeter(8); op(2); return {reply:"你说得对，选举我投你！", txt:"👥 拉票成功：上位支持 +8，舆论 +2"}; }
+  op(5); return {reply:"群主威武，我挺你！", txt:"👥 拉拢群众：舆论 +5"};
+}
+function openWhisper(){
+  if(g.dmUsed){ setHint("💬 本轮私聊已用，下轮再来"); return; }
+  const box=document.getElementById("whisperList"); box.innerHTML="";
+  const cands=NPCS.slice().sort(()=>Math.random()-0.5).slice(0,4);
+  cands.forEach(npc=>{ const el=document.createElement("div"); el.className="redopt";
+    el.innerHTML=`<span class="oi">${npc.a}</span><div class="oinfo"><div class="onm">${npc.n}</div><div class="od">点击私聊 TA</div></div><span class="oc">🔒</span>`;
+    el.onclick=()=>pickWhisper(npc); box.appendChild(el); });
+  document.getElementById("whisperScreen").classList.remove("hidden");
+}
+function pickWhisper(npc){
+  if(g.dmUsed) return; g.dmUsed=true;
+  document.getElementById("whisperScreen").classList.add("hidden");
+  meSay(`🔒 私聊 ${npc.n}：${pick(["在吗？帮个忙呗~","咱俩联手怎么样？","悄悄说个事…","给你发个红包，帮我说句话呗"])}`);
+  const r=whisperEffect(npc);
+  msg(npc.n+" 🔒", npc.a, r.reply);
+  sys("💬 "+r.txt,"good");
+  renderActs(); renderEv(); sync(); checkEnd();
+}
+
 /*==================== 🕶 黑市商店（每2轮·高风险高收益） ====================*/
 const BM_ITEMS=[
   {id:"timebomb",nm:"定时炸弹",price:8, ico:"💣",d:"2回合后重创对手阵营(清威胁+助攻)",fn:()=>{ g.timedBomb=g.round+2; sys("💣 定时炸弹已布下，2回合后引爆…","good"); }},
@@ -1057,21 +1112,42 @@ $("mpEnter").onclick=async()=>{ const nm=($("mpName").value||"").trim()||("群�
   MP.name=nm; show("mpJoin",false); $("mpChat").style.display="flex"; $("mpInputBar").style.display="flex";
   $("mpChat").innerHTML='<div class="sys">正在进群…</div>';
   await MP.send(`${nm} 进群了 👋`,true); mpPoll(); MP.timer=setInterval(mpPoll,3000); };
-$("mpLeave").onclick=()=>{ MP.stop(); backToMenu(); };
+$("mpLeave").onclick=()=>{ if(MP.dmWith){ exitDM(); } else { MP.stop(); backToMenu(); } };
+$("mpDmBack").onclick=exitDM;
 $("mpSend").onclick=mpSendMsg; $("mpText").addEventListener("keydown",e=>{ if(e.key==="Enter") mpSendMsg(); });
+function enterDM(name){ if(!name||name===MP.name) return; MP.dmWith=name;
+  $("mpMode").style.display="flex"; $("mpDmName").textContent=name;
+  $("mpText").placeholder="私聊 "+name+" …"; mpPoll(); }
+function exitDM(){ MP.dmWith=null; $("mpMode").style.display="none"; $("mpText").placeholder="点某人昵称可私聊 · 群里说点什么…"; mpPoll(); }
 async function mpSendMsg(){ const inp=$("mpText"); const t=(inp.value||"").trim(); if(!t) return; inp.value="";
-  await MP.send(t,false); mpPoll(); }
-MP.stop=()=>{ if(MP.timer){ clearInterval(MP.timer); MP.timer=null; } };
+  if(MP.dmWith) await MP.sendDM(MP.dmWith,t); else await MP.send(t,false); mpPoll(); }
+MP.stop=()=>{ if(MP.timer){ clearInterval(MP.timer); MP.timer=null; } MP.dmWith=null; $("mpMode").style.display="none"; };
 async function mpPoll(){ const d=await MP.get(); const box=$("mpChat"); if(!box||box.style.display==="none") return;
   if(!d){ box.innerHTML='<div class="sys bad">连不上服务器（离线/沙盒环境）</div>'; return; }
-  const msgs=d.messages||[]; box.innerHTML="";
   const now=Date.now(); const online=new Set();
-  msgs.forEach(m=>{ if(now-(m.ts||0)<90000) online.add(m.name);
-    if(m.sys){ const s=document.createElement("div"); s.className="sys"; s.textContent=m.text; box.appendChild(s); return; }
-    const me=m.name===MP.name; const w=document.createElement("div"); w.className="msg"+(me?" me":"");
-    w.innerHTML=me?`<div class="av">${m.role||"👤"}</div><div class="body"><div class="bub">${esc(m.text)}</div></div>`
-      :`<div class="av">${m.role||"👤"}</div><div class="body"><div class="who">${esc(m.name)}</div><div class="bub">${esc(m.text)}</div></div>`;
-    box.appendChild(w); });
+  (d.messages||[]).forEach(m=>{ if(now-(m.ts||0)<90000) online.add(m.name); });
+  box.innerHTML="";
+  if(MP.dmWith){
+    // 私聊视图：只显示我和对方之间的私信
+    const thread=(d.dms||[]).filter(m=>(m.from===MP.name&&m.to===MP.dmWith)||(m.from===MP.dmWith&&m.to===MP.name));
+    if(!thread.length){ const s=document.createElement("div"); s.className="sys"; s.textContent="🔒 和 "+MP.dmWith+" 的私聊（只有你俩看得到）"; box.appendChild(s); }
+    thread.forEach(m=>{ const me=m.from===MP.name; const w=document.createElement("div"); w.className="msg"+(me?" me":"");
+      w.innerHTML=me?`<div class="av">${m.role||"👤"}</div><div class="body"><div class="bub priv">${esc(m.text)}</div></div>`
+        :`<div class="av">${m.role||"👤"}</div><div class="body"><div class="who">${esc(m.from)}</div><div class="bub priv">${esc(m.text)}</div></div>`;
+      box.appendChild(w); });
+  } else {
+    // 群聊视图：昵称可点私聊；提示有无新私信
+    const dmToMe=(d.dms||[]).filter(m=>m.to===MP.name && now-(m.ts||0)<120000);
+    if(dmToMe.length){ const s=document.createElement("div"); s.className="sys good"; s.textContent="🔔 你有 "+dmToMe.length+" 条私信，点对方昵称查看"; box.appendChild(s); }
+    (d.messages||[]).forEach(m=>{
+      if(m.sys){ const s=document.createElement("div"); s.className="sys"; s.textContent=m.text; box.appendChild(s); return; }
+      const me=m.name===MP.name; const w=document.createElement("div"); w.className="msg"+(me?" me":"");
+      const who=me?"":`<div class="who dm" data-dm="${esc(m.name)}">${esc(m.name)} 🔒</div>`;
+      w.innerHTML=me?`<div class="av">${m.role||"👤"}</div><div class="body"><div class="bub">${esc(m.text)}</div></div>`
+        :`<div class="av">${m.role||"👤"}</div><div class="body">${who}<div class="bub">${esc(m.text)}</div></div>`;
+      box.appendChild(w); });
+    box.querySelectorAll(".who.dm").forEach(x=>x.onclick=()=>enterDM(x.getAttribute("data-dm")));
+  }
   box.scrollTop=box.scrollHeight; $("mpOnline").textContent="在线 "+online.size; }
 function esc(s){ return String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c])); }
 
@@ -1080,6 +1156,7 @@ $("shopClose").onclick=()=>show("shopScreen",false);
 $("redGiveCancel").onclick=()=>show("redGiveScreen",false);
 $("bmCancel").onclick=()=>show("bmScreen",false);
 $("rosterClose").onclick=()=>show("rosterScreen",false);
+$("whisperCancel").onclick=()=>show("whisperScreen",false);
 $("hdCount").onclick=()=>{ if(g&&!g.over) openRoster(); };
 $("shopTop").onclick=()=>{ if(g&&!g.over) openShop(); };
 $("againBtn").onclick=()=>{ show("overScreen",false); buildRoleGrid(); show("roleScreen",true); };
@@ -1087,7 +1164,7 @@ $("quitBtn").onclick=()=>{ location.href="index.html"; };
 $("homeBtn2").onclick=()=>{ show("overScreen",false); backToMenu(); };
 refreshAchCount();
 
-if(typeof window!=="undefined") window.__ww={get g(){return g;}, newGame, doAction, endRound, buy, useItem, ITEM, ROLE_KEYS, ACT_DEF, court, aiOne, get WSAVE(){return WSAVE;}, checkAch, ACHIEVEMENTS, claimRed, openRedGive, pickRed, RED_GIVE, openBM, buyBM, BM_ITEMS, swapRole, openRoster, groupCount, POP_DEF};
+if(typeof window!=="undefined") window.__ww={get g(){return g;}, newGame, doAction, endRound, buy, useItem, ITEM, ROLE_KEYS, ACT_DEF, court, aiOne, get WSAVE(){return WSAVE;}, checkAch, ACHIEVEMENTS, claimRed, openRedGive, pickRed, RED_GIVE, openBM, buyBM, BM_ITEMS, swapRole, openRoster, groupCount, POP_DEF, openWhisper, pickWhisper, NPCS};
 </script>
 </body>
 </html>
