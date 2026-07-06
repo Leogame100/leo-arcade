@@ -110,6 +110,24 @@
   .redopt:active{transform:scale(.97);} .redopt.dis{opacity:.45;pointer-events:none;}
   .redopt .oi{font-size:24px;} .redopt .oinfo{flex:1;} .redopt .onm{font-weight:700;font-size:14px;} .redopt .od{font-size:11px;color:var(--muted);}
   .redopt .oc{color:var(--gold);font-weight:800;font-size:13px;white-space:nowrap;}
+  /* 拆红包：封面态 */
+  .redpk.closed{cursor:pointer;} .redpk.closed .seal{background:radial-gradient(#ffe08a,#ffcf4a);font-size:24px;animation:sealpulse 1s ease infinite;}
+  @keyframes sealpulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
+  .redpk .taphint{font-size:12px;color:#ffe08a;margin-top:8px;font-weight:700;}
+  /* 舆论炸弹爆炸动画 */
+  .boomanim{position:absolute;inset:0;z-index:31;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden;}
+  .boom{font-size:92px;animation:boompop .6s ease forwards;filter:drop-shadow(0 0 12px #ff8a3c);}
+  @keyframes boompop{0%{transform:scale(.2) rotate(-8deg);opacity:0;}30%{transform:scale(1.3);opacity:1;}100%{transform:scale(1.7);opacity:0;}}
+  .shock{position:absolute;width:50px;height:50px;border:6px solid #ffce3a;border-radius:50%;animation:shockwave .6s ease forwards;}
+  @keyframes shockwave{0%{transform:scale(.3);opacity:.9;}100%{transform:scale(7);opacity:0;}}
+  .debris{position:absolute;font-size:24px;animation:debrisfly .75s ease forwards;}
+  @keyframes debrisfly{0%{transform:translate(0,0) scale(.5);opacity:0;}20%{opacity:1;}100%{transform:translate(var(--dx),var(--dy)) scale(1.15);opacity:0;}}
+  .shake{animation:shk .42s;} @keyframes shk{0%,100%{transform:translate(0,0);}20%{transform:translate(-6px,4px);}40%{transform:translate(6px,-4px);}60%{transform:translate(-5px,-3px);}80%{transform:translate(5px,3px);}}
+  /* 黑市 */
+  .bmtag{display:inline-block;background:linear-gradient(135deg,#3a2b5c,#1c1230);color:#c9a8ff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;letter-spacing:1px;}
+  .bmitem{border:1px solid #4a3a6a;background:linear-gradient(180deg,#241a38,#1a1228);color:#eee;}
+  .bmitem .snm{color:#e6d6ff;} .bmitem .sdesc{color:#a892c8;}
+  .bmrisk{font-size:11px;color:#c9a8ff;text-align:center;margin:6px 0 10px;line-height:1.6;}
 </style>
 </head>
 <body>
@@ -213,6 +231,17 @@
       <div id="achList"></div>
       <button class="btn" id="againBtn">🎲 再抽一个身份</button>
       <button class="btn ghost" id="homeBtn2">← 返回游戏厅</button>
+    </div>
+  </div>
+
+  <!-- 黑市商店 -->
+  <div class="overlay hidden" id="bmScreen">
+    <div class="sheet">
+      <h2>🕶 黑市商店 <span class="bmtag">BLACK MARKET</span></h2>
+      <div class="bmrisk">⚠ 限量2款 · 本次开放限购1件 · 购买后掷骰🎲判定风险<br>
+        1=被查获(金币减半·停手) · 2~4=正常 · 5=返还半价 · 6=再送1件普通道具</div>
+      <div id="bmGrid"></div>
+      <button class="btn ghost" id="bmCancel">离开黑市</button>
     </div>
   </div>
 
@@ -375,6 +404,7 @@ function newGame(forceRole){
       meter:0, evidence:[], inv:{shield:0,medkit:0,report:0,probe:0,disguise:0,mute:0,unban:0,spam:0,revive:0},
       threats:2, acted:false, over:false, itemsLocked:false, heat:false, chaos:false, disguised:false,
       exposeQueued:0, shieldGiven80:false, bombUsed:false, silenceNext:0, muted:false, redpacketClaimed:false,
+      bmOpen:false, bmBought:false, bmStock:[], timedBomb:0, cloak:0, bribeNext:false,
       stats:{acts:0,reveals:0,fakes:0,attacksTaken:0,gongguan:0,kicks:0,redpackets:0,hacks:0,exposes:0,maxop:100},
   };
   // 初始证据
@@ -402,16 +432,30 @@ function startRound(){
   g.acted=false; g.itemsLocked=false; g.heat=false; g.chaos=false; g.exposeQueued=0;
   g.muted=false; g.redpacketClaimed=false;
   sys(`—— 第 ${g.round} 轮 ——`);
+  // 定时炸弹到期引爆
+  if(g.timedBomb && g.round>=g.timedBomb){ g.timedBomb=0; detonateTimed(); }
   const ev=pick(EVENTS); sys(`🎴 事件牌：${ev.t}｜${ev.d}`,"event"); ev.f();
-  // AI 行动（按身份不同威胁不同）
-  if(g.disguised){ sys("🎭 你伪装成普通成员，本轮无人针对你。","good"); g.disguised=false; }
+  // AI 行动：被伪装/隐身/贿赂保护时无人针对你
+  const safe = g.disguised || g.bribeNext || g.cloak>0;
+  if(safe){ let why = g.cloak>0?`🕶 隐身披风生效(剩${g.cloak}轮)`:(g.bribeNext?"💵 贿赂生效，无人敢动你":"🎭 你伪装成普通成员");
+    sys(why+"，本轮无人针对你。","good"); g.disguised=false; g.bribeNext=false; if(g.cloak>0) g.cloak--; }
   else aiRound();
-  // 空投（每2轮，帮你回血/补给）
+  // 空投（偶数轮）
   if(g.round%2===0 && !g.over) airdrop();
+  // 黑市（奇数轮开张，与空投错开）
+  if(g.round%2===1){ g.bmOpen=true; g.bmBought=false; g.bmStock=BM_ITEMS.slice().sort(()=>Math.random()-0.5).slice(0,2);
+    sys("🕶 黑市开张了！（本轮可去黑市抢购1件强力道具）","event"); } else g.bmOpen=false;
   // 法庭（每3轮）
   if(g.round%3===0 && !g.over) court();
   if(g.over) return;
   setHint("轮到你了，选一个行动（每轮1次）"); renderActs(); sync();
+}
+function detonateTimed(){
+  boomAnim();
+  msg("定时炸弹","💣","【嘀…嘀…💥 定时炸弹引爆！】");
+  g.threats=Math.max(0,g.threats-2); g.silenceNext=(g.silenceNext||0)+1;
+  if(g.roleDef.meter && !g.roleDef.meter.bad) addMeter(15); else op(10);
+  sys("💥 定时炸弹引爆，重创对手阵营！","good");
 }
 
 function aiRound(){
@@ -546,7 +590,7 @@ const ACT_DEF={
     else { addMeter(10); op(3); meSay("实名举报竞争对手！"); good("上位支持+10 舆论+3"); } }},
 };
 
-function actsForRole(){ return g.roleDef.acts.concat("redpack","shop"); }
+function actsForRole(){ return g.roleDef.acts.concat("redpack", g.bmOpen?"blackmarket":null, "shop").filter(Boolean); }
 function renderActs(){
   const box=document.getElementById("acts"); box.innerHTML="";
   actsForRole().forEach(id=>{
@@ -556,6 +600,8 @@ function renderActs(){
       el.innerHTML=`<div class="ico">🧧</div><div class="nm">领红包</div>`; el.onclick=claimRed; box.appendChild(el); return; }
     if(id==="qzred"){ const el=document.createElement("div"); el.className="act"+(g.acted?" dis":"");
       el.innerHTML=`<div class="ico">🧧</div><div class="nm">群主红包</div>`; el.onclick=openRedGive; box.appendChild(el); return; }
+    if(id==="blackmarket"){ const el=document.createElement("div"); el.className="act"+((g.acted||g.bmBought)?" dis":"");
+      el.innerHTML=`<div class="ico">🕶</div><div class="nm">${g.bmBought?"黑市(已购)":"逛黑市"}</div>`; el.onclick=openBM; box.appendChild(el); return; }
     const a=ACT_DEF[id]; if(!a) return;
     const dis=(a.cost&&g.coins<a.cost)||g.acted;
     const el=document.createElement("div"); el.className="act"+(dis?" dis":"");
@@ -677,16 +723,36 @@ function useItem(id){ if(g.over) return;
 
 /*==================== 红包 & 炸弹 ====================*/
 function randItem(){ return pick(["medkit","report","probe","disguise","mute","spam"]); }
-// 红包开启动画（纯视觉，非阻塞）
+// 拆红包动画：先显示封面，手动点开才迸奖（有仪式感）
 function redAnim(text,sub){
   const host=document.getElementById("phone"); if(!host) return;
   const wrap=document.createElement("div"); wrap.className="redanim";
-  wrap.innerHTML=`<div class="redpk"><div class="seal">🧧</div><div class="rtxt">${text}</div>${sub?`<div class="rsub">${sub}</div>`:""}</div>`;
-  for(let i=0;i<8;i++){ const c=document.createElement("div"); c.className="coinfx"; c.textContent=pick(["💰","🪙","🧧","✨","🎁"]);
-    c.style.left=(28+Math.random()*44)+"%"; c.style.top=(38+Math.random()*22)+"%"; c.style.animationDelay=(Math.random()*0.35)+"s"; wrap.appendChild(c); }
-  wrap.onclick=()=>{ if(wrap.parentNode) wrap.remove(); };
+  wrap.innerHTML=`<div class="redpk closed"><div class="seal">開</div><div class="taphint">🧧 点击拆红包</div></div>`;
+  let opened=false;
+  function openIt(){
+    if(opened){ if(wrap.parentNode) wrap.remove(); return; }
+    opened=true;
+    wrap.innerHTML=`<div class="redpk"><div class="seal">🧧</div><div class="rtxt">${text}</div>${sub?`<div class="rsub">${sub}</div>`:""}</div>`;
+    for(let i=0;i<9;i++){ const c=document.createElement("div"); c.className="coinfx"; c.textContent=pick(["💰","🪙","🧧","✨","🎁"]);
+      c.style.left=(26+Math.random()*48)+"%"; c.style.top=(36+Math.random()*24)+"%"; c.style.animationDelay=(Math.random()*0.3)+"s"; wrap.appendChild(c); }
+    setTimeout(()=>{ if(wrap.parentNode) wrap.remove(); },1900);
+  }
+  wrap.onclick=openIt;
   host.appendChild(wrap);
-  setTimeout(()=>{ if(wrap.parentNode) wrap.remove(); },1600);
+  setTimeout(()=>{ if(!opened && wrap.parentNode) openIt(); },4500);  // 4.5秒没点则自动拆开
+}
+// 舆论炸弹爆炸动画
+function boomAnim(){
+  const host=document.getElementById("phone"); if(!host) return;
+  host.classList.add("shake"); setTimeout(()=>host.classList.remove("shake"),420);
+  const wrap=document.createElement("div"); wrap.className="boomanim";
+  wrap.innerHTML=`<div class="shock"></div><div class="boom">💥</div>`;
+  for(let i=0;i<11;i++){ const d=document.createElement("div"); d.className="debris"; d.textContent=pick(["🔥","💢","⚡","📉","💥","🗯️"]);
+    const a=Math.random()*6.283, dist=60+Math.random()*90;
+    d.style.setProperty("--dx",(Math.cos(a)*dist).toFixed(0)+"px"); d.style.setProperty("--dy",(Math.sin(a)*dist).toFixed(0)+"px");
+    wrap.appendChild(d); }
+  host.appendChild(wrap);
+  setTimeout(()=>{ if(wrap.parentNode) wrap.remove(); },850);
 }
 function claimRed(){
   if(g.over) return;
@@ -734,6 +800,61 @@ function pickRed(o){
   g.acted=true; g.stats.acts++; renderActs(); sync(); checkEnd();
   if(!g.over){ setHint("结算中…"); setTimeout(endRound,600); }
 }
+
+/*==================== 🕶 黑市商店（每2轮·高风险高收益） ====================*/
+const BM_ITEMS=[
+  {id:"timebomb",nm:"定时炸弹",price:8, ico:"💣",d:"2回合后重创对手阵营(清威胁+助攻)",fn:()=>{ g.timedBomb=g.round+2; sys("💣 定时炸弹已布下，2回合后引爆…","good"); }},
+  {id:"cloak",   nm:"隐身披风",price:6, ico:"🕶",d:"2回合内不被攻击/调查",fn:()=>{ g.cloak=2; if(g.roleDef.meter&&g.roleDef.meter.bad) addMeter(-20); }},
+  {id:"swap",    nm:"身份交换卡",price:10,ico:"🧬",d:"随机换成另一个身份(赌一把翻盘)",fn:()=>swapRole()},
+  {id:"dossier", nm:"绝密档案",price:7, ico:"📂",d:"获得2份真证据+情报(舆论+信誉)",fn:()=>{ g.evidence.push(makeEvidence(0),makeEvidence(0)); op(4); rep(1); renderEv(); }},
+  {id:"bribe",   nm:"贿赂卡",  price:5, ico:"💵",d:"下一回合无人攻击你，舆论+5",fn:()=>{ g.bribeNext=true; op(5); }},
+  {id:"reset",   nm:"技能重置卡",price:6,ico:"⚡",d:"刷新一次性技能(舆论炸弹/红包)",fn:()=>{ g.bombUsed=false; g.redpacketClaimed=false; op(2); }},
+  {id:"vault",   nm:"金库钥匙",price:12,ico:"🏦",d:"立即+10金币，并抽1件普通道具",fn:()=>{ g.coins+=10; const id=randItem(); g.inv[id]=(g.inv[id]||0)+1; }},
+  {id:"supreme", nm:"至尊红包",price:8, ico:"🎁",d:"开出2件高级道具或15金币(小概率空)",fn:()=>supremeRed()},
+];
+const BMITEM=Object.fromEntries(BM_ITEMS.map(x=>[x.id,x]));
+function swapRole(){
+  const nk=pick(ROLE_KEYS.filter(k=>k!==g.role)); const rd=ROLES[nk];
+  g.role=nk; g.roleDef=rd; g.meter=0; g.maxhp=rd.hp; g.hp=Math.min(g.hp,rd.hp);
+  document.getElementById("roleTag").textContent=`${rd.ico} ${rd.nm}`;
+  sys(`🧬 身份交换！你现在是 ${rd.ico}${rd.nm} —— 新目标：${rd.goal}`,"event");
+}
+function supremeRed(){
+  const r=Math.random();
+  if(r<0.10){ sys("🎁 至尊红包：竟是空红包，血亏…","bad"); redAnim("至尊红包 👑","❌ 空红包"); }
+  else if(r<0.55){ g.coins+=15; sys("🎁 至尊红包：+15金币！","good"); redAnim("至尊红包 👑","💰 +15金币"); }
+  else { const got=[]; for(let i=0;i<2;i++){ const id=pick(["disguise","mute","probe","medkit"]); g.inv[id]=(g.inv[id]||0)+1; got.push(ITEM[id].ico+ITEM[id].nm); }
+    sys("🎁 至尊红包："+got.join(" + "),"good"); redAnim("至尊红包 👑",got.join(" + ")); }
+}
+function openBM(){
+  if(g.acted){ setHint("请先完成本轮行动前来黑市"); return; }
+  if(!g.bmOpen){ setHint("黑市本轮未开张（奇数轮开放）"); return; }
+  const box=document.getElementById("bmGrid"); box.innerHTML="";
+  g.bmStock.forEach(it=>{ const el=document.createElement("div"); el.className="shopitem bmitem";
+    el.innerHTML=`<span class="si">${it.ico}</span><div class="sinfo"><div class="snm">${it.nm}</div><div class="sdesc">${it.d}</div></div>`;
+    const afford=g.coins>=it.price && !g.bmBought;
+    const b=document.createElement("button"); b.className="buy"+(afford?"":" own"); b.textContent=g.bmBought?"已购":"💰"+it.price; b.onclick=()=>{ if(afford) buyBM(it); };
+    el.appendChild(b); box.appendChild(el); });
+  document.getElementById("bmScreen").classList.remove("hidden");
+}
+function buyBM(it){
+  if(g.bmBought || g.coins<it.price) return;
+  g.coins-=it.price; g.bmBought=true;
+  const dice=1+Math.floor(Math.random()*6);
+  let txt;
+  if(dice===1){ g.coins=Math.floor(g.coins/2); g.acted=true; txt=`🚔 掷出 🎲1：被查获！金币减半，本回合无法行动（商品没收）`; }
+  else {
+    it.fn();
+    if(dice===5){ const back=Math.floor(it.price/2); g.coins+=back; txt=`🎉 掷出 🎲5：获得「${it.nm}」并返还 ${back} 金币`; }
+    else if(dice===6){ const id=randItem(); g.inv[id]=(g.inv[id]||0)+1; txt=`💎 掷出 🎲6：获得「${it.nm}」，再赠 ${ITEM[id].ico}${ITEM[id].nm}`; }
+    else txt=`✅ 掷出 🎲${dice}：顺利拿下「${it.nm}」`;
+  }
+  msg("黑市·商人","🕶","【一手交钱一手交货…掷骰判定风险】");
+  sys(txt, dice===1?"bad":"good");
+  document.getElementById("bmScreen").classList.add("hidden");
+  renderInv(); renderEv(); sync(); checkEnd();
+  if(g.acted && !g.over){ setHint("被查获，本回合结束…"); setTimeout(endRound,700); }
+}
 function mysteryBox(){   // 神秘红包（3金币购买）
   msg("神秘·红包","🎰","【神秘红包，点击试试手气…】");
   const r=Math.random(); let txt;
@@ -751,6 +872,7 @@ function mysteryBox(){   // 神秘红包（3金币购买）
   checkEnd();
 }
 function fireBomb(){   // 舆论炸弹：轰炸对手阵营
+  boomAnim();
   msg("你","💣","【引爆一颗舆论炸弹💣，对手阵营炸开了锅！】");
   g.threats=Math.max(0,g.threats-2); g.silenceNext=(g.silenceNext||0)+1; g.exposeQueued=0;
   if(g.role==="media"){ addMeter(18); sys("💣 舆论炸弹：曝光进度+18，压制对手","good"); }
@@ -869,13 +991,14 @@ function esc(s){ return String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&
 /* 通用 */
 $("shopClose").onclick=()=>show("shopScreen",false);
 $("redGiveCancel").onclick=()=>show("redGiveScreen",false);
+$("bmCancel").onclick=()=>show("bmScreen",false);
 $("shopTop").onclick=()=>{ if(g&&!g.over) openShop(); };
 $("againBtn").onclick=()=>{ show("overScreen",false); buildRoleGrid(); show("roleScreen",true); };
 $("quitBtn").onclick=()=>{ location.href="index.html"; };
 $("homeBtn2").onclick=()=>{ show("overScreen",false); backToMenu(); };
 refreshAchCount();
 
-if(typeof window!=="undefined") window.__ww={get g(){return g;}, newGame, doAction, endRound, buy, useItem, ITEM, ROLE_KEYS, ACT_DEF, court, aiOne, get WSAVE(){return WSAVE;}, checkAch, ACHIEVEMENTS, claimRed, openRedGive, pickRed, RED_GIVE};
+if(typeof window!=="undefined") window.__ww={get g(){return g;}, newGame, doAction, endRound, buy, useItem, ITEM, ROLE_KEYS, ACT_DEF, court, aiOne, get WSAVE(){return WSAVE;}, checkAch, ACHIEVEMENTS, claimRed, openRedGive, pickRed, RED_GIVE, openBM, buyBM, BM_ITEMS, swapRole};
 </script>
 </body>
 </html>
