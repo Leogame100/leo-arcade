@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>橡皮泥：战争塑形前线</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --bg:#2a2438; --panel:#37304a; --panel2:#443b5c; --ink:#f4eefe; --muted:#b8aecd;
+    --gold:#ffcf4a; --danger:#ff5c72; --good:#66e2a0;
+  }
+  html,body{ height:100%; background:radial-gradient(1200px 800px at 50% -10%,#3b3350,#211c2e 70%); color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei",-apple-system,system-ui,sans-serif; overflow:hidden; }
+  #app{ height:100%; display:flex; flex-direction:column; align-items:center; gap:8px; padding:8px; }
+  #topbar{ width:100%; max-width:1000px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:linear-gradient(180deg,var(--panel),var(--panel2)); border:1px solid #554a72;
+    border-radius:14px; padding:8px 12px; box-shadow:0 6px 20px rgba(0,0,0,.35); }
+  #topbar .title{ font-weight:800; font-size:16px; letter-spacing:.5px; }
+  #topbar .title small{ color:var(--muted); font-weight:600; }
+  .stat{ display:flex; align-items:center; gap:6px; background:#2c2740; border:1px solid #4b4168;
+    padding:5px 10px; border-radius:10px; font-weight:700; font-size:14px; }
+  .stat .lab{ color:var(--muted); font-weight:600; font-size:12px; }
+  .spacer{ flex:1; }
+  .btn{ cursor:pointer; border:none; border-radius:10px; padding:7px 14px; font-weight:800; font-size:13px;
+    background:var(--gold); color:#3a2c00; box-shadow:0 3px 0 #b58a12; transition:transform .05s; }
+  .btn:active{ transform:translateY(2px); box-shadow:0 1px 0 #b58a12; }
+  .btn.ghost{ background:#4b4168; color:var(--ink); box-shadow:0 3px 0 #2e2743; }
+  #stage{ position:relative; width:100%; max-width:1000px; aspect-ratio:5/3; }
+  canvas{ width:100%; height:100%; display:block; border-radius:16px; border:1px solid #554a72;
+    box-shadow:0 10px 30px rgba(0,0,0,.45); background:#1c1830; touch-action:none; }
+  #shop{ width:100%; max-width:1000px; display:flex; gap:7px; overflow-x:auto; padding:6px 4px 10px;
+    scrollbar-width:thin; }
+  #shop::-webkit-scrollbar{ height:7px; } #shop::-webkit-scrollbar-thumb{ background:#5a4f78; border-radius:8px; }
+  .card{ flex:0 0 auto; width:92px; background:var(--panel); border:2px solid #4b4168; border-radius:12px;
+    padding:6px 5px; cursor:pointer; position:relative; user-select:none; transition:border-color .1s, transform .05s; }
+  .card:active{ transform:scale(.97); }
+  .card.sel{ border-color:var(--gold); box-shadow:0 0 0 2px rgba(255,207,74,.35); }
+  .card.dis{ opacity:.5; }
+  .card .cico{ width:100%; height:44px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    font-size:26px; box-shadow:inset 0 -6px 10px rgba(0,0,0,.25), inset 0 4px 8px rgba(255,255,255,.25); }
+  .card .cname{ font-size:11px; font-weight:800; text-align:center; margin-top:4px; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis; }
+  .card .ccost{ display:flex; align-items:center; justify-content:center; gap:3px; font-size:12px; font-weight:900;
+    color:var(--gold); margin-top:2px; }
+  .card .stars{ font-size:8px; text-align:center; color:#ffd76a; line-height:1; height:9px; overflow:hidden; }
+  .card .cool{ position:absolute; inset:0; background:rgba(20,15,35,.7); border-radius:10px;
+    display:flex; align-items:flex-end; justify-content:center; font-weight:900; font-size:15px; color:#fff;
+    pointer-events:none; overflow:hidden; }
+  .card .coolfill{ position:absolute; left:0; bottom:0; width:100%; background:rgba(255,255,255,.12); }
+  .overlay{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:rgba(18,14,30,.86); border-radius:16px; text-align:center; padding:20px; z-index:5; }
+  .overlay h1{ font-size:26px; margin-bottom:6px; }
+  .overlay h1 .sub{ display:block; font-size:13px; color:var(--muted); font-weight:600; margin-top:4px; }
+  .overlay p{ color:var(--muted); font-size:13px; max-width:560px; line-height:1.6; margin:10px 0; }
+  .lore{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; max-width:600px; margin:8px 0 14px; }
+  .swatch{ display:flex; align-items:center; gap:5px; background:#2c2740; border:1px solid #4b4168;
+    padding:4px 8px; border-radius:20px; font-size:11px; }
+  .dot{ width:13px; height:13px; border-radius:50%; box-shadow:inset 0 -2px 3px rgba(0,0,0,.3); }
+  .hint{ position:absolute; top:8px; left:50%; transform:translateX(-50%); background:rgba(20,15,35,.8);
+    border:1px solid #554a72; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:700; z-index:4;
+    pointer-events:none; opacity:0; transition:opacity .3s; white-space:nowrap; }
+  .hint.show{ opacity:1; }
+  .tip{ position:absolute; bottom:10px; left:50%; transform:translateX(-50%); font-size:11px; color:var(--muted);
+    pointer-events:none; z-index:3; }
+  /* 天赋树 */
+  #talentScreen{ z-index:20; overflow:hidden; padding:14px; }
+  .tHead{ display:flex; align-items:center; gap:12px; margin-bottom:10px; flex-wrap:wrap; justify-content:center; }
+  .tHead h1{ font-size:22px; margin:0; }
+  .tPts{ background:#2c2740; border:1px solid #ffcf4a; color:var(--gold); font-weight:900;
+    padding:5px 12px; border-radius:20px; font-size:14px; }
+  .tTree{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; width:100%; max-width:820px;
+    overflow-y:auto; padding:4px; }
+  .tCol{ display:flex; flex-direction:column; align-items:center; gap:0; }
+  .tColH{ font-size:12px; font-weight:800; color:var(--muted); margin-bottom:6px; text-align:center; }
+  .tLink{ width:3px; height:12px; background:#4b4168; }
+  .tLink.on{ background:var(--gold); }
+  .tNode{ width:100%; max-width:180px; background:var(--panel); border:2px solid #4b4168; border-radius:11px;
+    padding:7px 8px; cursor:pointer; text-align:center; transition:transform .05s,border-color .1s; position:relative; }
+  .tNode:active{ transform:scale(.97); }
+  .tNode .tico{ font-size:20px; }
+  .tNode .tname{ font-size:12px; font-weight:800; margin:1px 0; }
+  .tNode .tdesc{ font-size:10px; color:var(--muted); line-height:1.35; }
+  .tNode .tcost{ font-size:10px; font-weight:900; color:var(--gold); margin-top:3px; }
+  .tNode.owned{ border-color:var(--good); background:#2c3d34; }
+  .tNode.owned .tcost{ color:var(--good); }
+  .tNode.avail{ border-color:var(--gold); box-shadow:0 0 0 2px rgba(255,207,74,.25); }
+  .tNode.locked{ opacity:.5; }
+  .tFoot{ display:flex; gap:10px; margin-top:12px; }
+  /* 关卡选择 */
+  .lvGrid{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:760px; margin:6px 0 14px; }
+  .lvCard{ width:140px; background:var(--panel); border:2px solid #4b4168; border-radius:12px; padding:12px 10px;
+    cursor:pointer; text-align:center; transition:transform .05s,border-color .1s; }
+  .lvCard:active{ transform:scale(.97); }
+  .lvCard.done{ border-color:var(--good); }
+  .lvCard.open{ border-color:var(--gold); box-shadow:0 0 0 2px rgba(255,207,74,.25); }
+  .lvCard.locked{ opacity:.45; cursor:not-allowed; }
+  .lvCard .lvno{ font-size:11px; color:var(--muted); font-weight:800; }
+  .lvCard .lvname{ font-size:15px; font-weight:900; margin:3px 0; }
+  .lvCard .lvmeta{ font-size:11px; color:var(--muted); line-height:1.4; }
+  .lvCard .lvbadge{ font-size:18px; margin-top:4px; height:20px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div class="title">🪄 橡皮泥：战争塑形前线 <small id="wavelab">· 准备中</small></div>
+    <div class="spacer"></div>
+    <div class="stat">🟤<span class="lab">泥料</span><span id="clay">150</span></div>
+    <div class="stat">❤️<span class="lab">基地</span><span id="lives">5</span></div>
+    <div class="stat">💀<span class="lab">击杀</span><span id="kills">0</span></div>
+    <button class="btn ghost" id="pauseBtn">⏸ 暂停</button>
+  </div>
+
+  <div id="stage">
+    <canvas id="cv" width="1000" height="600"></canvas>
+    <div class="hint" id="hint"></div>
+    <div class="tip">💎矿点上建🏭纸工厂/工程兵产量翻倍。🦇飞行敌人只能远程/🛩️防空拦截。双人：P2用方向键+逗号句号选兵+回车。</div>
+
+    <div class="overlay" id="startScreen">
+      <h1>橡皮泥：战争塑形前线<span class="sub">Playdough War · Shaping Frontline</span></h1>
+      <p>黑泥感染正从右侧涌来。用不同颜色的橡皮泥捏出你的军团，守住左侧基地！<br>
+         每种颜色都有独特属性与技能——自由组合，打造你的塑形前线。</p>
+      <div class="lore" id="loreBox"></div>
+      <p id="startRecords" style="margin:2px 0 10px;font-size:12px;"></p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+        <button class="btn" id="campaignBtn" style="font-size:16px;padding:10px 24px;">🗺️ 闯关模式</button>
+        <button class="btn" id="endlessBtn" style="font-size:16px;padding:10px 24px;background:#a45ce0;box-shadow:0 3px 0 #6f2fa8;color:#fff;">🌀 无尽模式</button>
+        <button class="btn" id="coopBtn" style="font-size:16px;padding:10px 24px;background:#5fd0e0;box-shadow:0 3px 0 #3a9aa8;color:#08343a;">👥 双人合作</button>
+        <button class="btn ghost" id="talentBtn" style="font-size:16px;padding:10px 24px;">🌳 天赋树</button>
+        <button class="btn ghost" id="techBtn" style="font-size:16px;padding:10px 24px;">🔬 科技树</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="shop"></div>
+</div>
+
+<script>
+"use strict";
+/* ============================ 数据：橡皮泥材料 & 单位 ============================ */
+const CLAY = {
+  brown:{name:"棕泥", col:"#8a5a3c", star:1},
+  white:{name:"白泥", col:"#f2f0ea", star:1},
+  yellow:{name:"黄泥", col:"#f2c94c", star:2},
+  green:{name:"绿泥", col:"#5fbf6a", star:2},
+  blue:{name:"蓝泥", col:"#4d7ee0", star:3},
+  pink:{name:"粉泥", col:"#f48fb1", star:3},
+  purple:{name:"紫泥", col:"#a45ce0", star:4},
+  orange:{name:"橙泥", col:"#f28c3c", star:4},
+  red:{name:"红泥", col:"#e0464b", star:5},
+  gray:{name:"灰泥", col:"#8b8fa0", star:5},
+  cyan:{name:"青泥", col:"#5fd0e0", star:5},
+  silver:{name:"银泥", col:"#cdd3e0", star:6},
+  gold:{name:"金泥", col:"#ffcf4a", star:6},
+  black:{name:"黑泥", col:"#2a2233", star:7},
+  rainbow:{name:"彩色泥", col:"#c86bd6", star:8},
+};
+
+// 玩家可制作单位
+const UNITS = [
+  {id:"recruit", clay:"brown", ico:"🪖", name:"新兵", cost:50, cd:3, hp:120, dmg:22, rate:0.9,
+   role:"melee", desc:"最基础的近战肉盾"},
+  {id:"engineer", clay:"yellow", ico:"🔧", name:"工程兵", cost:50, cd:6, hp:80, dmg:0, rate:0,
+   role:"gen", gen:25, genEvery:5, desc:"每5秒产出泥料"},
+  {id:"medic", clay:"white", ico:"⛑️", name:"医疗兵", cost:75, cd:7, hp:90, dmg:0, rate:0,
+   role:"heal", heal:28, healEvery:1.6, desc:"治疗同行受伤单位"},
+  {id:"heavy", clay:"blue", ico:"🛡️", name:"重甲步兵", cost:100, cd:8, hp:520, dmg:16, rate:1.2,
+   role:"melee", desc:"高血量装甲前锋"},
+  {id:"fortress", clay:"gray", ico:"🧱", name:"移动堡垒", cost:125, cd:12, hp:1100, dmg:0, rate:0,
+   role:"wall", desc:"超硬城墙，专门挡路"},
+  {id:"commander", clay:"pink", ico:"📣", name:"指挥员", cost:100, cd:10, hp:110, dmg:0, rate:0,
+   role:"buff", buff:0.4, desc:"同行友军伤害+40%"},
+  {id:"poison", clay:"green", ico:"🧪", name:"毒气兵", cost:125, cd:6, hp:90, dmg:8, rate:1.1,
+   role:"shoot", fx:"poison", desc:"投毒，持续腐蚀"},
+  {id:"laser", clay:"purple", ico:"⚡", name:"激光炮", cost:150, cd:6, hp:100, dmg:30, rate:1.0,
+   role:"shoot", fx:"chain", desc:"电磁弹，链击2个敌人"},
+  {id:"flame", clay:"orange", ico:"🔥", name:"喷火坦克", cost:150, cd:7, hp:160, dmg:26, rate:1.3,
+   role:"shoot", fx:"splash", desc:"熔岩弹，范围灼烧"},
+  {id:"ice", clay:"cyan", ico:"❄️", name:"冰冻炮", cost:125, cd:6, hp:100, dmg:14, rate:1.4,
+   role:"shoot", fx:"slow", desc:"冰弹，冻缓敌人"},
+  {id:"berserker", clay:"red", ico:"⚔️", name:"狂战士", cost:150, cd:8, hp:150, dmg:52, rate:0.55,
+   role:"melee", crit:0.25, desc:"极高攻击，暴击连斩"},
+  {id:"rocket", clay:"red", ico:"🚀", name:"火箭炮", cost:225, cd:16, hp:150, dmg:130, rate:3.6,
+   role:"shoot", fx:"rocket", desc:"充能慢·火箭大范围爆炸"},
+  {id:"sniper", clay:"silver", ico:"🎯", name:"狙击兵", cost:175, cd:9, hp:90, dmg:70, rate:1.6,
+   role:"shoot", fx:"crit", desc:"超远精准，高暴击"},
+  {id:"guard", clay:"gold", ico:"👑", name:"皇家近卫", cost:250, cd:16, hp:420, dmg:55, rate:0.7,
+   role:"melee", buff:0.2, desc:"精英全能，自带光环"},
+  // —— 纸工厂：可升级的产泥建筑 ——
+  {id:"factory", clay:"white", ico:"🏭", name:"纸工厂", cost:175, cd:14, role:"factory",
+   genEvery:5, lvls:[{hp:260,gen:34},{hp:440,gen:62},{hp:700,gen:104}], upCost:[200,300],
+   desc:"产泥建筑·点击可升级(3级)·建在💎矿点产量翻倍"},
+  // —— 科技解锁单位（默认锁定）——
+  {id:"antiair", clay:"silver", ico:"🛩️", name:"防空炮", cost:130, cd:9, hp:110, dmg:34, rate:1.1,
+   role:"shoot", fx:"antiair", locked:true, desc:"对飞行敌人3倍伤害"},
+  {id:"beast", clay:"green", ico:"🐲", name:"生物战兽", cost:200, cd:11, hp:640, dmg:40, rate:0.9,
+   role:"melee", fx:"poison", locked:true, desc:"高血近战·撕咬带毒"},
+  {id:"spectrum", clay:"rainbow", ico:"🌈", name:"光谱士兵", cost:300, cd:14, hp:260, dmg:60, rate:0.7,
+   role:"shoot", fx:"chain", locked:true, desc:"终极·彩虹链光束"},
+];
+
+const ENEMIES = {
+  bug:  {name:"感染兽", ico:"👾", hp:80,  dmg:18, rate:1.0, speed:34, col:"#3a3048"},
+  crawler:{name:"感染爬虫", ico:"🕷️", hp:150, dmg:14, rate:0.8, speed:52, col:"#2e2740"},
+  wagon:{name:"深渊战车", ico:"🚙", hp:420, dmg:30, rate:1.1, speed:26, col:"#241d33"},
+  brute:{name:"黑泥巨兽", ico:"👹", hp:1600,dmg:60, rate:1.3, speed:20, col:"#1c1628"},
+  // —— 关卡专属 ——
+  flyer:{name:"会飞的黑泥", ico:"🦇", hp:95, dmg:22, rate:1.0, speed:64, col:"#4a2f66", fly:true},
+  splitter:{name:"分裂感染兽", ico:"🫧", hp:300, dmg:22, rate:1.0, speed:30, col:"#243a2e", split:true},
+  splitling:{name:"感染孢子", ico:"🟢", hp:70, dmg:12, rate:0.9, speed:48, col:"#2e5540", isSplit:true},
+};
+
+/* ============================ 天赋树（跨局永久成长） ============================ */
+// tier=层级(1顶→3底)，req=前置(满足任意一个即可解锁)，eff=对加成对象的修改
+const TALENTS = [
+  // —— 经济线 · 棕黄 ——
+  {id:"eco1", branch:0, tier:1, ico:"🟤", name:"泥料涌流", cost:20, req:[],
+   eff:t=>t.trickleMult=1.6, desc:"被动产泥 +60%"},
+  {id:"eco2", branch:0, tier:2, ico:"📦", name:"储备扩容", cost:30, req:["eco1"],
+   eff:t=>t.startClay+=120, desc:"开局泥料 +120"},
+  {id:"eco3", branch:0, tier:2, ico:"🔧", name:"高效工程", cost:35, req:["eco1"],
+   eff:t=>t.genMult=1.6, desc:"工程兵产量 +60%"},
+  {id:"eco4", branch:0, tier:3, ico:"♻️", name:"废料回收", cost:60, req:["eco2","eco3"],
+   eff:t=>t.killClayMult=2.2, desc:"击杀返还泥料 +120%"},
+  // —— 攻击线 · 红银 ——
+  {id:"atk1", branch:1, tier:1, ico:"⚔️", name:"利刃塑形", cost:20, req:[],
+   eff:t=>t.dmgMult*=1.15, desc:"全体伤害 +15%"},
+  {id:"atk2", branch:1, tier:2, ico:"🔥", name:"狂热", cost:35, req:["atk1"],
+   eff:t=>t.atkSpeedMult=0.8, desc:"攻击速度 +25%"},
+  {id:"atk3", branch:1, tier:2, ico:"🎯", name:"精准塑造", cost:35, req:["atk1"],
+   eff:t=>t.critBonus=0.15, desc:"全体暴击率 +15%"},
+  {id:"atk4", branch:1, tier:3, ico:"💥", name:"重火力", cost:65, req:["atk2","atk3"],
+   eff:t=>t.dmgMult*=1.25, desc:"全体伤害 额外 +25%"},
+  // —— 防御线 · 蓝灰 ——
+  {id:"def1", branch:2, tier:1, ico:"🛡️", name:"硬化装甲", cost:20, req:[],
+   eff:t=>t.hpMult=1.25, desc:"全体生命 +25%"},
+  {id:"def2", branch:2, tier:2, ico:"🏰", name:"城防加固", cost:30, req:["def1"],
+   eff:t=>t.livesBonus+=3, desc:"基地生命 +3"},
+  {id:"def3", branch:2, tier:2, ico:"⚡", name:"速塑工艺", cost:35, req:["def1"],
+   eff:t=>t.cdMult=0.75, desc:"单位冷却 -25%"},
+  {id:"def4", branch:2, tier:3, ico:"⛑️", name:"白泥强化", cost:55, req:["def2","def3"],
+   eff:t=>t.healMult=1.7, desc:"治疗量 +70%"},
+  // —— 元素/黑科技线 · 紫橙青绿黑 ——
+  {id:"ele1", branch:3, tier:1, ico:"🌈", name:"元素亲和", cost:25, req:[],
+   eff:t=>t.fxMult=1.5, desc:"毒/火/冰 效果 +50%"},
+  {id:"ele2", branch:3, tier:2, ico:"❄️", name:"深度冰封", cost:35, req:["ele1"],
+   eff:t=>t.freezeBonus=1.6, desc:"冰冻/减速时长 +60%"},
+  {id:"ele3", branch:3, tier:2, ico:"⏳", name:"从容备战", cost:30, req:["ele1"],
+   eff:t=>t.waveGapMult=1.5, desc:"波次间隔 +50%（更多准备）"},
+  {id:"ele4", branch:3, tier:3, ico:"👑", name:"黑泥馈赠", cost:70, req:["ele2","ele3"],
+   eff:t=>t.freeGuard=true, desc:"每局开局免费获得皇家近卫"},
+];
+const BRANCH_NAME = ["经济·棕黄","攻击·红银","防御·蓝灰","元素·黑科技"];
+
+/* ============================ 科技树（升级士兵 / 解锁新兵） ============================ */
+// kind:"boost" 强化已有单位(mod)；kind:"unlock" 解锁新单位(unit)
+const TECH = [
+  // 步兵强化线
+  {id:"k_rec", branch:0, tier:1, ico:"🪖", name:"精锐新兵", cost:25, req:[],
+   kind:"boost", mod:{recruit:{hpMult:1.6,dmgMult:1.4}}, desc:"新兵 生命+60% 伤害+40%"},
+  {id:"k_ber", branch:0, tier:2, ico:"⚔️", name:"狂暴之血", cost:40, req:["k_rec"],
+   kind:"boost", mod:{berserker:{rateMult:0.75,critAdd:0.2}}, desc:"狂战士 攻速+33% 暴击+20%"},
+  {id:"k_beast", branch:0, tier:3, ico:"🐲", name:"生物工程", cost:70, req:["k_ber"],
+   kind:"unlock", unit:"beast", desc:"解锁 · 生物战兽（绿泥）"},
+  // 载具火力线
+  {id:"k_laser", branch:1, tier:1, ico:"⚡", name:"电磁过载", cost:30, req:[],
+   kind:"boost", mod:{laser:{dmgMult:1.25,chainAdd:1}}, desc:"激光炮 伤害+25% 链击+1"},
+  {id:"k_ice", branch:1, tier:2, ico:"❄️", name:"寒冰工艺", cost:30, req:["k_laser"],
+   kind:"boost", mod:{ice:{rateMult:0.7,dmgMult:1.3}}, desc:"冰冻炮 攻速+43% 伤害+30%"},
+  {id:"k_rocket", branch:1, tier:3, ico:"🚀", name:"重炮升级", cost:55, req:["k_ice"],
+   kind:"boost", mod:{rocket:{dmgMult:1.5,rateMult:0.8}}, desc:"火箭炮 伤害+50% 装填+20%"},
+  // 尖端科技线
+  {id:"k_anti", branch:2, tier:1, ico:"🛩️", name:"防空体系", cost:40, req:[],
+   kind:"unlock", unit:"antiair", desc:"解锁 · 防空炮（专打飞行）"},
+  {id:"k_spec", branch:2, tier:2, ico:"🌈", name:"光谱科技", cost:90, req:["k_anti"],
+   kind:"unlock", unit:"spectrum", desc:"解锁 · 光谱士兵（终极）"},
+  {id:"k_all", branch:2, tier:3, ico:"🎖️", name:"全军现代化", cost:80, req:["k_spec"],
+   kind:"boost", mod:{"*":{hpMult:1.12,dmgMult:1.12}}, desc:"全体单位 生命+12% 伤害+12%"},
+];
+const TECH_BRANCH = ["步兵强化","载具火力","尖端科技"];
+
+/* ---- 存档（localStorage，跨局累积） ---- */
+const SAVE_KEY = "clayWarSave_v1";
+let SAVE = loadSave();
+function loadSave(){
+  const def={points:0, unlocked:[], techUnlocked:[], campaignCleared:0, bestWave:0, bestKills:0};
+  try{ const s=JSON.parse(localStorage.getItem(SAVE_KEY)); if(s&&s.unlocked) return {...def,...s}; }catch(e){}
+  return def;
+}
+function persist(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE)); }catch(e){} }
+function isUnlocked(id){ return SAVE.unlocked.includes(id); }
+function isTech(id){ return SAVE.techUnlocked.includes(id); }
+function canUnlock(t){
+  if(isUnlocked(t.id)) return false;
+  if(SAVE.points<t.cost) return false;
+  return t.req.length===0 || t.req.some(r=>isUnlocked(r));
+}
+function canTech(t){
+  if(isTech(t.id)) return false;
+  if(SAVE.points<t.cost) return false;
+  return t.req.length===0 || t.req.some(r=>isTech(r));
+}
+
+/* ---- 科技汇总：解锁单位集合 + 单位强化表 UMOD ---- */
+let UNLOCKED_UNITS = new Set();
+let UMOD = {};
+function computeTech(){
+  UNLOCKED_UNITS = new Set(UNITS.filter(u=>!u.locked).map(u=>u.id));
+  UMOD = {};
+  const ensure=id=>UMOD[id]||(UMOD[id]={hpMult:1,dmgMult:1,rateMult:1,critAdd:0,chainAdd:0});
+  for(const t of TECH){ if(!isTech(t.id)) continue;
+    if(t.kind==="unlock") UNLOCKED_UNITS.add(t.unit);
+    else if(t.kind==="boost"){
+      for(const uid in t.mod){ const m=ensure(uid), src=t.mod[uid];
+        if(src.hpMult) m.hpMult*=src.hpMult;
+        if(src.dmgMult) m.dmgMult*=src.dmgMult;
+        if(src.rateMult) m.rateMult*=src.rateMult;
+        if(src.critAdd) m.critAdd+=src.critAdd;
+        if(src.chainAdd) m.chainAdd+=src.chainAdd;
+      }
+    }
+  }
+}
+function umodFor(id){
+  const base={hpMult:1,dmgMult:1,rateMult:1,critAdd:0,chainAdd:0};
+  for(const key of ["*",id]){ const m=UMOD[key]; if(!m) continue;
+    base.hpMult*=m.hpMult; base.dmgMult*=m.dmgMult; base.rateMult*=m.rateMult;
+    base.critAdd+=m.critAdd; base.chainAdd+=m.chainAdd; }
+  return base;
+}
+
+/* ---- 汇总所有已解锁天赋 → 加成对象 TAL ---- */
+let TAL = defaultTAL();
+function defaultTAL(){
+  return { trickleMult:1, startClay:0, genMult:1, killClayMult:1,
+           dmgMult:1, atkSpeedMult:1, critBonus:0,
+           hpMult:1, livesBonus:0, cdMult:1, healMult:1,
+           fxMult:1, freezeBonus:1, waveGapMult:1, freeGuard:false };
+}
+function computeTAL(){
+  TAL = defaultTAL();
+  for(const t of TALENTS) if(isUnlocked(t.id)) t.eff(TAL);
+  computeTech();
+}
+
+/* ============================ 画布 & 网格 ============================ */
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const W = cv.width, H = cv.height;
+const COLS = 9, ROWS = 5;
+const CW = W / COLS, CH = H / ROWS;
+const cellCX = c => c*CW + CW/2;
+const rowCY  = r => r*CH + CH/2;
+
+/* ============================ 游戏状态 ============================ */
+let G;
+// 资源点：确定性生成 4 个矿点（避开最左两列/基地）
+function genNodes(seed){
+  const set=new Set(), usedCols=new Set(); let x=(seed*9301+49297)%233280 + 1;
+  const next=()=>{ x=(x*9301+49297)%233280; return x/233280; };
+  let guard=0;
+  while(set.size<4 && guard++<80){
+    const c=2+Math.floor(next()*6);   // 列 2..7
+    const r=Math.floor(next()*ROWS);  // 行 0..4
+    if(usedCols.has(c)) continue;      // 每列至多一个矿点，分散分布
+    usedCols.add(c); set.add(r+","+c);
+  }
+  return set;
+}
+function newGame(mode, level, twoP){
+  const lv = (mode==="campaign") ? LEVELS[level] : null;
+  let diff = lv?lv.diff:1;
+  if(twoP) diff*=1.4; // 双人：敌人更强
+  const seed = (mode==="campaign"? level+1 : 7) + (twoP?100:0);
+  G = {
+    running:false, paused:false, over:false, won:false,
+    mode:mode||"campaign", level:level||0, twoP:!!twoP,
+    diff, totalWaves: lv?lv.waves:0, // endless: totalWaves=0 表示无限
+    clay:150+TAL.startClay + (twoP?100:0), lives:5+TAL.livesBonus + (twoP?3:0), kills:0,
+    units:[], enemies:[], shots:[], parts:[], shake:0,
+    grid:Array.from({length:ROWS},()=>Array(COLS).fill(null)),
+    nodes: genNodes(seed),
+    selected:null, cd:{}, hoverCell:null,
+    sel2:null, cd2:{}, cursor:{c:4,r:2},   // P2（键盘）
+    t:0, trickle:0,
+    wave:0, waveTimer:3, inWave:false, toSpawn:[], spawnTimer:0, waveClearWait:0,
+  };
+  UNITS.forEach(u=>{ G.cd[u.id]=0; G.cd2[u.id]=0; });
+}
+function isNode(r,c){ return G.nodes.has(r+","+c); }
+
+/* ============================ 波次生成 ============================ */
+function buildWave(n){
+  const list=[];
+  const push=(type,count,gap)=>{ for(let i=0;i<Math.max(0,count);i++) list.push({type,delay:gap}); };
+  const cap=x=>Math.min(x,16); // 单波数量上限，避免无尽后期爆屏
+  push("bug", cap(3+n), 1.4 - Math.min(0.9,n*0.05));
+  if(n>=2) push("crawler", cap(1+Math.floor(n/2)), 1.1);
+  if(n>=3) push("wagon", cap(Math.floor(n/3)), 2.0);
+  if(n%4===0) push("brute", cap(Math.floor(n/4)), 3.5); // boss 每4波
+  // 关卡专属敌人：闯关按关卡配置，无尽从第4波起随机加入
+  let special = [];
+  if(G && G.mode==="campaign") special = LEVELS[G.level].special||[];
+  else if(G && G.mode==="endless" && n>=4) special = ["splitter","flyer"];
+  if(special.includes("splitter") && n>=2) push("splitter", cap(1+Math.floor(n/3)), 2.4);
+  if(special.includes("flyer") && n>=3)    push("flyer", cap(1+Math.floor(n/3)), 1.6);
+  // 打乱一点顺序（确定性洗牌，避免用随机破坏存档重放）
+  for(let i=list.length-1;i>0;i--){ const j=(i*7+n*3)%(i+1); [list[i],list[j]]=[list[j],list[i]]; }
+  return list;
+}
+
+/* ============================ 关卡定义 ============================ */
+const LEVELS = [
+  {name:"新兵训练场", waves:6,  diff:0.85, special:[],                 tip:"熟悉塑形，守住6波"},
+  {name:"感染前哨",   waves:8,  diff:1.05, special:[],                 tip:"感染开始成群"},
+  {name:"深渊战线",   waves:10, diff:1.25, special:["splitter"],       tip:"分裂感染兽来袭"},
+  {name:"黑泥要塞",   waves:12, diff:1.5,  special:["flyer"],          tip:"会飞的黑泥突袭"},
+  {name:"最终塑形",   waves:15, diff:1.8,  special:["splitter","flyer"],tip:"决战·黑泥狂潮"},
+];
+
+/* ============================ 放置 & 输入 ============================ */
+const shopEl = document.getElementById("shop");
+function buildShop(){
+  shopEl.innerHTML="";
+  UNITS.filter(u=>UNLOCKED_UNITS.has(u.id)).forEach(u=>{
+    const c = CLAY[u.clay];
+    const el = document.createElement("div");
+    el.className="card"; el.dataset.id=u.id;
+    el.innerHTML =
+      `<div class="cico" style="background:${c.col}">${u.ico}</div>
+       <div class="stars">${"★".repeat(c.star)}</div>
+       <div class="cname">${u.name}</div>
+       <div class="ccost">🟤 ${u.cost}</div>
+       <div class="cool" style="display:none"><div class="coolfill"></div></div>`;
+    el.title = `${c.name}·${u.name}\n${u.desc}`;
+    el.addEventListener("click",()=>selectUnit(u.id));
+    shopEl.appendChild(el);
+  });
+}
+function selectUnit(id){
+  G.selected = (G.selected===id)?null:id;
+  refreshShop();
+}
+function refreshShop(){
+  [...shopEl.children].forEach(el=>{
+    const id=el.dataset.id, u=UNITS.find(x=>x.id===id);
+    el.classList.toggle("sel", G.selected===id);
+    const afford = G.clay>=u.cost, ready = G.cd[id]<=0;
+    el.classList.toggle("dis", !(afford&&ready));
+    const cool=el.querySelector(".cool"), fill=el.querySelector(".coolfill");
+    if(G.cd[id]>0){ cool.style.display="flex"; fill.style.height=(G.cd[id]/u.cd*100)+"%"; }
+    else cool.style.display="none";
+  });
+}
+
+function canvasPoint(e){
+  const r=cv.getBoundingClientRect();
+  const x=(e.clientX-r.left)/r.width*W, y=(e.clientY-r.top)/r.height*H;
+  return {x,y,col:Math.floor(x/CW), row:Math.floor(y/CH)};
+}
+cv.addEventListener("mousemove",e=>{
+  const p=canvasPoint(e);
+  G.hoverCell = (p.col>=0&&p.col<COLS&&p.row>=0&&p.row<ROWS)?{c:p.col,r:p.row}:null;
+});
+cv.addEventListener("mouseleave",()=>G.hoverCell=null);
+cv.addEventListener("click",e=>{
+  if(!G.running||G.over) return;
+  const p=canvasPoint(e);
+  if(p.col<0||p.col>=COLS||p.row<0||p.row>=ROWS) return;
+  const occ=G.grid[p.row][p.col];
+  if(!G.selected && occ && occ.role==="factory"){ upgradeFactory(occ); return; } // 无选中→点工厂升级
+  placeAt(p.col,p.row,1);
+});
+// —— P2 键盘控制（双人合作）——
+function unlockedList(){ return UNITS.filter(u=>UNLOCKED_UNITS.has(u.id)); }
+function cycleSel2(dir){
+  const list=unlockedList(); if(!list.length) return;
+  let i=list.findIndex(u=>u.id===G.sel2);
+  i = (i<0) ? (dir>0?0:list.length-1) : (i+dir+list.length)%list.length;
+  G.sel2=list[i].id;
+  const u=list[i]; flash(`P2 选择：${u.ico} ${u.name}（${u.cost}泥）`);
+}
+window.addEventListener("keydown",e=>{
+  if(!G||!G.twoP||!G.running||G.over||G.paused) return;
+  const k=e.key;
+  const handled=["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter",",",".","/"," "];
+  if(!handled.includes(k)) return;
+  e.preventDefault();
+  if(k==="ArrowUp")    G.cursor.r=Math.max(0,G.cursor.r-1);
+  else if(k==="ArrowDown")  G.cursor.r=Math.min(ROWS-1,G.cursor.r+1);
+  else if(k==="ArrowLeft")  G.cursor.c=Math.max(0,G.cursor.c-1);
+  else if(k==="ArrowRight") G.cursor.c=Math.min(COLS-1,G.cursor.c+1);
+  else if(k===",") cycleSel2(-1);
+  else if(k===".") cycleSel2(1);
+  else if(k==="Enter"||k==="/"||k===" ") placeAt(G.cursor.c,G.cursor.r,2);
+});
+
+function placeAt(c,r,who){
+  who=who||1;
+  const sel = who===1 ? G.selected : G.sel2;
+  const cd  = who===1 ? G.cd : G.cd2;
+  const tag = who===2 ? "P2 " : "";
+  const occ=G.grid[r][c];
+  if(!sel){ if(occ&&occ.role==="factory") upgradeFactory(occ); else flash(tag+"先选择一种橡皮泥单位"); return; }
+  const u=UNITS.find(x=>x.id===sel);
+  if(occ){ if(occ.role==="factory"){ upgradeFactory(occ); } else flash(tag+"这里已经有单位了"); return; }
+  if(cd[u.id]>0){ flash(`${tag}${u.name}还在冷却`); return; }
+  if(G.clay<u.cost){ flash(tag+"泥料不足！造工程兵/纸工厂产泥"); return; }
+  G.clay-=u.cost; cd[u.id]=u.cd*TAL.cdMult;
+  const unit=makeUnit(u,c,r); unit.owner=who;
+  G.grid[r][c]=unit; G.units.push(unit);
+  spawnParts(unit.x,unit.y,CLAY[u.clay].col,10);
+  if(unit.onNode) flash("💎 建在矿点·产量翻倍！");
+  refreshShop();
+}
+function upgradeFactory(f){
+  if(f.lvl>=2){ flash("纸工厂已满级 (Lv3)"); return; }
+  const cost=f.upCost[f.lvl];
+  if(G.clay<cost){ flash(`升级需要 ${cost} 泥料`); return; }
+  G.clay-=cost; f.lvl++;
+  const spec=f.lvls[f.lvl];
+  const newMax=Math.round(spec.hp*TAL.hpMult);
+  f.hp += newMax-f.maxhp; f.maxhp=newMax;      // 升级同时补血
+  f.gen=spec.gen*TAL.genMult*(f.onNode?2:1);
+  spawnParts(f.x,f.y,"#ffcf4a",16); f.sink=8;
+  flash(`纸工厂升级至 Lv${f.lvl+1}！产量↑`);
+  refreshShop();
+}
+
+function makeUnit(u,c,r){
+  const m=umodFor(u.id);
+  const baseHp = (u.role==="factory") ? u.lvls[0].hp : u.hp;
+  const hp=Math.round(baseHp*TAL.hpMult*m.hpMult);
+  const gen0 = (u.role==="factory") ? u.lvls[0].gen : (u.gen||0);
+  const onNode = isNode(r,c) && (u.role==="factory"||u.role==="gen"); // 矿点产泥翻倍
+  return { ...u, x:cellCX(c), y:rowCY(r), col:c, row:r, maxhp:hp, hp:hp,
+    dmg:(u.dmg||0)*m.dmgMult, rate:(u.rate||0)*TAL.atkSpeedMult*m.rateMult,
+    gen:gen0*TAL.genMult*(onNode?2:1), heal:(u.heal||0)*TAL.healMult, onNode,
+    crit:(u.crit||0)+TAL.critBonus+m.critAdd, chainMax:2+m.chainAdd, lvl:0,
+    timer:Math.random()*0.3, genTimer:(u.genEvery||0), healTimer:(u.healEvery||0),
+    flashT:0, sink:6 };
+}
+let hintT=0; const hintEl=document.getElementById("hint");
+function flash(msg){ hintEl.textContent=msg; hintEl.classList.add("show"); hintT=1.6; }
+
+/* ============================ 战斗辅助 ============================ */
+function nearestEnemyRight(row,x,maxDist){
+  let best=null,bd=1e9;
+  for(const e of G.enemies){
+    if(e.row!==row||e.dead) continue;
+    const d=e.x-x;
+    if(d<-CW*0.3) continue;
+    if(maxDist&&d>maxDist) continue;
+    if(d<bd){ bd=d; best=e; }
+  }
+  return best;
+}
+function frontEnemyContact(unit){ // 敌人贴脸
+  let best=null,bd=1e9;
+  for(const e of G.enemies){
+    if(e.row!==unit.row||e.dead) continue;
+    const d=e.x-unit.x;
+    if(d>=-CW*0.15 && d<CW*0.62 && d<bd){ bd=d; best=e; }
+  }
+  return best;
+}
+function rowBuff(row){
+  let b=0;
+  for(const u of G.units){ if(u.dead) continue; if(u.row===row&&(u.role==="buff"||u.buff)&&u.buff) b+=u.buff; }
+  return 1+b;
+}
+function damageEnemy(e,dmg){
+  if(e.dead) return;
+  e.hp-=dmg; e.flashT=0.12;
+  if(e.hp<=0){ e.dead=true; G.kills++; G.clay+=6*TAL.killClayMult; spawnParts(e.x,e.y,e.col,12);
+    if(e.split) splitEnemy(e); }
+}
+function splitEnemy(e){
+  const base=ENEMIES.splitling;
+  const scale=(1+(G.wave-1)*(G.mode==="endless"?0.16:0.12))*G.diff*0.6;
+  for(let i=0;i<2;i++){
+    G.enemies.push({ ...base, type:"splitling", row:e.row, x:e.x+(i?24:-24), y:rowCY(e.row),
+      maxhp:base.hp*scale, hp:base.hp*scale, dmg:base.dmg*G.diff,
+      timer:0.2, flashT:0, poison:0, slow:0, dead:false });
+  }
+  spawnParts(e.x,e.y,"#5fbf6a",14);
+}
+
+/* ============================ 主循环 ============================ */
+let last=0;
+function loop(ts){
+  requestAnimationFrame(loop);
+  const dt=Math.min(0.05,(ts-last)/1000||0); last=ts;
+  if(G.running&&!G.paused&&!G.over) update(dt);
+  render();
+}
+function update(dt){
+  G.t+=dt;
+  if(hintT>0){ hintT-=dt; if(hintT<=0) hintEl.classList.remove("show"); }
+
+  // 泥料被动涓流
+  G.trickle+=dt; if(G.trickle>=4){ G.trickle-=4; G.clay+=15*TAL.trickleMult; }
+  // 冷却
+  for(const id in G.cd){ if(G.cd[id]>0) G.cd[id]=Math.max(0,G.cd[id]-dt); }
+  if(G.twoP) for(const id in G.cd2){ if(G.cd2[id]>0) G.cd2[id]=Math.max(0,G.cd2[id]-dt); }
+
+  waveLogic(dt);
+
+  /* --- 单位 --- */
+  for(const u of G.units){
+    if(u.dead) continue;
+    if(u.sink>0) u.sink=Math.max(0,u.sink-dt*20);
+    if(u.flashT>0) u.flashT-=dt;
+    const buff=rowBuff(u.row);
+
+    if(u.role==="gen"||u.role==="factory"){
+      u.genTimer-=dt; if(u.genTimer<=0){ u.genTimer=u.genEvery; G.clay+=u.gen;
+        spawnParts(u.x,u.y-10, u.role==="factory"?"#ffe08a":"#f2c94c", u.role==="factory"?9:6); }
+    }
+    else if(u.role==="heal"){
+      u.healTimer-=dt; if(u.healTimer<=0){ u.healTimer=u.healEvery;
+        let tgt=null,worst=1;
+        for(const a of G.units){ if(a.dead||a===u) continue;
+          if(Math.abs(a.row-u.row)<=1){ const f=a.hp/a.maxhp; if(f<worst&&f<1){ worst=f; tgt=a; } } }
+        if(tgt){ tgt.hp=Math.min(tgt.maxhp,tgt.hp+u.heal); spawnParts(tgt.x,tgt.y,"#b6ffce",5); }
+      }
+    }
+    else if(u.role==="melee"){
+      const e=frontEnemyContact(u);
+      if(e){ u.timer-=dt; if(u.timer<=0){ u.timer=u.rate;
+        let d=u.dmg*buff*TAL.dmgMult; if(u.crit&&Math.random()<u.crit) d*=2.2;
+        damageEnemy(e,d); u.attackFx=0.12;
+        if(u.fx==="poison"){ e.poison=Math.max(e.poison||0,3*TAL.freezeBonus); e.poisonDps=14*TAL.fxMult; } } }
+    }
+    else if(u.role==="shoot"){
+      const e=nearestEnemyRight(u.row,u.x, u.fx==="crit"?W:W);
+      if(e){ u.timer-=dt; if(u.timer<=0){ u.timer=u.rate; fireShot(u,e,buff); u.attackFx=0.12; } }
+    }
+    if(u.attackFx>0) u.attackFx-=dt;
+  }
+
+  /* --- 子弹 --- */
+  for(const s of G.shots){
+    if(s.dead) continue;
+    s.x+=s.vx*dt;
+    if(s.x>W+40){ s.dead=true; continue; }
+    for(const e of G.enemies){
+      if(e.dead||e.row!==s.row) continue;
+      if(Math.abs(e.x-s.x)<CW*0.35){
+        let d=s.dmg;
+        if(s.fx==="crit"&&Math.random()<0.4) d*=2.5;
+        if(s.fx==="antiair"&&e.fly) d*=3;   // 防空炮对飞行3倍
+        damageEnemy(e,d);
+        applyFx(s,e);
+        s.dead=true; spawnParts(s.x,s.y,s.color,5);
+        break;
+      }
+    }
+  }
+
+  /* --- 敌人 --- */
+  for(const e of G.enemies){
+    if(e.dead) continue;
+    if(e.flashT>0) e.flashT-=dt;
+    // 状态：中毒/减速
+    if(e.poison>0){ e.poison-=dt; damageEnemy(e,e.poisonDps*dt); }
+    let sp=e.speed;
+    if(e.slow>0){ e.slow-=dt; sp*=0.45; }
+    // 飞行敌人无视地面阻挡，直接飘向基地（只能被远程/防空拦截）
+    const blocker = e.fly ? null : blockerFor(e);
+    if(blocker){
+      e.timer-=dt; if(e.timer<=0){ e.timer=e.rate; blocker.hp-=e.dmg; blocker.flashT=0.12;
+        spawnParts(blocker.x+10,blocker.y,"#ff7a8a",4);
+        if(blocker.hp<=0){ blocker.dead=true; G.grid[blocker.row][blocker.col]=null; } }
+    } else {
+      e.x-=sp*dt;
+    }
+    if(e.x < -CW*0.3){ e.dead=true; breach(); }
+  }
+
+  // 清理
+  G.units=G.units.filter(u=>!u.dead);
+  G.enemies=G.enemies.filter(e=>!e.dead);
+  G.shots=G.shots.filter(s=>!s.dead);
+  for(const p of G.parts){ p.life-=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=180*dt; }
+  G.parts=G.parts.filter(p=>p.life>0);
+  if(G.shake>0) G.shake=Math.max(0,G.shake-dt);
+
+  refreshShop();
+  updateTop();
+}
+
+function blockerFor(e){
+  let best=null,bd=1e9;
+  for(const u of G.units){ if(u.dead||u.row!==e.row) continue;
+    const d=e.x-u.x;
+    if(d>=-CW*0.1 && d<CW*0.5 && d<bd){ bd=d; best=u; } }
+  return best;
+}
+function fireShot(u,e,buff){
+  const c=CLAY[u.clay].col;
+  G.shots.push({x:u.x+18,y:u.y-4,vx:520,row:u.row,dmg:u.dmg*buff*TAL.dmgMult,fx:u.fx,
+    chainMax:u.chainMax||2, color:c, dead:false});
+}
+function applyFx(s,e){
+  if(s.fx==="poison"){ e.poison=Math.max(e.poison||0,3*TAL.freezeBonus); e.poisonDps=14*TAL.fxMult; }
+  else if(s.fx==="slow"){ e.slow=Math.max(e.slow||0,2.2*TAL.freezeBonus); }
+  else if(s.fx==="splash"){
+    for(const o of G.enemies){ if(o.dead||o===e||o.row!==s.row) continue;
+      if(Math.abs(o.x-s.x)<CW*0.9) damageEnemy(o,s.dmg*0.6*TAL.fxMult); }
+    spawnParts(s.x,s.y,"#ffb03c",10);
+  }
+  else if(s.fx==="chain"){
+    let hit=0; const maxHit=(s.chainMax||2)-1;
+    for(const o of G.enemies){ if(o.dead||o===e||o.row!==s.row) continue;
+      if(o.x>s.x && o.x-s.x<CW*2.6){ damageEnemy(o,s.dmg*0.7); spawnParts(o.x,o.y,"#c98bff",5); if(++hit>=maxHit) break; } }
+  }
+  else if(s.fx==="rocket"){
+    // 大范围爆炸：跨相邻行、全额伤害
+    for(const o of G.enemies){ if(o.dead||o===e) continue;
+      if(Math.abs(o.row-s.row)<=1 && Math.abs(o.x-s.x)<CW*1.6) damageEnemy(o, s.dmg*0.9); }
+    spawnParts(s.x,s.y,"#ff7a3c",26); spawnParts(s.x,s.y,"#ffd76a",16);
+    G.shake=0.25;
+  }
+}
+
+/* ============================ 波次逻辑 ============================ */
+function waveLogic(dt){
+  if(G.inWave){
+    // 生成
+    if(G.toSpawn.length){
+      G.spawnTimer-=dt;
+      if(G.spawnTimer<=0){
+        const nxt=G.toSpawn.shift();
+        spawnEnemy(nxt.type);
+        G.spawnTimer = nxt.delay;
+      }
+    } else if(G.enemies.length===0){
+      // 本波清空
+      G.inWave=false;
+      if(G.totalWaves>0 && G.wave>=G.totalWaves){ winGame(); return; } // 仅闯关有终点
+      G.waveTimer=6*TAL.waveGapMult; G.waveClearWait=1;
+      setWaveLabel(`第 ${G.wave} 波 已清除 · 备战中`);
+    }
+  } else if(!G.over){
+    G.waveTimer-=dt;
+    if(G.waveTimer<=0) startWave();
+  }
+}
+function startWave(){
+  G.wave++;
+  G.toSpawn=buildWave(G.wave);
+  G.spawnTimer=0.5; G.inWave=true;
+  const of = G.totalWaves>0 ? `/ ${G.totalWaves}` : "· 无尽";
+  setWaveLabel(`⚔ 第 ${G.wave} ${of} 波 来袭！`);
+  flash(`第 ${G.wave} 波 黑泥感染涌来！`);
+}
+function spawnEnemy(type){
+  const base=ENEMIES[type];
+  const row=Math.floor(Math.random()*ROWS);
+  // 随波增强 × 关卡难度；无尽模式成长更陡
+  const growth = G.mode==="endless" ? 0.16 : 0.12;
+  const scale=(1+ (G.wave-1)*growth) * G.diff;
+  G.enemies.push({ ...base, type, row, x:W+CW*0.5, y:rowCY(row),
+    maxhp:base.hp*scale, hp:base.hp*scale, dmg:base.dmg*(1+ (G.wave-1)*0.05)*G.diff,
+    timer:0.3, flashT:0, poison:0, slow:0, dead:false });
+}
+function breach(){
+  G.lives--; flash("⚠ 基地被突破！"); spawnParts(20,H/2,"#ff5c72",20);
+  if(G.lives<=0) loseGame();
+}
+function setWaveLabel(t){ document.getElementById("wavelab").textContent="· "+t; }
+
+/* ============================ 结束 ============================ */
+function winGame(){ G.over=true; G.won=true; showEnd(); }
+function loseGame(){ G.over=true; G.won=false; showEnd(); }
+function showEnd(){
+  // 结算塑形点：击杀 + 波次 + 通关奖励
+  const earned = G.kills + G.wave*3 + (G.won?60:0);
+  SAVE.points += earned;
+  // 闯关：通关解锁下一关
+  let unlockedNext=false;
+  if(G.mode==="campaign" && G.won && G.level+1>SAVE.campaignCleared && G.level+1<LEVELS.length){
+    SAVE.campaignCleared=G.level+1; unlockedNext=true;
+  }
+  // 无尽：刷新最佳记录
+  let newRecord=false;
+  if(G.mode==="endless"){
+    if(G.wave>SAVE.bestWave){ SAVE.bestWave=G.wave; newRecord=true; }
+    if(G.kills>SAVE.bestKills) SAVE.bestKills=G.kills;
+  }
+  persist();
+
+  const ov=document.createElement("div"); ov.className="overlay"; ov.id="endScreen";
+  let head, body;
+  if(G.mode==="endless"){
+    head=`<h1>🌀 无尽模式结束<span class="sub">${newRecord?"🎉 刷新最佳记录！":"黑泥无穷无尽…"}</span></h1>`;
+    body=`<p>坚持到第 <b>${G.wave}</b> 波 · 击杀 <b>${G.kills}</b> 个感染体<br>历史最佳：第 <b style="color:#ffcf4a">${SAVE.bestWave}</b> 波 · ${SAVE.bestKills} 击杀</p>`;
+  } else if(G.won){
+    head=`<h1>🏆 「${LEVELS[G.level].name}」通关！<span class="sub">全 ${G.totalWaves} 波黑泥感染被击退</span></h1>`;
+    body=`<p>击杀 <b>${G.kills}</b> · 剩余基地 <b>${G.lives}</b> ❤️${unlockedNext?`<br>🔓 解锁新关卡：<b style="color:#ffcf4a">${LEVELS[G.level+1].name}</b>`:(G.level+1>=LEVELS.length?"<br>🎖️ 你已通关全部关卡！":"")}</p>`;
+  } else {
+    head=`<h1>💥 基地失守<span class="sub">「${LEVELS[G.level].name}」黑泥吞噬了前线…</span></h1>`;
+    body=`<p>坚持到第 <b>${G.wave}/${G.totalWaves}</b> 波 · 击杀 <b>${G.kills}</b> 个感染体<br>捏一支更强的军团再战！</p>`;
+  }
+  ov.innerHTML=head+body;
+  const gain=document.createElement("p");
+  gain.innerHTML=`✨ 获得 <b style="color:#ffcf4a">${earned}</b> 塑形点 · 当前共 <b style="color:#ffcf4a">${SAVE.points}</b> 点`;
+  ov.appendChild(gain);
+
+  const wrap=document.createElement("div"); wrap.style.cssText="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;justify-content:center;";
+  const mk=(txt,cls,fn)=>{ const b=document.createElement("button"); b.className="btn"+(cls?" "+cls:"");
+    b.style.cssText="font-size:15px;padding:10px 20px;"; b.textContent=txt; b.onclick=fn; return b; };
+  if(unlockedNext) wrap.appendChild(mk("▶ 下一关","",()=>{ ov.remove(); startGame("campaign",G.level+1); }));
+  wrap.appendChild(mk("🔁 重玩","ghost",()=>{ ov.remove(); startGame(G.mode,G.level); }));
+  wrap.appendChild(mk("🏠 模式选择","ghost",()=>{ ov.remove(); goHome(); }));
+  wrap.appendChild(mk("🌳 天赋树","ghost",()=>openTalents()));
+  wrap.appendChild(mk("🔬 科技树","ghost",()=>openTech()));
+  ov.appendChild(wrap);
+  document.getElementById("stage").appendChild(ov);
+}
+function goHome(){
+  const es=document.getElementById("endScreen"); if(es) es.remove();
+  G.running=false; G.over=true;
+  updateStartRecords();
+  const ss=document.getElementById("startScreen"); if(ss) ss.style.display="flex";
+}
+function updateStartRecords(){
+  const el=document.getElementById("startRecords"); if(!el) return;
+  el.innerHTML=`🗺️ 闯关进度 <b style="color:#66e2a0">${SAVE.campaignCleared}/${LEVELS.length}</b>　`+
+    `🌀 无尽最佳 <b style="color:#a45ce0">第 ${SAVE.bestWave} 波</b>　`+
+    `✨ 塑形点 <b style="color:#ffcf4a">${SAVE.points}</b>`;
+}
+
+/* ============================ 渲染 ============================ */
+function drawMap(){
+  // 橡皮泥垫底色（竖向柔和渐变）
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,"#2b2440"); bg.addColorStop(1,"#1d1830");
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  // 行泳道：交替色 + 内嵌高光，像捏平的泥板
+  for(let r=0;r<ROWS;r++){
+    ctx.fillStyle = (r%2)?"#241f37":"#2a2440";
+    ctx.fillRect(0,r*CH,W,CH);
+    ctx.fillStyle="rgba(255,255,255,.025)"; ctx.fillRect(0,r*CH,W,3);
+    ctx.fillStyle="rgba(0,0,0,.14)"; ctx.fillRect(0,r*CH+CH-3,W,3);
+  }
+  // 左侧基地区
+  const baseG=ctx.createLinearGradient(0,0,CW*1.1,0);
+  baseG.addColorStop(0,"rgba(102,226,160,.22)"); baseG.addColorStop(1,"rgba(102,226,160,0)");
+  ctx.fillStyle=baseG; ctx.fillRect(0,0,CW*1.1,H);
+  ctx.font=`${Math.floor(CH*0.5)}px sans-serif`; ctx.textAlign="center"; ctx.textBaseline="middle";
+  for(let r=0;r<ROWS;r++) ctx.fillText("🏰", CW*0.22, rowCY(r));
+  // 右侧感染入口
+  const infG=ctx.createLinearGradient(W-CW*1.1,0,W,0);
+  infG.addColorStop(0,"rgba(120,60,140,0)"); infG.addColorStop(1,"rgba(150,50,90,.28)");
+  ctx.fillStyle=infG; ctx.fillRect(W-CW*1.1,0,CW*1.1,H);
+  for(let r=0;r<ROWS;r++) ctx.fillText("☣️", W-CW*0.2, rowCY(r));
+  // 网格线
+  ctx.strokeStyle="rgba(255,255,255,.05)"; ctx.lineWidth=1;
+  for(let c=1;c<COLS;c++){ ctx.beginPath(); ctx.moveTo(c*CW,0); ctx.lineTo(c*CW,H); ctx.stroke(); }
+  // 资源点（矿点）
+  if(G.nodes) for(const key of G.nodes){
+    const [r,c]=key.split(",").map(Number);
+    const x=cellCX(c), y=rowCY(r), pulse=0.5+0.5*Math.sin(G.t*3+c+r);
+    ctx.save();
+    const glow=ctx.createRadialGradient(x,y,2,x,y,CW*0.5);
+    glow.addColorStop(0,`rgba(120,230,255,${0.28+0.18*pulse})`);
+    glow.addColorStop(1,"rgba(120,230,255,0)");
+    ctx.fillStyle=glow; ctx.fillRect(c*CW,r*CH,CW,CH);
+    ctx.font=`${Math.floor(CH*0.34)}px sans-serif`; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.globalAlpha=0.9; ctx.fillText("💎", x, y+CH*0.02); ctx.globalAlpha=1;
+    ctx.restore();
+  }
+}
+function render(){
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  if(G&&G.shake>0){ const s=G.shake*14; ctx.translate((Math.random()-0.5)*s,(Math.random()-0.5)*s); }
+  drawMap();
+
+  // 悬停高亮（P1 鼠标）
+  if(G.running&&!G.over&&G.hoverCell&&G.selected){
+    const {c,r}=G.hoverCell; const ok=!G.grid[r][c];
+    ctx.fillStyle= ok?"rgba(255,207,74,.20)":"rgba(255,92,114,.22)";
+    ctx.fillRect(c*CW+2,r*CH+2,CW-4,CH-4);
+    if(ok){ const u=UNITS.find(x=>x.id===G.selected);
+      ctx.globalAlpha=.5; drawBlob(cellCX(c),rowCY(r),CLAY[u.clay].col,u.ico,0); ctx.globalAlpha=1; }
+  }
+  // P2 光标（键盘）
+  if(G.twoP&&G.running&&!G.over){
+    const {c,r}=G.cursor; const ok=!G.grid[r][c];
+    ctx.strokeStyle="#5fd0e0"; ctx.lineWidth=3;
+    const pulse=2+Math.sin(G.t*6)*1.5;
+    ctx.strokeRect(c*CW+3+pulse*0.3,r*CH+3+pulse*0.3,CW-6-pulse*0.6,CH-6-pulse*0.6);
+    if(ok&&G.sel2){ const u=UNITS.find(x=>x.id===G.sel2);
+      if(u){ ctx.globalAlpha=.45; drawBlob(cellCX(c),rowCY(r),CLAY[u.clay].col,u.ico,0); ctx.globalAlpha=1; } }
+    // P2 当前选择标签
+    const su=UNITS.find(x=>x.id===G.sel2);
+    if(su){ const rdy=(G.cd2[su.id]||0)<=0 && G.clay>=su.cost;
+      const txt=`P2▸${su.ico}${su.name} ${su.cost}`;
+      ctx.font="bold 11px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+      const tw=ctx.measureText(txt).width+10;
+      ctx.fillStyle="rgba(8,52,58,.85)"; ctx.fillRect(c*CW+CW/2-tw/2, r*CH+2, tw, 16);
+      ctx.fillStyle=rdy?"#7fe9f5":"#ff8fa0"; ctx.fillText(txt, c*CW+CW/2, r*CH+11);
+    } else { ctx.fillStyle="#5fd0e0"; ctx.font="bold 11px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="bottom";
+      ctx.fillText("P2 按,/.选兵", c*CW+CW/2, r*CH+CH-3); }
+  }
+
+  // 子弹
+  for(const s of G.shots){
+    ctx.fillStyle=s.color;
+    ctx.beginPath(); ctx.arc(s.x,s.y,6,0,7); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,.5)"; ctx.beginPath(); ctx.arc(s.x-3,s.y-2,2,0,7); ctx.fill();
+  }
+
+  // 单位
+  for(const u of G.units){
+    const c=CLAY[u.clay].col;
+    if(G.twoP&&u.owner===2){ // P2 单位青色标记环
+      ctx.strokeStyle="rgba(95,208,224,.8)"; ctx.lineWidth=2.5;
+      ctx.beginPath(); ctx.arc(u.x,u.y+(u.sink||0),Math.min(CW,CH)*0.4,0,7); ctx.stroke();
+    }
+    drawBlob(u.x,u.y+ (u.sink||0), c, u.ico, u.flashT>0?1:0, u.attackFx>0?8:0);
+    hpbar(u.x,u.y-CH*0.34,u.hp,u.maxhp,"#66e2a0");
+    if(u.role==="factory"){ // 等级标记
+      ctx.fillStyle="#ffcf4a"; ctx.font="bold 12px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.fillText("Lv"+(u.lvl+1), u.x, u.y+CH*0.30);
+    }
+  }
+  // 敌人
+  for(const e of G.enemies){
+    const yo = e.fly ? -14+Math.sin(G.t*5+e.x*0.05)*5 : 0; // 飞行浮动
+    if(e.fly){ ctx.fillStyle="rgba(0,0,0,.25)"; ctx.beginPath();
+      ctx.ellipse(e.x,e.y+CH*0.24,CW*0.16,CH*0.05,0,0,7); ctx.fill(); }
+    drawBlob(e.x,e.y+yo,e.col,e.ico,e.flashT>0?1:0,0,true, e.slow>0);
+    hpbar(e.x,e.y+yo-CH*0.34,e.hp,e.maxhp,"#ff7a8a");
+    if(e.poison>0){ ctx.fillStyle="rgba(95,191,106,.9)"; ctx.font="12px sans-serif"; ctx.textAlign="center"; ctx.fillText("☠",e.x+14,e.y+yo-14); }
+  }
+  // 粒子
+  for(const p of G.parts){
+    ctx.globalAlpha=Math.max(0,p.life/p.max); ctx.fillStyle=p.col;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+
+function drawBlob(x,y,col,ico,flash,punch,enemy,frozen){
+  const R=Math.min(CW,CH)*0.36 + (punch||0);
+  // 影子
+  ctx.fillStyle="rgba(0,0,0,.28)"; ctx.beginPath();
+  ctx.ellipse(x,y+R*0.75,R*0.9,R*0.32,0,0,7); ctx.fill();
+  // 身体（橡皮泥质感）
+  const g=ctx.createRadialGradient(x-R*0.3,y-R*0.4,R*0.2,x,y,R*1.1);
+  g.addColorStop(0, lighten(col,40)); g.addColorStop(1, col);
+  ctx.fillStyle= flash? "#ffffff": g;
+  roundBlob(x,y,R);
+  ctx.fill();
+  // 高光
+  ctx.fillStyle="rgba(255,255,255,.25)"; ctx.beginPath();
+  ctx.ellipse(x-R*0.35,y-R*0.4,R*0.28,R*0.18,-0.5,0,7); ctx.fill();
+  if(frozen){ ctx.fillStyle="rgba(120,220,255,.35)"; roundBlob(x,y,R); ctx.fill(); }
+  // 图标
+  ctx.font=`${Math.floor(R*1.05)}px sans-serif`; ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText(ico,x,y+R*0.06);
+}
+function roundBlob(x,y,R){
+  ctx.beginPath();
+  // 略带不规则的“捏出来”外形
+  const n=8;
+  for(let i=0;i<=n;i++){ const a=i/n*Math.PI*2;
+    const rr=R*(0.92+0.08*Math.sin(a*3+x*0.01));
+    const px=x+Math.cos(a)*rr, py=y+Math.sin(a)*rr*0.95;
+    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py); }
+  ctx.closePath();
+}
+function hpbar(x,y,hp,max,col){
+  if(hp>=max) return;
+  const w=CW*0.5, h=5, f=Math.max(0,hp/max);
+  ctx.fillStyle="rgba(0,0,0,.5)"; ctx.fillRect(x-w/2,y,w,h);
+  ctx.fillStyle=col; ctx.fillRect(x-w/2,y,w*f,h);
+}
+function spawnParts(x,y,col,n){
+  for(let i=0;i<n;i++){ const a=Math.random()*7,s=40+Math.random()*120;
+    G.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-40,r:2+Math.random()*3,col,life:0.5,max:0.5}); }
+}
+function lighten(hex,amt){
+  const h=hex.replace('#',''); let r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
+  r=Math.min(255,r+amt);g=Math.min(255,g+amt);b=Math.min(255,b+amt);
+  return `rgb(${r},${g},${b})`;
+}
+
+/* ============================ 顶栏 & 控制 ============================ */
+function updateTop(){
+  document.getElementById("clay").textContent=Math.floor(G.clay);
+  document.getElementById("lives").textContent=G.lives;
+  document.getElementById("kills").textContent=G.kills;
+}
+document.getElementById("pauseBtn").onclick=()=>{
+  if(!G.running||G.over) return;
+  G.paused=!G.paused;
+  document.getElementById("pauseBtn").textContent=G.paused?"▶ 继续":"⏸ 暂停";
+};
+document.getElementById("campaignBtn").onclick=()=>openLevels();
+document.getElementById("endlessBtn").onclick=()=>startGame("endless",0);
+document.getElementById("coopBtn").onclick=()=>startGame("endless",0,true);
+function startGame(mode,level,twoP){
+  computeTAL(); buildShop();
+  const ss=document.getElementById("startScreen"); if(ss) ss.style.display="none";
+  const es=document.getElementById("endScreen"); if(es) es.remove();
+  const tp=document.getElementById("talentScreen"); if(tp) tp.remove();
+  const lp=document.getElementById("levelScreen"); if(lp) lp.remove();
+  newGame(mode,level,twoP); G.running=true;
+  document.getElementById("pauseBtn").textContent="⏸ 暂停";
+  let modeLab = mode==="endless" ? "🌀 无尽模式" : `🗺️ ${LEVELS[level].name}`;
+  if(twoP) modeLab="👥 双人合作 · "+modeLab;
+  setWaveLabel(modeLab+" · 准备中，快放置单位！");
+  if(twoP){ G.sel2="recruit"; flash("👥 双人合作！P1🖱️鼠标 · P2⌨️方向键移动·逗号句号选兵·回车放置"); }
+  // 黑泥馈赠：开局免费近卫
+  if(TAL.freeGuard){
+    const gu=UNITS.find(u=>u.id==="guard");
+    const unit=makeUnit(gu,1,2); unit.owner=1; G.grid[2][1]=unit; G.units.push(unit);
+    spawnParts(unit.x,unit.y,"#ffcf4a",14);
+  }
+  refreshShop(); updateTop();
+}
+
+/* ============================ 关卡选择 UI ============================ */
+function openLevels(){
+  const old=document.getElementById("levelScreen"); if(old) old.remove();
+  const ov=document.createElement("div"); ov.className="overlay"; ov.id="levelScreen";
+  const head=document.createElement("div"); head.className="tHead";
+  head.innerHTML=`<h1>🗺️ 选择关卡</h1><span class="tPts">最高通关：${SAVE.campaignCleared}/${LEVELS.length}</span>`;
+  ov.appendChild(head);
+
+  const grid=document.createElement("div"); grid.className="lvGrid";
+  LEVELS.forEach((lv,i)=>{
+    const cleared = i<SAVE.campaignCleared;      // 已通关
+    const unlocked = i<=SAVE.campaignCleared;     // 可进入（已通关的下一关）
+    const c=document.createElement("div");
+    c.className="lvCard "+(cleared?"done":unlocked?"open":"locked");
+    c.innerHTML=`<div class="lvno">第 ${i+1} 关</div>
+      <div class="lvname">${lv.name}</div>
+      <div class="lvmeta">${lv.waves} 波 · 难度 ${"🔥".repeat(Math.round(lv.diff*2))}<br>${lv.tip}</div>
+      <div class="lvbadge">${cleared?"✅":unlocked?"⚔️":"🔒"}</div>`;
+    if(unlocked) c.onclick=()=>{ ov.remove(); startGame("campaign",i); };
+    grid.appendChild(c);
+  });
+  ov.appendChild(grid);
+
+  const foot=document.createElement("div"); foot.className="tFoot";
+  const back=document.createElement("button"); back.className="btn ghost"; back.style.cssText="font-size:15px;padding:9px 24px;";
+  back.textContent="← 返回"; back.onclick=()=>{ ov.remove();
+    const ss=document.getElementById("startScreen"); if(ss) ss.style.display="flex"; };
+  foot.appendChild(back); ov.appendChild(foot);
+  document.getElementById("stage").appendChild(ov);
+}
+
+/* ============================ 天赋树 UI ============================ */
+document.getElementById("talentBtn").onclick=()=>openTalents();
+function openTalents(){
+  const old=document.getElementById("talentScreen"); if(old) old.remove();
+  const ov=document.createElement("div"); ov.className="overlay"; ov.id="talentScreen";
+
+  const head=document.createElement("div"); head.className="tHead";
+  head.innerHTML=`<h1>🌳 塑形天赋树</h1><span class="tPts">✨ 塑形点：${SAVE.points}</span>`;
+  ov.appendChild(head);
+
+  const tree=document.createElement("div"); tree.className="tTree";
+  for(let b=0;b<4;b++){
+    const col=document.createElement("div"); col.className="tCol";
+    const h=document.createElement("div"); h.className="tColH"; h.textContent=BRANCH_NAME[b];
+    col.appendChild(h);
+    const nodes=TALENTS.filter(t=>t.branch===b).sort((a,c)=>a.tier-c.tier);
+    nodes.forEach((t,i)=>{
+      if(i>0){ const lk=document.createElement("div"); lk.className="tLink"+(isUnlocked(t.id)?" on":""); col.appendChild(lk); }
+      const owned=isUnlocked(t.id), avail=canUnlock(t);
+      const n=document.createElement("div");
+      n.className="tNode "+(owned?"owned":avail?"avail":"locked");
+      n.innerHTML=`<div class="tico">${t.ico}</div><div class="tname">${t.name}</div>
+        <div class="tdesc">${t.desc}</div>
+        <div class="tcost">${owned?"✔ 已解锁":"✨ "+t.cost}</div>`;
+      n.onclick=()=>tryUnlock(t);
+      col.appendChild(n);
+    });
+    tree.appendChild(col);
+  }
+  ov.appendChild(tree);
+
+  const foot=document.createElement("div"); foot.className="tFoot";
+  const back=document.createElement("button"); back.className="btn"; back.style.cssText="font-size:15px;padding:9px 24px;";
+  back.textContent="✔ 完成"; back.onclick=()=>{ ov.remove();
+    if(!G.running||G.over){ const ss=document.getElementById("startScreen"); if(ss) ss.style.display="flex";
+      const es=document.getElementById("endScreen"); if(es) es.style.display="flex"; } };
+  const reset=document.createElement("button"); reset.className="btn ghost"; reset.style.cssText="font-size:15px;padding:9px 20px;";
+  reset.textContent="↺ 重置返还"; reset.title="退还全部天赋，返还塑形点";
+  reset.onclick=()=>{ SAVE.points += TALENTS.filter(t=>isUnlocked(t.id)).reduce((s,t)=>s+t.cost,0);
+    SAVE.unlocked=[]; persist(); openTalents(); };
+  foot.appendChild(back); foot.appendChild(reset); ov.appendChild(foot);
+
+  document.getElementById("stage").appendChild(ov);
+}
+function tryUnlock(t){
+  if(isUnlocked(t.id)){ flashTree("已经解锁啦"); return; }
+  if(!(t.req.length===0||t.req.some(r=>isUnlocked(r)))){ flashTree("需要先解锁上一层天赋"); return; }
+  if(SAVE.points<t.cost){ flashTree("塑形点不足——去战场击杀黑泥吧！"); return; }
+  SAVE.points-=t.cost; SAVE.unlocked.push(t.id); persist();
+  computeTAL(); openTalents();
+}
+function flashTree(msg){
+  const h=document.querySelector("#talentScreen .tPts");
+  if(h){ h.textContent=msg; h.style.color="#ff5c72";
+    setTimeout(()=>{ h.textContent="✨ 塑形点："+SAVE.points; h.style.color=""; },1100); }
+}
+
+/* ============================ 科技树 UI ============================ */
+document.getElementById("techBtn").onclick=()=>openTech();
+function openTech(){
+  const old=document.getElementById("talentScreen"); if(old) old.remove();
+  const ov=document.createElement("div"); ov.className="overlay"; ov.id="talentScreen";
+  const head=document.createElement("div"); head.className="tHead";
+  head.innerHTML=`<h1>🔬 科技树 · 兵种升级</h1><span class="tPts">✨ 塑形点：${SAVE.points}</span>`;
+  ov.appendChild(head);
+
+  const tree=document.createElement("div"); tree.className="tTree"; tree.style.gridTemplateColumns="repeat(3,1fr)";
+  for(let b=0;b<3;b++){
+    const col=document.createElement("div"); col.className="tCol";
+    const h=document.createElement("div"); h.className="tColH"; h.textContent=TECH_BRANCH[b];
+    col.appendChild(h);
+    const nodes=TECH.filter(t=>t.branch===b).sort((a,c)=>a.tier-c.tier);
+    nodes.forEach((t,i)=>{
+      if(i>0){ const lk=document.createElement("div"); lk.className="tLink"+(isTech(t.id)?" on":""); col.appendChild(lk); }
+      const owned=isTech(t.id), avail=canTech(t);
+      const n=document.createElement("div");
+      n.className="tNode "+(owned?"owned":avail?"avail":"locked");
+      const tag = t.kind==="unlock" ? '<span style="color:#66e2a0">🔓解锁</span> ' : '<span style="color:#ffcf4a">⬆升级</span> ';
+      n.innerHTML=`<div class="tico">${t.ico}</div><div class="tname">${t.name}</div>
+        <div class="tdesc">${tag}${t.desc}</div>
+        <div class="tcost">${owned?"✔ 已研发":"✨ "+t.cost}</div>`;
+      n.onclick=()=>tryTech(t);
+      col.appendChild(n);
+    });
+    tree.appendChild(col);
+  }
+  ov.appendChild(tree);
+
+  const foot=document.createElement("div"); foot.className="tFoot";
+  const back=document.createElement("button"); back.className="btn"; back.style.cssText="font-size:15px;padding:9px 24px;";
+  back.textContent="✔ 完成"; back.onclick=()=>{ ov.remove();
+    if(!G.running||G.over){ const ss=document.getElementById("startScreen"); if(ss) ss.style.display="flex";
+      const es=document.getElementById("endScreen"); if(es) es.style.display="flex"; } };
+  const reset=document.createElement("button"); reset.className="btn ghost"; reset.style.cssText="font-size:15px;padding:9px 20px;";
+  reset.textContent="↺ 重置返还";
+  reset.onclick=()=>{ SAVE.points += TECH.filter(t=>isTech(t.id)).reduce((s,t)=>s+t.cost,0);
+    SAVE.techUnlocked=[]; persist(); computeTAL(); openTech(); };
+  foot.appendChild(back); foot.appendChild(reset); ov.appendChild(foot);
+  document.getElementById("stage").appendChild(ov);
+}
+function tryTech(t){
+  if(isTech(t.id)){ flashTree("已经研发啦"); return; }
+  if(!(t.req.length===0||t.req.some(r=>isTech(r)))){ flashTree("需要先研发前置科技"); return; }
+  if(SAVE.points<t.cost){ flashTree("塑形点不足——去战场击杀黑泥吧！"); return; }
+  SAVE.points-=t.cost; SAVE.techUnlocked.push(t.id); persist();
+  computeTAL(); openTech();
+}
+
+/* ============================ 材料图例 ============================ */
+function buildLore(){
+  const box=document.getElementById("loreBox");
+  Object.values(CLAY).forEach(c=>{
+    const s=document.createElement("div"); s.className="swatch";
+    s.innerHTML=`<span class="dot" style="background:${c.col}"></span>${c.name} ${"★".repeat(c.star)}`;
+    box.appendChild(s);
+  });
+}
+
+/* ============================ 启动 ============================ */
+computeTAL(); newGame(); buildShop(); buildLore(); updateStartRecords();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

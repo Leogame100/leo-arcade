@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEO 游戏厅 · 像素游戏合集</title>
+<style>
+  :root{ --bg:#0a0b10; --panel:#161a28; --line:#26304a; --ink:#eef2ff; --muted:#8b93b0;
+    --cyan:#4fe3d1; --cyan-dim:#2aa79a; --clay-b:#c8503c; --b1:#3b6fd4; }
+  *{box-sizing:border-box;} html,body{height:100%;margin:0;}
+  body{background:radial-gradient(1200px 700px at 50% -10%,#1a2035,#0a0b10 62%),var(--bg);
+    color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;overflow-x:hidden;}
+  #scan{position:fixed;inset:0;pointer-events:none;z-index:50;background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 3px);mix-blend-mode:multiply;}
+  #vign{position:fixed;inset:0;pointer-events:none;z-index:49;box-shadow:inset 0 0 160px 40px rgba(0,0,0,.65);}
+  #hub{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:40px 18px 60px;}
+  .kicker{font-family:ui-monospace,monospace;letter-spacing:.5em;font-size:12px;color:var(--cyan);text-transform:uppercase;margin-bottom:12px;padding-left:.5em;text-align:center;}
+  .title{font-family:ui-monospace,"Courier New",monospace;font-weight:800;text-transform:uppercase;letter-spacing:.10em;line-height:1;
+    font-size:clamp(30px,7vw,62px);margin:0;color:#fff;text-align:center;
+    text-shadow:0 3px 0 #000,3px 0 0 var(--clay-b),-3px 0 0 var(--b1),0 0 22px rgba(79,227,209,.45);}
+  .sub{margin-top:14px;color:var(--muted);font-size:14px;text-align:center;} .sub b{color:var(--ink);}
+  .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;width:100%;max-width:880px;}
+  @media (max-width:720px){ .cards{grid-template-columns:1fr;} }
+  .cab{position:relative;background:linear-gradient(180deg,var(--panel),#0e1120);border:1px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;
+    display:flex;flex-direction:column;gap:12px;text-decoration:none;color:inherit;
+    box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);transition:transform .12s,border-color .12s,box-shadow .12s;}
+  .cab:hover,.cab:focus-visible{transform:translateY(-4px);border-color:var(--cyan-dim);box-shadow:0 16px 40px rgba(0,0,0,.6),0 0 0 1px var(--cyan-dim),0 0 30px rgba(79,227,209,.25);outline:none;}
+  .screen{aspect-ratio:16/10;border-radius:10px;overflow:hidden;position:relative;background:#05060a;border:2px solid #000;box-shadow:inset 0 0 40px rgba(0,0,0,.8);}
+  .screen .glow{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 1px,transparent 1px 3px);pointer-events:none;}
+  .clay-prev{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;gap:7px;padding:14px 10px;background:radial-gradient(400px 200px at 50% 0%,#2a2540,#151125);}
+  .blob{width:12%;padding-bottom:12%;border-radius:42% 42% 46% 46%/48%;box-shadow:inset 0 -5px 8px rgba(0,0,0,.3),inset 0 4px 6px rgba(255,255,255,.35);}
+  .brick-prev{position:absolute;inset:0;padding:12px 12px 6px;background:radial-gradient(400px 200px at 50% 0%,#12161f,#0a0c12);display:flex;flex-direction:column;gap:5px;}
+  .brow{display:flex;gap:4px;} .brk{flex:1;height:9px;border-radius:2px;box-shadow:inset 0 2px 0 rgba(255,255,255,.25),inset 0 -2px 0 rgba(0,0,0,.3);}
+  .ball{position:absolute;left:50%;bottom:26px;width:8px;height:8px;border-radius:50%;background:#fff;transform:translateX(-50%);box-shadow:0 0 8px rgba(255,255,255,.6);}
+  .pad{position:absolute;left:50%;bottom:12px;width:34%;height:7px;border-radius:3px;background:#eef0f8;transform:translateX(-50%);}
+  .cabmeta{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .cabname{font-weight:800;font-size:17px;} .cabtag{color:var(--muted);font-size:12px;margin-top:2px;}
+  .badge{font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;padding:4px 8px;border-radius:6px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;}
+  .play{font-family:ui-monospace,monospace;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border:none;border-radius:10px;padding:11px;font-size:14px;color:#04141a;text-align:center;
+    background:linear-gradient(180deg,var(--cyan),var(--cyan-dim));box-shadow:0 4px 0 #1c7a70;}
+  .cab:active .play{transform:translateY(2px);box-shadow:0 2px 0 #1c7a70;}
+  .foot{color:var(--muted);font-size:12px;text-align:center;max-width:640px;line-height:1.7;}
+  @media (prefers-reduced-motion:reduce){ .cab{transition:none;} }
+</style>
+</head>
+<body>
+<div id="scan"></div><div id="vign"></div>
+<div id="hub">
+  <div>
+    <div class="kicker">Insert Coin · 街机厅</div>
+    <h1 class="title">LEO 游戏厅</h1>
+    <div class="sub">两款自制像素游戏 · 点一款开始玩 · <b>手机 / 电脑</b>都能玩</div>
+  </div>
+  <div class="cards">
+    <a class="cab" href="clay-war.html">
+      <div class="screen"><div class="clay-prev" id="clayPrev"></div><div class="glow"></div></div>
+      <div class="cabmeta"><div><div class="cabname">橡皮泥：战争塑形前线</div><div class="cabtag">15 色橡皮泥 · 塔防军团 · 天赋 & 科技树</div></div><div class="badge">策略 / 塔防</div></div>
+      <div class="play">▶ 开始游戏</div>
+    </a>
+    <a class="cab" href="brick-breaker.html">
+      <div class="screen"><div class="brick-prev" id="brickPrev"><div class="ball"></div><div class="pad"></div></div><div class="glow"></div></div>
+      <div class="cabmeta"><div><div class="cabname">方砖破坏者</div><div class="cabtag">像素打砖块 · Boss「机敏」· 天赋 / 商店 / 排行榜</div></div><div class="badge">街机 / 弹球</div></div>
+      <div class="play">▶ 开始游戏</div>
+    </a>
+  </div>
+  <div class="foot">进度存档保存在你自己的浏览器里。想开启全球实时排行榜，请在 brick-breaker.html 顶部 NET_CONFIG 填入 Firebase 数据库网址。</div>
+</div>
+<script>
+  const clayCols=["#8a5a3c","#f2f0ea","#f2c94c","#5fbf6a","#4d7ee0","#f48fb1","#a45ce0","#e0464b"];
+  const cp=document.getElementById("clayPrev");
+  clayCols.forEach(c=>{const d=document.createElement("div");d.className="blob";d.style.background=c;d.style.height=(30+Math.random()*30)+"%";cp.appendChild(d);});
+  const brickCols=["#3b6fd4","#d8433a","#e6c02e","#2f9e44"];
+  const bp=document.getElementById("brickPrev");
+  brickCols.forEach(c=>{const row=document.createElement("div");row.className="brow";
+    for(let i=0;i<7;i++){const b=document.createElement("div");b.className="brk";b.style.background=c;if(Math.random()<0.12)b.style.visibility="hidden";row.appendChild(b);}bp.insertBefore(row,bp.firstChild);});
+</script>
+</body>
+</html>
