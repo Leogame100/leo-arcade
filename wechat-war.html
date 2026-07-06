@@ -128,6 +128,15 @@
   .bmitem{border:1px solid #4a3a6a;background:linear-gradient(180deg,#241a38,#1a1228);color:#eee;}
   .bmitem .snm{color:#e6d6ff;} .bmitem .sdesc{color:#a892c8;}
   .bmrisk{font-size:11px;color:#c9a8ff;text-align:center;margin:6px 0 10px;line-height:1.6;}
+  .nav .gname small{cursor:pointer;text-decoration:underline dotted;}
+  /* 花名册 */
+  .rgrp{margin-bottom:10px;} .rgrp h3{font-size:12px;color:var(--muted);margin:8px 0 5px;font-weight:800;border-left:3px solid var(--wx);padding-left:6px;}
+  .rrow{display:flex;align-items:center;gap:8px;padding:5px 8px;background:#fff;border-radius:8px;margin-bottom:4px;font-size:13px;}
+  .rrow.me{background:#eafce0;box-shadow:0 0 0 1px var(--wx);}
+  .rrow .ri{font-size:18px;width:24px;text-align:center;} .rrow .rn{flex:1;} .rrow .rc{font-weight:800;color:#333;}
+  .rrow .rbar{flex:0 0 60px;height:8px;background:#eee;border-radius:5px;overflow:hidden;}
+  .rrow .rbar i{display:block;height:100%;background:linear-gradient(90deg,#07c160,#39d67f);}
+  .rrow .metag{font-size:9px;background:var(--wx);color:#fff;padding:1px 5px;border-radius:8px;}
 </style>
 </head>
 <body>
@@ -234,6 +243,16 @@
     </div>
   </div>
 
+  <!-- 群花名册 -->
+  <div class="overlay hidden" id="rosterScreen">
+    <div class="sheet">
+      <h2>👥 群花名册 <span id="rosterCount" style="color:#07c160;"></span></h2>
+      <div class="sub">128人大群的全部身份构成（随局势实时变化）</div>
+      <div id="rosterBody"></div>
+      <button class="btn ghost" id="rosterClose">关闭</button>
+    </div>
+  </div>
+
   <!-- 黑市商店 -->
   <div class="overlay hidden" id="bmScreen">
     <div class="sheet">
@@ -267,9 +286,15 @@ const ROLES={
   qunzhu:{nm:"群主",ico:"👑",hp:5,side:"power",goal:"守住群主之位到第20轮",
     acts:["speak","pr","kick","qzred","reveal","buyshield"],
     desc:"最高权力，但媒体曝光、成员举报、官方踢人都盯着你。撑满20轮且不被弹劾/罢免即胜。"},
+  fuqun:{nm:"副群主",ico:"⭐",hp:4,side:"power",goal:"代管全群撑到第20轮，信誉不崩",
+    acts:["speak","pr","kick","reveal","buyshield"],
+    desc:"二把手，群主不在时代管全群。撑满20轮且信誉>0即胜。"},
   admin:{nm:"管理员",ico:"🛡",hp:4,side:"power",goal:"撑到第20轮，且信誉不崩(>0)",
     acts:["speak","kick","reveal","redpacket","buyshield"],
     desc:"辅佐群主、踢除刺头。小心被官方开除或信誉归零降职。活到最后即胜。"},
+  leader:{nm:"组长",ico:"📢",hp:3,side:"power",goal:"管好你的组撑到第20轮，信誉不崩",
+    acts:["speak","muteact","kick","reveal","buyshield"],
+    desc:"能禁言组员压制闹事者。活到最后且信誉>0即胜。"},
   media:{nm:"媒体记者",ico:"📰",hp:3,side:"press",goal:"曝光进度满100，扳倒微信总监",
     acts:["investigate","expose","speak","reveal","buyshield"],meter:{lab:"曝光进度",max:100},
     desc:"调查取证→曝光官方。成员会攻击你、官方会公关压你。曝光进度满100即胜。"},
@@ -285,6 +310,41 @@ const ROLES={
 };
 const ROLE_KEYS=Object.keys(ROLES);
 
+/*==================== 群人口（全部身份 + 人数，随局势变化） ====================*/
+const POP_DEF=[
+  {k:"qunzhu", ico:"👑",nm:"群主",       n:1,  grp:"群管理园区"},
+  {k:"fuqun",  ico:"⭐",nm:"副群主",     n:1,  grp:"群管理园区"},
+  {k:"admin",  ico:"🛡",nm:"管理员",     n:5,  grp:"群管理园区"},
+  {k:"core",   ico:"💎",nm:"核心成员",   n:15, grp:"群管理园区"},
+  {k:"leader", ico:"📢",nm:"组长",       n:30, grp:"群管理园区"},
+  {k:"member", ico:"👥",nm:"成员",       n:95, grp:"普通成员队伍"},
+  {k:"guest",  ico:"👀",nm:"游客",       n:10, grp:"普通成员队伍"},
+  {k:"muted",  ico:"🔇",nm:"禁言成员",   n:0,  grp:"特殊状态"},
+  {k:"kicked", ico:"🚫",nm:"被踢成员",   n:0,  grp:"特殊状态"},
+  {k:"banned", ico:"❌",nm:"被封禁成员", n:0,  grp:"特殊状态"},
+  {k:"worker", ico:"🏢",nm:"微信工作人员",n:30,grp:"微信官方势力"},
+  {k:"senior", ico:"🏢",nm:"高级工作人员",n:12,grp:"微信官方势力"},
+  {k:"manager",ico:"💼",nm:"微信主管",   n:2,  grp:"微信官方势力"},
+  {k:"director",ico:"👔",nm:"微信总监",  n:1,  grp:"微信官方势力"},
+  {k:"media",  ico:"📰",nm:"媒体",       n:5,  grp:"媒体集群"},
+];
+const POP_BY=Object.fromEntries(POP_DEF.map(p=>[p.k,p]));
+// 在群内活跃人数（不含被踢/被封/官方/媒体）
+function groupCount(){ let s=0; for(const p of POP_DEF){ if(["kicked","banned"].includes(p.k)) continue;
+  if(["worker","senior","manager","director","media"].includes(p.k)) continue; s+=g.pop[p.k]||0; } return s; }
+function popChange(k,d){ if(!g.pop) return; g.pop[k]=Math.max(0,(g.pop[k]||0)+d); }
+// 群里的官场倾轧/循环克制（偶发flavor，移动人数）
+const DRAMA=[
+  {t:"🏢 微信工作人员踢掉了一名群主候选，杀鸡儆猴",f:()=>{}},
+  {t:"🏢 高级工作人员开除了一名工作人员",f:()=>popChange("worker",-1)},
+  {t:"💼 微信主管清理门户，开除一名工作人员",f:()=>popChange("worker",-1)},
+  {t:"👔 微信总监罢免了一名主管",f:()=>{ if(g.pop.manager>0){popChange("manager",-1);} }},
+  {t:"📰 媒体联合群众，正在酝酿罢免微信总监",f:()=>{}},
+  {t:"👥 成员们串联起来，围攻一名媒体",f:()=>{ if(Math.random()<.4)popChange("media",-1); }},
+  {t:"⭐ 副群主代群主处理了一批违规",f:()=>{ popChange("member",-1); popChange("kicked",1); }},
+];
+function groupDrama(){ const d=pick(DRAMA); sys("📣 群内动态："+d.t); d.f(); }
+
 /*==================== 存档 + 成就 ====================*/
 const WSKEY="wechatWarSave_v1";
 let WSAVE=wload();
@@ -298,7 +358,9 @@ const ACHIEVEMENTS=[
   {id:"win_wodi",  ico:"👻",nm:"最强卧底",d:"以卧底身份潜伏到底",cond:g=>g.won&&g.role==="wodi"},
   {id:"win_hacker",ico:"🕵️",nm:"顶级黑客",d:"以黑客身份获胜",cond:g=>g.won&&g.role==="hacker"},
   {id:"win_member",ico:"👥",nm:"逆袭上位",d:"以成员身份当选群主",cond:g=>g.won&&g.role==="member"},
-  {id:"allroles", ico:"🌈",nm:"六边形战士",d:"用全部6种身份各赢一次",cond:()=>ROLE_KEYS.every(r=>WSAVE.winByRole[r])},
+  {id:"win_fuqun", ico:"⭐",nm:"稳如副手",d:"以副群主身份获胜",cond:g=>g.won&&g.role==="fuqun"},
+  {id:"win_leader",ico:"📢",nm:"金牌组长",d:"以组长身份获胜",cond:g=>g.won&&g.role==="leader"},
+  {id:"allroles", ico:"🌈",nm:"全能王",d:"用全部身份各赢一次",cond:()=>ROLE_KEYS.every(r=>WSAVE.winByRole[r])},
   {id:"evidence", ico:"🧾",nm:"证据大师",d:"单局公开3份真证据",cond:g=>g.stats.reveals>=3},
   {id:"fake",     ico:"🤥",nm:"翻车现场",d:"公开假证据被抓包",cond:g=>g.stats.fakes>=1},
   {id:"tank",     ico:"💢",nm:"挨打王",d:"单局硬抗5次攻击",cond:g=>g.stats.attacksTaken>=5},
@@ -342,12 +404,14 @@ const EVENTS=[
   {t:"🔥 上了热搜",d:"媒体火力全开，攻击更猛。",f:()=>g.heat=true},
   {t:"📵 网络异常",d:"信息混乱，本轮波动更大。",f:()=>g.chaos=true},
   {t:"🧧 红包雨",d:"全群疯狂抢红包，你也抢一个！",f:()=>luckyRed()},
-  {t:"🆙 系统升级",d:"管理更混乱，舆论 -3。",f:()=>op(-3)},
-  {t:"🤖 AI 审核",d:"随机封禁一名闹事者，威胁-1。",f:()=>g.threats=Math.max(0,g.threats-1)},
-  {t:"🦠 病毒传播",d:"随机2人禁言，群里安静，舆论 +3。",f:()=>op(3)},
+  {t:"🆙 系统升级",d:"管理员+1，管理更混乱，舆论 -3。",f:()=>{op(-3);popChange("admin",1);}},
+  {t:"🤖 AI 审核",d:"随机封禁一名闹事者，威胁-1。",f:()=>{g.threats=Math.max(0,g.threats-1);popChange("member",-1);popChange("banned",1);}},
+  {t:"🦠 病毒传播",d:"随机2人禁言，群里安静，舆论 +3。",f:()=>{op(3);popChange("member",-2);popChange("muted",2);}},
   {t:"🔀 微信更新",d:"全员职位洗牌！舆论大幅波动。",f:()=>op(Math.random()<.5?-8:8)},
   {t:"📂 数据泄露",d:"群里流出一批聊天记录，你捡到 1 份证据。",f:()=>{ g.evidence.push(makeEvidence(0.3)); }},
-  {t:"🎉 群庆典",d:"群满128人气氛火热，舆论 +5。",f:()=>op(5)},
+  {t:"🎉 群庆典",d:"群里涌入新人，气氛火热，舆论 +5。",f:()=>{op(5);popChange("member",3);popChange("guest",2);}},
+  {t:"🔗 群二维码刷屏",d:"扫码进来 5 名游客。",f:()=>popChange("guest",5)},
+  {t:"🐛 系统Bug",d:"一名被踢成员被恢复了！",f:()=>{ if(g.pop.kicked>0){popChange("kicked",-1);popChange("member",1);} }},
 ];
 
 /*==================== 空投（每2轮） ====================*/
@@ -405,6 +469,7 @@ function newGame(forceRole){
       threats:2, acted:false, over:false, itemsLocked:false, heat:false, chaos:false, disguised:false,
       exposeQueued:0, shieldGiven80:false, bombUsed:false, silenceNext:0, muted:false, redpacketClaimed:false,
       bmOpen:false, bmBought:false, bmStock:[], timedBomb:0, cloak:0, bribeNext:false,
+      pop:Object.fromEntries(POP_DEF.map(p=>[p.k,p.n])),
       stats:{acts:0,reveals:0,fakes:0,attacksTaken:0,gongguan:0,kicks:0,redpackets:0,hacks:0,exposes:0,maxop:100},
   };
   // 初始证据
@@ -447,6 +512,7 @@ function startRound(){
     sys("🕶 黑市开张了！（本轮可去黑市抢购1件强力道具）","event"); } else g.bmOpen=false;
   // 法庭（每3轮）
   if(g.round%3===0 && !g.over) court();
+  if(Math.random()<0.32 && !g.over) groupDrama();   // 群内官场倾轧/循环克制
   if(g.over) return;
   setHint("轮到你了，选一个行动（每轮1次）"); renderActs(); sync();
 }
@@ -570,8 +636,10 @@ const ACT_DEF={
     renderEv(); }},
   // 群主/管理员
   pr:{ico:"🤝",nm:"公关",cost:2,do:()=>{ if(!spend(2))return false; op(8); g.exposeQueued=0; g.stats.gongguan++; meSay("这事我处理好了，官方打好招呼了。"); good("公关 舆论+8，曝光压下"); }},
-  kick:{ico:"👢",nm:"踢人",do:()=>{ if(Math.random()<0.2){ op(-5); rep(-1); g.stats.kicks++; meSay("这刺头，踢了！"); sys("😱 你踢错了人！舆论-5 信誉-1","bad"); checkEnd(); }
+  kick:{ico:"👢",nm:"踢人",do:()=>{ popChange("member",-1); popChange("kicked",1);
+    if(Math.random()<0.2){ op(-5); rep(-1); g.stats.kicks++; meSay("这刺头，踢了！"); sys("😱 你踢错了人！舆论-5 信誉-1","bad"); checkEnd(); }
     else { g.threats=Math.max(0,g.threats-1); op(2); g.stats.kicks++; meSay("搞事的，踢出去。"); good("踢掉一个威胁，舆论+2"); } }},
+  muteact:{ico:"🔇",nm:"禁言组员",do:()=>{ g.silenceNext=(g.silenceNext||0)+1; g.threats=Math.max(0,g.threats-1); popChange("member",-1); popChange("muted",1); meSay("这位组员太闹，禁言10分钟。"); good("禁言一个组员：下一轮敌方攻击-1"); }},
   redpacket:{ico:"🧧",nm:"发红包",cost:3,do:()=>{ if(!spend(3))return false; op(10); if(g.role==="member") addMeter(12); g.stats.redpackets++; meSay("【发了一个88元红包】🧧"); good(`发红包 舆论+10${g.role==="member"?"，上位支持+12":""}`); }},
   // 媒体
   investigate:{ico:"🔍",nm:"调查取证",do:()=>{ const e=makeEvidence(0.2); g.evidence.push(e); op(2); meSay("我去挖点料…"); good(`调查获得证据「${e.ico}${e.nm}」${e.fake?"(存疑)":""}`); renderEv(); }},
@@ -662,6 +730,8 @@ function checkEnd(){
 }
 function finalJudge(){   // 撑到第20轮的最终裁定
   if(g.role==="qunzhu"){ winGame("你守住群主之位，撑过全部20轮！"); }
+  else if(g.role==="fuqun"){ g.rep>0?winGame("你代管全群到最后，副群主稳如泰山！"):loseGame("信誉崩塌，你被撤了副群主"); }
+  else if(g.role==="leader"){ g.rep>0?winGame("你把小组管到最后，金牌组长！"):loseGame("信誉崩塌，你被撤了组长"); }
   else if(g.role==="admin"){ g.rep>0?winGame("你稳坐管理员到最后，功成身退！"):loseGame("信誉崩塌，你被降为普通成员"); }
   else if(g.role==="wodi"){ winGame("你潜伏到最后从未暴露，卧底大成功！"); }
   else if(g.role==="hacker"){ g.meter>=6?winGame(`你破解了 ${g.meter} 人并全身而退！`):loseGame(`只破解了 ${g.meter}/6 人，任务失败`); }
@@ -898,6 +968,23 @@ function renderInv(){ const bar=document.getElementById("invBar"); bar.innerHTML
     bar.appendChild(el); });
   if(!any){ const el=document.createElement("span"); el.className="inv dis"; el.textContent="空（去🛒商店买）"; bar.appendChild(el); } }
 
+/*==================== 群花名册 ====================*/
+function openRoster(){
+  const body=document.getElementById("rosterBody"); body.innerHTML="";
+  document.getElementById("rosterCount").textContent="（在群 "+groupCount()+" 人）";
+  const groups=["群管理园区","普通成员队伍","特殊状态","微信官方势力","媒体集群"];
+  const maxN=95;
+  groups.forEach(gr=>{ const items=POP_DEF.filter(p=>p.grp===gr); if(!items.length) return;
+    const box=document.createElement("div"); box.className="rgrp"; box.innerHTML=`<h3>${gr}</h3>`;
+    items.forEach(p=>{ const n=g.pop[p.k]||0; const mine=(p.k===g.role)||(g.role==="qunzhu"&&p.k==="qunzhu");
+      const row=document.createElement("div"); row.className="rrow"+(mine?" me":"");
+      row.innerHTML=`<span class="ri">${p.ico}</span><span class="rn">${p.nm}${mine?' <span class="metag">你</span>':""}</span>`
+        +`<div class="rbar"><i style="width:${Math.min(100,n/maxN*100)}%"></i></div><span class="rc">${n}</span>`;
+      box.appendChild(row); });
+    body.appendChild(box); });
+  document.getElementById("rosterScreen").classList.remove("hidden");
+}
+
 /*==================== 工具 ====================*/
 function spend(n){ if(g.coins<n){ setHint("金币不足，去商店或发言攒钱"); return false; } g.coins-=n; return true; }
 function setHint(t){ document.getElementById("hint").textContent=t; }
@@ -921,7 +1008,7 @@ function sync(){
   } else mw.style.display="none";
   document.getElementById("goalLine").textContent="🎯 "+g.roleDef.goal;
   renderEv(); renderInv();
-  document.getElementById("hdCount").textContent="("+(128-(g.maxhp-Math.max(0,g.hp)))+")";
+  document.getElementById("hdCount").textContent="("+groupCount()+"人)";
 }
 
 /*==================== 按钮 ====================*/
@@ -992,13 +1079,15 @@ function esc(s){ return String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&
 $("shopClose").onclick=()=>show("shopScreen",false);
 $("redGiveCancel").onclick=()=>show("redGiveScreen",false);
 $("bmCancel").onclick=()=>show("bmScreen",false);
+$("rosterClose").onclick=()=>show("rosterScreen",false);
+$("hdCount").onclick=()=>{ if(g&&!g.over) openRoster(); };
 $("shopTop").onclick=()=>{ if(g&&!g.over) openShop(); };
 $("againBtn").onclick=()=>{ show("overScreen",false); buildRoleGrid(); show("roleScreen",true); };
 $("quitBtn").onclick=()=>{ location.href="index.html"; };
 $("homeBtn2").onclick=()=>{ show("overScreen",false); backToMenu(); };
 refreshAchCount();
 
-if(typeof window!=="undefined") window.__ww={get g(){return g;}, newGame, doAction, endRound, buy, useItem, ITEM, ROLE_KEYS, ACT_DEF, court, aiOne, get WSAVE(){return WSAVE;}, checkAch, ACHIEVEMENTS, claimRed, openRedGive, pickRed, RED_GIVE, openBM, buyBM, BM_ITEMS, swapRole};
+if(typeof window!=="undefined") window.__ww={get g(){return g;}, newGame, doAction, endRound, buy, useItem, ITEM, ROLE_KEYS, ACT_DEF, court, aiOne, get WSAVE(){return WSAVE;}, checkAch, ACHIEVEMENTS, claimRed, openRedGive, pickRed, RED_GIVE, openBM, buyBM, BM_ITEMS, swapRole, openRoster, groupCount, POP_DEF};
 </script>
 </body>
 </html>
