@@ -13,73 +13,62 @@
   #app{height:100%;display:flex;align-items:center;justify-content:center;}
   #phone{position:relative;width:100%;max-width:440px;height:100%;max-height:900px;background:var(--bg);
     display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.6);}
-  /* 顶部导航 */
-  .nav{flex:0 0 auto;background:#ededed;border-bottom:1px solid #d6d6d6;padding:10px 12px 8px;
-    display:flex;align-items:center;gap:8px;}
-  .nav .back{font-size:20px;color:#333;width:24px;}
+  .nav{flex:0 0 auto;background:#ededed;border-bottom:1px solid #d6d6d6;padding:10px 12px 8px;display:flex;align-items:center;gap:8px;}
+  .nav .back{font-size:20px;color:#333;width:24px;cursor:pointer;}
   .nav .gname{flex:1;text-align:center;font-size:16px;font-weight:600;color:#000;}
   .nav .gname small{color:var(--muted);font-weight:400;}
-  .nav .more{font-size:20px;color:#333;width:24px;text-align:right;}
-  /* 状态条 */
-  .status{flex:0 0 auto;background:#fff;border-bottom:1px solid #e3e3e3;padding:7px 12px;
-    display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:12px;}
-  .status .role{background:linear-gradient(135deg,#ffd34d,#ff9d2e);color:#5a3b00;font-weight:800;
-    padding:2px 9px;border-radius:20px;font-size:12px;}
+  .nav .more{font-size:20px;color:#333;width:24px;text-align:right;cursor:pointer;}
+  .status{flex:0 0 auto;background:#fff;border-bottom:1px solid #e3e3e3;padding:7px 12px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:12px;}
+  .status .role{background:linear-gradient(135deg,#ffd34d,#ff9d2e);color:#5a3b00;font-weight:800;padding:2px 9px;border-radius:20px;font-size:12px;}
   .status .chip{color:#444;font-weight:600;} .status .chip b{color:#000;}
   .barwrap{flex:1 1 100%;display:flex;align-items:center;gap:8px;margin-top:2px;}
   .barwrap .lab{font-size:11px;color:var(--muted);white-space:nowrap;}
   .bar{flex:1;height:12px;background:#eee;border-radius:8px;overflow:hidden;position:relative;box-shadow:inset 0 1px 2px rgba(0,0,0,.12);}
   .bar > i{display:block;height:100%;border-radius:8px;transition:width .4s ease, background .3s;}
   .bar .txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#333;}
-  /* 聊天区 */
   #chat{flex:1;overflow-y:auto;padding:12px 12px 6px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth;}
-  .sys{align-self:center;background:rgba(0,0,0,.10);color:#fff;background:#c8c8c8;color:#fff;
-    font-size:11px;padding:3px 10px;border-radius:6px;max-width:85%;text-align:center;line-height:1.5;}
-  .sys.event{background:#7d6bb0;} .sys.good{background:#54b26a;} .sys.bad{background:#e2645c;}
+  .sys{align-self:center;background:#c8c8c8;color:#fff;font-size:11px;padding:3px 10px;border-radius:6px;max-width:88%;text-align:center;line-height:1.5;}
+  .sys.event{background:#7d6bb0;} .sys.good{background:#54b26a;} .sys.bad{background:#e2645c;} .sys.court{background:#c98a2b;}
   .msg{display:flex;gap:8px;max-width:82%;animation:pop .2s ease;}
   .msg .av{flex:0 0 auto;width:38px;height:38px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#d8d8d8;}
   .msg .body{display:flex;flex-direction:column;gap:2px;}
   .msg .who{font-size:11px;color:var(--muted);margin-left:2px;}
-  .msg .bub{background:var(--bubble);padding:8px 11px;border-radius:5px;font-size:14px;line-height:1.45;color:#1a1a1a;
-    position:relative;box-shadow:0 1px 1px rgba(0,0,0,.04);word-break:break-word;}
+  .msg .bub{background:var(--bubble);padding:8px 11px;border-radius:5px;font-size:14px;line-height:1.45;color:#1a1a1a;position:relative;box-shadow:0 1px 1px rgba(0,0,0,.04);word-break:break-word;}
   .msg .bub::before{content:"";position:absolute;left:-5px;top:12px;border:6px solid transparent;border-right-color:var(--bubble);border-left:0;}
   .msg.me{align-self:flex-end;flex-direction:row-reverse;}
   .msg.me .bub{background:var(--me);}
   .msg.me .bub::before{left:auto;right:-5px;border-right-color:transparent;border-left-color:var(--me);border-right:0;}
   @keyframes pop{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
-  /* 底部操作 */
   .dock{flex:0 0 auto;background:#f7f7f7;border-top:1px solid #dcdcdc;padding:8px;}
   .hintline{font-size:11px;color:var(--muted);text-align:center;margin-bottom:6px;min-height:14px;}
   .acts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
-  .act{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:8px 4px;cursor:pointer;text-align:center;
-    display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .05s,background .1s;}
+  .act{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:8px 4px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .05s,background .1s;}
   .act:active{transform:scale(.95);} .act.dis{opacity:.4;pointer-events:none;}
   .act .ico{font-size:20px;} .act .nm{font-size:11px;font-weight:600;color:#333;} .act .cost{font-size:9px;color:var(--gold);font-weight:700;}
-  .act.primary{background:var(--wx);border-color:var(--wx);} .act.primary .nm,.act.primary .ico{color:#fff;}
-  /* 覆盖层 */
-  .overlay{position:absolute;inset:0;background:rgba(20,20,25,.72);display:flex;align-items:center;justify-content:center;
-    z-index:20;padding:18px;}
+  .overlay{position:absolute;inset:0;background:rgba(20,20,25,.72);display:flex;align-items:center;justify-content:center;z-index:20;padding:18px;}
   .overlay.hidden{display:none;}
-  .sheet{background:#f6f6f6;border-radius:16px;width:100%;max-width:380px;max-height:88%;overflow-y:auto;padding:16px;}
-  .sheet h2{font-size:18px;text-align:center;margin-bottom:4px;}
-  .sheet .sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px;}
+  .sheet{background:#f6f6f6;border-radius:16px;width:100%;max-width:390px;max-height:90%;overflow-y:auto;padding:16px;}
+  .sheet h2{font-size:18px;text-align:center;margin-bottom:4px;} .sheet .sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px;}
   .shopgrid{display:flex;flex-direction:column;gap:8px;}
   .shopitem{display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:10px 12px;}
-  .shopitem .si{font-size:24px;} .shopitem .sinfo{flex:1;} .shopitem .snm{font-weight:700;font-size:14px;}
-  .shopitem .sdesc{font-size:11px;color:var(--muted);}
+  .shopitem .si{font-size:24px;} .shopitem .sinfo{flex:1;} .shopitem .snm{font-weight:700;font-size:14px;} .shopitem .sdesc{font-size:11px;color:var(--muted);}
   .buy{background:var(--wx);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;}
   .buy:active{transform:scale(.95);} .buy.own{background:#ddd;color:#888;}
   .btn{display:block;width:100%;background:var(--wx);color:#fff;border:none;border-radius:12px;padding:13px;font-size:16px;font-weight:800;cursor:pointer;margin-top:12px;}
-  .btn.ghost{background:#e6e6e6;color:#333;}
-  .btn:active{transform:scale(.98);}
+  .btn.ghost{background:#e6e6e6;color:#333;} .btn:active{transform:scale(.98);}
   .ach{display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:9px 12px;margin-bottom:7px;}
   .ach .m{font-size:22px;} .ach .at{font-size:13px;font-weight:700;} .ach .ad{font-size:11px;color:var(--muted);}
   .startlogo{font-size:54px;text-align:center;}
-  .rules{font-size:12px;color:#555;line-height:1.8;background:#fff;border-radius:12px;padding:12px;margin:10px 0;}
-  .rules b{color:#000;}
-  .invbar{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:6px;}
+  .rules{font-size:12px;color:#555;line-height:1.8;background:#fff;border-radius:12px;padding:12px;margin:10px 0;} .rules b{color:#000;}
+  .invbar{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:6px;flex:1 1 100%;}
   .inv{font-size:11px;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:3px 9px;color:#333;cursor:pointer;}
   .inv:active{transform:scale(.94);} .inv.dis{opacity:.4;}
+  .goalline{flex:1 1 100%;font-size:11px;color:#7a5cc0;font-weight:700;margin-top:3px;}
+  .evbar{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+  .ev{font-size:11px;background:#fff;border:1px dashed #b7a2e0;border-radius:8px;padding:3px 8px;color:#5a3ea0;}
+  .ev.fake{border-color:#e0a2a2;color:#b04a4a;}
+  .rolecard{background:#fff;border-radius:12px;padding:12px;margin:8px 0;text-align:center;}
+  .rolecard .ri{font-size:40px;} .rolecard .rn{font-size:18px;font-weight:800;margin:2px 0;} .rolecard .rg{font-size:12px;color:#7a5cc0;font-weight:700;} .rolecard .rd{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.6;}
 </style>
 </head>
 <body>
@@ -91,14 +80,15 @@
   </div>
   <div class="status">
     <span class="role" id="roleTag">👑 群主</span>
-    <span class="chip">第 <b id="roundN">1</b>/20 轮</span>
+    <span class="chip">第 <b id="roundN">1</b>/20</span>
     <span class="chip">💰<b id="coinN">5</b></span>
     <span class="chip">❤<b id="hpN">5</b></span>
     <span class="chip">🛡<b id="shieldN">0</b></span>
-    <div class="barwrap">
-      <span class="lab">📊舆论值</span>
-      <div class="bar"><i id="opBar"></i><span class="txt" id="opTxt">100</span></div>
-    </div>
+    <span class="chip">🎖<b id="repN">5</b></span>
+    <div class="barwrap"><span class="lab">📊舆论</span><div class="bar"><i id="opBar"></i><span class="txt" id="opTxt">100</span></div></div>
+    <div class="barwrap" id="meterWrap" style="display:none;"><span class="lab" id="meterLab">进度</span><div class="bar"><i id="meterBar"></i><span class="txt" id="meterTxt">0</span></div></div>
+    <div class="goalline" id="goalLine">🎯 目标：保住群主之位</div>
+    <div class="evbar" id="evBar"></div>
     <div class="invbar" id="invBar"></div>
   </div>
   <div id="chat"></div>
@@ -107,26 +97,22 @@
     <div class="acts" id="acts"></div>
   </div>
 
-  <!-- 开始 -->
   <div class="overlay" id="startScreen">
     <div class="sheet">
-      <div class="startlogo">👑💬⚔️</div>
+      <div class="startlogo">🎲💬⚔️</div>
       <h2>微信群权力战争</h2>
-      <div class="sub">你是 128 人大群的群主，坐稳你的宝座！</div>
+      <div class="sub">128 人大群 · 每局<b>随机分配身份</b>，目标各不相同！</div>
       <div class="rules">
-        🎯 目标：撑过 <b>20 轮</b>，保住群主之位。<br>
-        📊 <b>舆论值</b> 是你的支持率：<br>
-        · ≥80 → 群管理获得 <b>护盾</b><br>
-        · &lt;50 → 全群开始怀疑你<br>
-        · &lt;20 → 触发 <b>弹劾大会</b>，可能下台！<br>
-        ⚔️ 媒体曝光、成员举报、官方踢人都会攻击你（❤-1）。<br>
-        🛒 用金币买护盾/红包/道具反击，每 5 轮还有<b>全民选举</b>。
+        🎲 开局<b>随机</b>成为：👑群主 / 🛡管理员 / 📰媒体 / 👻卧底 / 🕵️黑客 / 👥成员。<br>
+        🎯 每种身份<b>胜利目标不同</b>（守位 / 曝光 / 潜伏 / 破解 / 上位…）。<br>
+        📊 <b>舆论</b> 是支持率，🎖 <b>信誉</b> 影响法庭与职位。<br>
+        🧾 <b>证据机制</b>：公开真证据可扳倒对手，假证据反噬信誉。<br>
+        ⚖ 每 3 轮开<b>法庭</b>，每 5 轮<b>全民选举</b>，事件牌搅动全场。
       </div>
-      <button class="btn" id="startBtn">▶ 上任群主</button>
+      <button class="btn" id="startBtn">🎲 随机抽取身份</button>
     </div>
   </div>
 
-  <!-- 商店 -->
   <div class="overlay hidden" id="shopScreen">
     <div class="sheet">
       <h2>🛒 群道具商店</h2>
@@ -136,13 +122,12 @@
     </div>
   </div>
 
-  <!-- 结算 -->
   <div class="overlay hidden" id="overScreen">
     <div class="sheet">
       <h2 id="overTitle">游戏结束</h2>
       <div class="sub" id="overSub"></div>
       <div id="achList"></div>
-      <button class="btn" id="againBtn">🔁 再当一次群主</button>
+      <button class="btn" id="againBtn">🎲 再抽一个身份</button>
       <button class="btn ghost" id="homeBtn2">← 返回游戏厅</button>
     </div>
   </div>
@@ -150,286 +135,410 @@
 
 <script>
 "use strict";
-/*==================== 数据 ====================*/
-const NPCS=[
-  {n:"管理员·老张",a:"🛡"},{n:"管理员·阿珍",a:"🛡"},{n:"核心·大彪",a:"💎"},{n:"组长·小美",a:"📢"},
-  {n:"成员·路人甲",a:"👥"},{n:"成员·吃瓜王",a:"👥"},{n:"成员·夜猫子",a:"👥"},{n:"媒体·真相报",a:"📰"},
-  {n:"媒体·爆料君",a:"📰"},{n:"官方·工作人员",a:"🏢"},{n:"官方·主管",a:"🏢"},{n:"游客·6666",a:"👀"},
-  {n:"黑客·匿名",a:"🕵️"},{n:"卧底·？？",a:"👻"},
-];
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const rand=(a,b)=>a+Math.random()*(b-a);
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 
-// 世界事件牌（每轮1张）
+/*==================== 身份（随机分配） ====================*/
+const ROLES={
+  qunzhu:{nm:"群主",ico:"👑",hp:5,side:"power",goal:"守住群主之位到第20轮",
+    acts:["speak","pr","kick","redpacket","reveal","buyshield"],
+    desc:"最高权力，但媒体曝光、成员举报、官方踢人都盯着你。撑满20轮且不被弹劾/罢免即胜。"},
+  admin:{nm:"管理员",ico:"🛡",hp:4,side:"power",goal:"撑到第20轮，且信誉不崩(>0)",
+    acts:["speak","kick","reveal","redpacket","buyshield"],
+    desc:"辅佐群主、踢除刺头。小心被官方开除或信誉归零降职。活到最后即胜。"},
+  media:{nm:"媒体记者",ico:"📰",hp:3,side:"press",goal:"曝光进度满100，扳倒微信总监",
+    acts:["investigate","expose","speak","reveal","buyshield"],meter:{lab:"曝光进度",max:100},
+    desc:"调查取证→曝光官方。成员会攻击你、官方会公关压你。曝光进度满100即胜。"},
+  wodi:{nm:"卧底",ico:"👻",hp:4,side:"spy",goal:"潜伏到第20轮，怀疑度别满100",
+    acts:["laylow","speak","reveal","redpacket","buyshield"],meter:{lab:"怀疑度",max:100,bad:true},
+    desc:"隐藏身份坚持到最后。发言/攻击会升怀疑，潜伏降怀疑。怀疑度满100被识破即败。"},
+  hacker:{nm:"黑客",ico:"🕵️",hp:3,side:"hack",goal:"破解6名玩家并活到第20轮",
+    acts:["hack","delete","speak","reveal","buyshield"],meter:{lab:"破解数",max:6},
+    desc:"破解身份、删除证据、搅动全场。官方会溯源你。破解满6人且活到最后即胜。"},
+  member:{nm:"成员",ico:"👥",hp:3,side:"climb",goal:"在选举中当选新群主",
+    acts:["report","speak","reveal","redpacket","buyshield"],meter:{lab:"上位支持",max:100},
+    desc:"通过拉票、举报、证据攒上位支持，在每5轮的选举中支持够高即当选新群主获胜。"},
+};
+const ROLE_KEYS=Object.keys(ROLES);
+
+const NPCS=[
+  {n:"管理员·老张",a:"🛡"},{n:"管理员·阿珍",a:"🛡"},{n:"核心·大彪",a:"💎"},{n:"组长·小美",a:"📢"},
+  {n:"成员·路人甲",a:"👥"},{n:"成员·吃瓜王",a:"👥"},{n:"成员·夜猫子",a:"👥"},{n:"媒体·真相报",a:"📰"},
+  {n:"媒体·爆料君",a:"📰"},{n:"官方·工作人员",a:"🏢"},{n:"官方·主管",a:"🏢"},{n:"游客·6666",a:"👀"},
+  {n:"黑客·匿名",a:"🕵️"},{n:"卧底·？？",a:"👻"},{n:"微信总监·大佬",a:"💼"},
+];
+const npcBy=e=>{ const f=NPCS.filter(n=>n.a===e); return pick(f.length?f:NPCS); };
+
+/*==================== 证据 ====================*/
+const EV_TYPES=[
+  {k:"chat",nm:"聊天记录",ico:"📱"},{k:"shot",nm:"截图",ico:"📷"},{k:"report",nm:"举报记录",ico:"📑"},
+  {k:"bribe",nm:"收买记录",ico:"💰"},{k:"audio",nm:"录音",ico:"🎙"},{k:"log",nm:"系统日志",ico:"📂"},
+];
+function makeEvidence(fakeChance){ const t=pick(EV_TYPES); return {type:t.k,ico:t.ico,nm:t.nm,fake:Math.random()<(fakeChance==null?0.15:fakeChance)}; }
+
+/*==================== 事件牌 ====================*/
 const EVENTS=[
-  {t:"🟥 腾讯服务器维护",d:"本轮所有道具失效！",f:g=>g.itemsLocked=true},
-  {t:"🔥 上了热搜",d:"媒体火力全开，本轮曝光伤害+50%。",f:g=>g.heat=true},
-  {t:"📵 网络异常",d:"信息混乱，本轮舆论波动更大。",f:g=>g.chaos=true},
-  {t:"🧧 红包雨",d:"群里发红包，你 +2 金币！",f:g=>g.coins+=2},
-  {t:"🆙 系统升级",d:"管理员+1，管理更混乱，舆论 -3。",f:g=>op(g,-3)},
-  {t:"🤖 AI 审核",d:"随机封禁一名闹事者，你少一个威胁。",f:g=>{g.threats=Math.max(0,g.threats-1);}},
-  {t:"🦠 病毒传播",d:"随机 2 人被禁言，群里安静了，舆论 +3。",f:g=>op(g,3)},
-  {t:"🔀 微信更新",d:"全员职位重新洗牌！舆论大幅波动。",f:g=>op(g, Math.random()<.5?-8:8)},
-  {t:"🌧 网络水军",d:"有人带节奏黑你，舆论 -5。",f:g=>op(g,-5)},
-  {t:"🎉 群庆典",d:"群满 128 人，气氛火热，舆论 +5。",f:g=>op(g,5)},
+  {t:"🟥 腾讯服务器维护",d:"本轮所有道具失效！",f:()=>g.itemsLocked=true},
+  {t:"🔥 上了热搜",d:"媒体火力全开，攻击更猛。",f:()=>g.heat=true},
+  {t:"📵 网络异常",d:"信息混乱，本轮波动更大。",f:()=>g.chaos=true},
+  {t:"🧧 红包雨",d:"群里发红包，你 +2 金币！",f:()=>g.coins+=2},
+  {t:"🆙 系统升级",d:"管理更混乱，舆论 -3。",f:()=>op(-3)},
+  {t:"🤖 AI 审核",d:"随机封禁一名闹事者，威胁-1。",f:()=>g.threats=Math.max(0,g.threats-1)},
+  {t:"🦠 病毒传播",d:"随机2人禁言，群里安静，舆论 +3。",f:()=>op(3)},
+  {t:"🔀 微信更新",d:"全员职位洗牌！舆论大幅波动。",f:()=>op(Math.random()<.5?-8:8)},
+  {t:"📂 数据泄露",d:"群里流出一批聊天记录，你捡到 1 份证据。",f:()=>{ g.evidence.push(makeEvidence(0.3)); }},
+  {t:"🎉 群庆典",d:"群满128人气氛火热，舆论 +5。",f:()=>op(5)},
 ];
 
-// AI 攻击/事件池
-const AI_ACTS=[
-  {w:26, kind:"attack", msg:["曝光群主私聊记录！","独家：群主暗箱操作实锤？","爆料群主收黑钱！"], who:"📰", op:-6, hp:1, tag:"曝光"},
-  {w:16, kind:"attack", msg:["我举报群主滥用职权！","@所有人 群主踢错人了！","实名举报群主！"], who:"👥", op:-4, hp:0, tag:"举报"},
-  {w:12, kind:"attack", msg:["管理员误踢了核心成员…","管理员权限出事了","踢错人引发不满"], who:"🛡", op:-5, hp:0, tag:"内乱"},
-  {w:10, kind:"attack", msg:["微信官方介入调查群主","官方：该群主涉嫌违规","工作人员盯上群主了"], who:"🏢", op:-3, hp:1, tag:"官方"},
-  {w:8,  kind:"good",   msg:["官方公关帮群主澄清了","主管替群主说了好话","风评被官方带回来一点"], who:"🏢", op:4, hp:0, tag:"公关"},
-  {w:8,  kind:"noise",  msg:["6666666666","？？？？？","哈哈哈哈哈哈","......","表情包轰炸🤣🤣🤣"], who:"👀", op:0, hp:0, tag:"刷屏"},
-  {w:6,  kind:"attack", msg:["黑客破解了群主身份！","有人删了群主的证据","匿名黑客搞事情"], who:"🕵️", op:-4, hp:0, tag:"黑客"},
-  {w:5,  kind:"attack", msg:["卧底煽动大家不满","内部有人搞事…","？？的身份很可疑"], who:"👻", op:-3, hp:0, tag:"卧底"},
-];
-
-// 商店
+/*==================== 商店 ====================*/
 const SHOP=[
-  {id:"shield", nm:"护盾", price:2, ico:"🛡", d:"抵挡下一次攻击"},
-  {id:"medkit", nm:"医疗包", price:3, ico:"💊", d:"恢复 1 点血量"},
-  {id:"report", nm:"举报卡", price:1, ico:"📣", d:"反举报，舆论 +6"},
-  {id:"investigate", nm:"调查卡", price:2, ico:"🔍", d:"揪出闹事者，减少一个威胁"},
-  {id:"disguise", nm:"身份伪装", price:4, ico:"🎭", d:"下一轮不被攻击"},
-  {id:"spam", nm:"刷屏卡", price:1, ico:"💥", d:"刷屏搅局，舆论 +3 并消一次曝光"},
-  {id:"revive", nm:"复活券", price:5, ico:"🎟", d:"淘汰时自动复活一次"},
+  {id:"shield",nm:"护盾",price:2,ico:"🛡",d:"抵挡下一次攻击"},
+  {id:"medkit",nm:"医疗包",price:3,ico:"💊",d:"恢复 1 点血量"},
+  {id:"report",nm:"举报卡",price:1,ico:"📣",d:"反举报，舆论 +6"},
+  {id:"evidence",nm:"线人情报",price:2,ico:"🧾",d:"购买 1 份证据（可能是假的）"},
+  {id:"disguise",nm:"身份伪装",price:4,ico:"🎭",d:"下一轮不被攻击（并降怀疑）"},
+  {id:"spam",nm:"刷屏卡",price:1,ico:"💥",d:"搅局，舆论 +3 并消一次曝光"},
+  {id:"revive",nm:"复活券",price:5,ico:"🎟",d:"淘汰时自动复活一次"},
 ];
 const ITEM=Object.fromEntries(SHOP.map(s=>[s.id,s]));
 
 /*==================== 状态 ====================*/
 let g=null;
-function op(state,d){ state.op=clamp(Math.round(state.op+d),0,120); }
+function op(d){ g.op=clamp(Math.round(g.op+d),0,120); }
+function rep(d){ g.rep=clamp(g.rep+d,0,8); }
+function addMeter(d){ if(!g.roleDef.meter) return; g.meter=clamp(g.meter+d,0,g.roleDef.meter.max); }
 
-function newGame(){
-  g={ round:1, op:100, coins:5, hp:5, maxhp:5, shield:0,
-      inv:{shield:0,medkit:0,report:0,investigate:0,disguise:0,spam:0,revive:0},
-      threats:2, acted:false, over:false, itemsLocked:false, heat:false, chaos:false,
-      disguised:false, exposeQueued:0, shieldGiven80:false, impeachWarned:false,
-      stats:{gongguan:0,kicks:0,redpackets:0,speeches:0,reports:0,maxop:100,attacksTaken:0,itemsUsed:0,coinsSpent:0},
+function newGame(forceRole){
+  const key=forceRole||pick(ROLE_KEYS);
+  const rd=ROLES[key];
+  g={ role:key, roleDef:rd, round:1, op:100, coins:5, hp:rd.hp, maxhp:rd.hp, shield:0, rep:5,
+      meter:0, evidence:[], inv:{shield:0,medkit:0,report:0,evidence:0,disguise:0,spam:0,revive:0},
+      threats:2, acted:false, over:false, itemsLocked:false, heat:false, chaos:false, disguised:false,
+      exposeQueued:0, shieldGiven80:false,
+      stats:{acts:0,reveals:0,fakes:0,attacksTaken:0,gongguan:0,kicks:0,redpackets:0,hacks:0,exposes:0,maxop:100},
   };
+  // 初始证据
+  const en=Math.floor(rand(0,2.99));
+  for(let i=0;i<en;i++) g.evidence.push(makeEvidence());
   document.getElementById("chat").innerHTML="";
-  sys("👑 你上任成为「128人大群」群主，坐稳你的宝座！","event");
-  sys("目标：撑过 20 轮，保住群主之位。舆论值越高越稳。");
-  startRound();
-  sync();
+  sys(`🎲 身份揭晓：你是 ${rd.ico} ${rd.nm}！`,"event");
+  sys(`🎯 目标：${rd.goal}`,"court");
+  sys(rd.desc);
+  document.getElementById("roleTag").textContent=`${rd.ico} ${rd.nm}`;
+  startRound(); sync();
 }
 
 /*==================== 消息 ====================*/
 const chat=document.getElementById("chat");
 function scroll(){ chat.scrollTop=chat.scrollHeight; }
 function sys(text,cls){ const d=document.createElement("div"); d.className="sys"+(cls?" "+cls:""); d.textContent=text; chat.appendChild(d); scroll(); }
-function msg(who,avatar,text,me){ const w=document.createElement("div"); w.className="msg"+(me?" me":"");
-  w.innerHTML=`<div class="av">${avatar}</div><div class="body">${me?"":`<div class="who">${who}</div>`}<div class="bub">${text}</div></div>`;
-  chat.appendChild(w); scroll(); }
-function meSay(text){ msg("群主","👑",text,true); }
+function msg(who,av,text){ const w=document.createElement("div"); w.className="msg";
+  w.innerHTML=`<div class="av">${av}</div><div class="body"><div class="who">${who}</div><div class="bub">${text}</div></div>`; chat.appendChild(w); scroll(); }
+function meSay(text){ const w=document.createElement("div"); w.className="msg me";
+  w.innerHTML=`<div class="av">${g.roleDef.ico}</div><div class="body"><div class="bub">${text}</div></div>`; chat.appendChild(w); scroll(); }
 
 /*==================== 回合流程 ====================*/
 function startRound(){
   g.acted=false; g.itemsLocked=false; g.heat=false; g.chaos=false; g.exposeQueued=0;
   sys(`—— 第 ${g.round} 轮 ——`);
-  // 1) 世界事件牌
-  const ev=pick(EVENTS);
-  sys(`🎴 事件牌：${ev.t}｜${ev.d}`,"event");
-  ev.f(g);
-  // 2) AI 行动（舆论高则围攻少；后期更激烈）
-  if(g.disguised){ sys("🎭 你伪装成普通成员，本轮无人攻击你。","good"); g.disguised=false; }
-  else {
-    const num = 1 + (Math.random()<0.5?1:0) + (g.op<35?1:0) + (g.round>13?1:0);
-    for(let i=0;i<num;i++) aiAct();
-  }
-  // 3) 轮到你
-  g.acted=false;
-  setHint("轮到你了，选一个行动（每轮1次）");
-  renderActs();
-  sync();
+  const ev=pick(EVENTS); sys(`🎴 事件牌：${ev.t}｜${ev.d}`,"event"); ev.f();
+  // AI 行动（按身份不同威胁不同）
+  if(g.disguised){ sys("🎭 你伪装成普通成员，本轮无人针对你。","good"); g.disguised=false; }
+  else aiRound();
+  // 法庭（每3轮）
+  if(g.round%3===0 && !g.over) court();
+  if(g.over) return;
+  setHint("轮到你了，选一个行动（每轮1次）"); renderActs(); sync();
 }
 
-function aiAct(){
-  // 加权抽一个 AI 行为
-  let tot=AI_ACTS.reduce((s,a)=>s+a.w,0), r=Math.random()*tot, act=AI_ACTS[0];
-  for(const a of AI_ACTS){ r-=a.w; if(r<=0){ act=a; break; } }
-  const npc=pick(NPCS.filter(n=>n.a===act.who).length?NPCS.filter(n=>n.a===act.who):NPCS);
-  const text=pick(act.msg);
-  msg(npc.n, npc.a, text, false);
-  if(act.kind==="noise"){ if(g.chaos) op(g, Math.random()<.5?-1:1); return; }
-  if(act.kind==="good"){ op(g, act.op); sys(`👍 ${act.tag}：舆论 ${act.op>0?"+":""}${act.op}`,"good"); return; }
-  // attack（HP 伤害约55%概率发生）
-  let dop=act.op, dhp=act.hp? (Math.random()<0.55?1:0):0;
+function aiRound(){
+  const low = (g.roleDef.side==="power" && g.op<35) || (g.roleDef.meter&&g.roleDef.meter.bad&&g.meter>60) || Math.random()<0.25;
+  const n = 1 + (Math.random()<0.5?1:0) + (low?1:0) + (g.round>13?1:0);
+  for(let i=0;i<n && !g.over;i++) aiOne();
+}
+function shieldBlock(tag){ if(g.shield>0){ g.shield--; sys(`🛡 护盾抵挡了「${tag}」！`,"good"); renderInv(); return true; } return false; }
+
+function aiOne(){
+  const s=g.roleDef.side;
+  if(s==="power"){                 // 群主/管理员：被围攻
+    const pool=[
+      {who:"📰",tag:"曝光",txt:["曝光群主私聊记录！","独家：管理层暗箱操作实锤？","爆料收黑钱！"],op:-6,hp:1},
+      {who:"👥",tag:"举报",txt:["我举报滥用职权！","@所有人 又踢错人了！","实名举报！"],op:-4,hp:0},
+      {who:"🛡",tag:"内乱",txt:["管理员误踢了核心成员…","权限出事了","踢错人引发不满"],op:-5,hp:0},
+      {who:"🏢",tag:"官方",txt:["微信官方介入调查","官方：涉嫌违规","工作人员盯上你了"],op:-3,hp:1},
+      {who:"🏢",tag:"公关",txt:["官方帮忙澄清了","主管替你说了好话"],op:4,hp:0,good:true},
+      {who:"👀",tag:"刷屏",txt:["6666666","？？？","哈哈哈哈","......"],op:0,hp:0,noise:true},
+    ];
+    resolveAI(pick(pool),"expose");
+  } else if(s==="press"){          // 媒体：成员攻击你、官方压曝光
+    const pool=[
+      {who:"👥",tag:"围攻媒体",txt:["这记者造谣，一起举报！","别信媒体，攻击他！","媒体黑我们！"],op:-3,hp:1},
+      {who:"🏢",tag:"官方压制",txt:["官方否认了你的报道","公关删了你的稿子","这是假新闻！"],op:0,hp:0,meter:-8},
+      {who:"💼",tag:"总监警告",txt:["微信总监警告你别乱来","再曝光就封你号"],op:-2,hp:0,meter:-5},
+      {who:"👀",tag:"吃瓜",txt:["记者加油！","蹲一个大瓜","666"],op:2,hp:0,good:true},
+    ];
+    resolveAI(pick(pool));
+  } else if(s==="spy"){            // 卧底：被调查升怀疑
+    const pool=[
+      {who:"🛡",tag:"调查",txt:["这个人有点可疑…","查一下他的身份","感觉他是卧底"],susp:14},
+      {who:"👥",tag:"起疑",txt:["他发言好奇怪","为什么总躲着","有内鬼吧？"],susp:8},
+      {who:"👀",tag:"日常",txt:["群里真热闹","红包呢","哈哈哈"],susp:0,good:true},
+    ];
+    resolveAI(pick(pool));
+  } else if(s==="hack"){          // 黑客：被溯源掉血/舆论
+    const pool=[
+      {who:"🏢",tag:"安全溯源",txt:["检测到异常登录，正在溯源！","官方在追踪黑客","IP暴露了？"],op:-2,hp:1},
+      {who:"🛡",tag:"警觉",txt:["有人在搞事…","系统被入侵了？","注意安全"],op:-3,hp:0},
+      {who:"👀",tag:"围观",txt:["黑客好酷","救救孩子","666"],op:1,hp:0,good:true},
+    ];
+    resolveAI(pick(pool));
+  } else {                        // 成员：对手拉票压支持
+    const pool=[
+      {who:"🛡",tag:"打压",txt:["这人也想上位？做梦","别投他","他没资格"],meter:-8,op:-2},
+      {who:"👥",tag:"竞争",txt:["我也要竞选群主！","支持我才对","别被他忽悠"],meter:-6},
+      {who:"👀",tag:"路人",txt:["这位说得有道理","考虑一下他","围观"],meter:4,op:1,good:true},
+    ];
+    resolveAI(pick(pool));
+  }
+}
+function resolveAI(act){
+  const npc=npcBy(act.who); msg(npc.n,npc.a,pick(act.txt));
+  if(act.noise){ if(g.chaos) op(Math.random()<.5?-1:1); return; }
+  if(act.good){ if(act.op) op(act.op); if(act.meter) addMeter(act.meter); if(act.op) sys(`👍 ${act.tag}：舆论 ${act.op>0?"+":""}${act.op||0}`,"good"); return; }
+  // 卧底怀疑
+  if(act.susp!=null){ addMeter(act.susp); if(act.susp>0) sys(`🔎 ${act.tag}：怀疑度 +${act.susp}`,"bad"); checkEnd(); return; }
+  // 攻击
+  let dop=act.op||0, dhp=act.hp?(Math.random()<0.55?1:0):0, dm=act.meter||0;
   if(g.heat && act.who==="📰"){ dop=Math.round(dop*1.5); dhp=1; }
   if(g.chaos) dop-=2;
-  if(g.op<45) dop-=2;                     // 怀疑期，攻击更狠
-  // 护盾抵挡
-  if(g.shield>0 && (dhp>0||dop<=-5)){ g.shield--; sys(`🛡 护盾抵挡了「${act.tag}」！`,"good"); renderInv(); return; }
-  op(g,dop); if(dhp>0){ g.hp-=dhp; g.stats.attacksTaken++; }
+  if((dhp>0||dop<=-5) && shieldBlock(act.tag)) return;
+  if(dop) op(dop); if(dm) addMeter(dm); if(dhp>0){ g.hp-=dhp; g.stats.attacksTaken++; }
   if(act.tag==="曝光") g.exposeQueued++;
-  sys(`💥 ${act.tag}：舆论 ${dop}${dhp?`，❤-${dhp}`:""}`,"bad");
-  if(g.hp<=0) checkDeath();
+  sys(`💥 ${act.tag}：${dop?`舆论 ${dop}`:""}${dhp?`，❤-${dhp}`:""}${dm?`，${g.roleDef.meter.lab} ${dm}`:""}`,"bad");
+  checkEnd();
+}
+
+/*==================== 法庭 ====================*/
+function court(){
+  sys("⚖ —— 法庭开庭 —— ","court");
+  const real=g.evidence.filter(e=>!e.fake);
+  if(real.length>0){
+    const e=real[0]; g.evidence.splice(g.evidence.indexOf(e),1);
+    msg("法官·公正","⚖",`原告出示了「${e.ico}${e.nm}」，证据确凿！`);
+    rep(1); sys("✅ 你在法庭上扳倒对手，信誉 +1","good");
+    if(g.role==="media"){ addMeter(25); sys("📰 曝光进度 +25","good"); }
+    else if(g.role==="member"){ addMeter(20); sys("👥 上位支持 +20","good"); }
+    else if(g.role==="hacker"){ g.coins+=3; sys("💰 顺手捞了 3 金币","good"); }
+    else { op(8); g.threats=Math.max(0,g.threats-1); sys("📊 舆论 +8，扳倒一个对手","good"); }
+    renderEv();
+  } else if(g.op<45 || g.rep<3){
+    msg("法官·公正","⚖","有人指控你，现在开始质证。");
+    if(g.inv.report>0){ g.inv.report--; op(8); rep(1); sys("📣 你打出举报卡自辩，舆论+8 信誉+1，无罪释放！","good"); renderInv(); }
+    else if(g.op>=40||g.rep>=3){ sys("😮‍💨 证据不足，你被无罪释放。","good"); }
+    else { const pun=pick(["禁言","降职","舆论重创"]);
+      if(pun==="禁言"){ sys("🔇 判决：禁言！你本轮无法行动。","bad"); g.acted=true; }
+      else if(pun==="降职"){ rep(-1); op(-6); sys("⬇ 判决：信誉-1，舆论-6。","bad"); }
+      else { op(-10); sys("📉 判决：舆论-10。","bad"); }
+      checkEnd();
+    }
+  } else { sys("本轮无人提交有效证据，退庭。"); }
 }
 
 /*==================== 玩家行动 ====================*/
-const ACTIONS=[
-  {id:"speak", ico:"📢", nm:"发言拉票", do:()=>{ op(g,4); g.coins+=1; g.stats.speeches++; meSay(pick(["各位群友信我！我一心为群！","造谣的别得逞，我清者自清！","跟着我，群里天天有红包！"])); flashOp("发言拉票 舆论 +4，💰+1"); }},
-  {id:"pr", ico:"🤝", nm:"公关", cost:2, do:()=>{ if(!spend(2))return false; op(g,8); g.exposeQueued=0; g.stats.gongguan++; meSay("这事我已经处理好了，官方那边打好招呼了。"); flashOp("公关 舆论 +8，曝光已压下"); }},
-  {id:"kick", ico:"👢", nm:"踢人", do:()=>{ if(Math.random()<0.2){ op(g,-5); g.stats.kicks++; meSay("这个刺头，踢了！"); sys("😱 你踢错了人！群友不满，舆论 -5","bad"); }
-      else { g.threats=Math.max(0,g.threats-1); op(g,2); g.stats.kicks++; meSay("这个搞事的，踢出去。"); flashOp("踢掉一个威胁，舆论 +2"); } }},
-  {id:"redpacket", ico:"🧧", nm:"发红包", cost:3, do:()=>{ if(!spend(3))return false; op(g,12); g.stats.redpackets++; meSay("【群主发了一个 88 元红包】🧧"); flashOp("发红包 舆论 +12"); }},
-  {id:"buyshield", ico:"🛡", nm:"加护盾", cost:2, do:()=>{ if(!spend(2))return false; g.shield++; meSay("先给自己加个防护。"); flashOp("获得 1 层护盾"); renderInv(); }},
-  {id:"shop", ico:"🛒", nm:"商店", noturn:true, do:()=>openShop()},
-];
+const ACT_DEF={
+  speak:{ico:"📢",nm:"发言",do:()=>{ op(4); g.coins+=1; if(g.role==="wodi") addMeter(6);
+    meSay(pick(["各位群友信我！","我清者自清！","跟着我有肉吃！","理性讨论，别带节奏。"]));
+    good(`发言 舆论+4 💰+1${g.role==="wodi"?"（但怀疑+6）":""}`); }},
+  buyshield:{ico:"🛡",nm:"加护盾",cost:2,do:()=>{ if(!spend(2))return false; g.shield++; meSay("先给自己加个防护。"); good("获得1层护盾"); renderInv(); }},
+  reveal:{ico:"🧾",nm:"公开证据",do:()=>{ const real=g.evidence.find(e=>!e.fake);
+    if(!real){ if(g.evidence.length){ const f=g.evidence.shift(); g.stats.fakes++; rep(-3); op(-4); meSay("我有实锤！（其实是假的…）"); sys("❌ 假证据被识破！信誉-3 舆论-4","bad"); renderEv(); checkEnd(); return; }
+      setHint("你没有证据可公开，先去调查/购买"); return false; }
+    g.evidence.splice(g.evidence.indexOf(real),1); g.stats.reveals++;
+    meSay(`我公开「${real.ico}${real.nm}」，实锤了！`);
+    if(g.role==="media"){ addMeter(22); good("曝光进度 +22"); }
+    else if(g.role==="member"){ addMeter(20); op(4); good("上位支持 +20，舆论+4"); }
+    else if(g.role==="hacker"){ g.coins+=3; rep(1); good("信誉+1，💰+3"); }
+    else { op(8); rep(1); g.threats=Math.max(0,g.threats-1); good("舆论+8 信誉+1，扳倒一个对手"); }
+    renderEv(); }},
+  // 群主/管理员
+  pr:{ico:"🤝",nm:"公关",cost:2,do:()=>{ if(!spend(2))return false; op(8); g.exposeQueued=0; g.stats.gongguan++; meSay("这事我处理好了，官方打好招呼了。"); good("公关 舆论+8，曝光压下"); }},
+  kick:{ico:"👢",nm:"踢人",do:()=>{ if(Math.random()<0.2){ op(-5); rep(-1); g.stats.kicks++; meSay("这刺头，踢了！"); sys("😱 你踢错了人！舆论-5 信誉-1","bad"); checkEnd(); }
+    else { g.threats=Math.max(0,g.threats-1); op(2); g.stats.kicks++; meSay("搞事的，踢出去。"); good("踢掉一个威胁，舆论+2"); } }},
+  redpacket:{ico:"🧧",nm:"发红包",cost:3,do:()=>{ if(!spend(3))return false; op(10); if(g.role==="member") addMeter(12); g.stats.redpackets++; meSay("【发了一个88元红包】🧧"); good(`发红包 舆论+10${g.role==="member"?"，上位支持+12":""}`); }},
+  // 媒体
+  investigate:{ico:"🔍",nm:"调查取证",do:()=>{ const e=makeEvidence(0.2); g.evidence.push(e); op(2); meSay("我去挖点料…"); good(`调查获得证据「${e.ico}${e.nm}」${e.fake?"(存疑)":""}`); renderEv(); }},
+  expose:{ico:"📸",nm:"曝光官方",do:()=>{ const real=g.evidence.find(e=>!e.fake); g.stats.exposes++;
+    if(real){ g.evidence.splice(g.evidence.indexOf(real),1); addMeter(26); meSay(`重磅曝光！附证据「${real.ico}${real.nm}」`); good("曝光进度 +26"); renderEv(); }
+    else { addMeter(8); op(-2); meSay("我曝光官方黑幕！（暂无实锤）"); good("无实锤曝光，进度+8（舆论-2）"); } }},
+  // 卧底
+  laylow:{ico:"🎭",nm:"潜伏",do:()=>{ addMeter(-18); op(1); meSay(pick(["随便看看…","我就是个普通群友。","不太懂，围观。"])); good("潜伏，怀疑度 -18"); }},
+  // 黑客
+  hack:{ico:"💻",nm:"破解身份",do:()=>{ g.meter=Math.min(g.roleDef.meter.max,g.meter+1); g.stats.hacks++;
+    const r=Math.random(); if(r<0.5){ const e=makeEvidence(0.25); g.evidence.push(e); meSay("已入侵，拖出一份数据。"); good(`破解 +1，获得证据「${e.ico}${e.nm}」`); renderEv(); }
+    else { g.coins+=2; meSay("顺手薅了点羊毛。"); good("破解 +1，💰+2"); } }},
+  delete:{ico:"🗑",nm:"删除证据",do:()=>{ g.threats=Math.max(0,g.threats-1); g.exposeQueued=0; op(2); meSay("把痕迹清理干净。"); good("删除对手证据，威胁-1"); }},
+  // 成员
+  report:{ico:"📣",nm:"举报对手",do:()=>{ if(Math.random()<0.25){ rep(-1); op(-2); meSay("我举报他！（好像诬告了）"); sys("😬 诬告！信誉-1 舆论-2","bad"); checkEnd(); }
+    else { addMeter(10); op(3); meSay("实名举报竞争对手！"); good("上位支持+10 舆论+3"); } }},
+};
 
+function actsForRole(){ return g.roleDef.acts.concat("shop"); }
 function renderActs(){
   const box=document.getElementById("acts"); box.innerHTML="";
-  ACTIONS.forEach(a=>{
-    const el=document.createElement("div"); el.className="act"+(a.id==="redpacket"?" ":"")+((a.cost&&g.coins<a.cost)?" dis":"")+(g.acted&&!a.noturn?" dis":"");
+  actsForRole().forEach(id=>{
+    if(id==="shop"){ const el=document.createElement("div"); el.className="act";
+      el.innerHTML=`<div class="ico">🛒</div><div class="nm">商店</div>`; el.onclick=openShop; box.appendChild(el); return; }
+    const a=ACT_DEF[id]; if(!a) return;
+    const dis=(a.cost&&g.coins<a.cost)||g.acted;
+    const el=document.createElement("div"); el.className="act"+(dis?" dis":"");
     el.innerHTML=`<div class="ico">${a.ico}</div><div class="nm">${a.nm}</div>${a.cost?`<div class="cost">💰${a.cost}</div>`:""}`;
-    el.onclick=()=>doAction(a); box.appendChild(el);
+    el.onclick=()=>doAction(id); box.appendChild(el);
   });
 }
-function doAction(a){
-  if(g.over) return;
-  if(a.noturn){ a.do(); return; }
-  if(g.acted){ setHint("本轮已行动，点「结束本轮」进入下一轮"); return; }
-  const r=a.do();
-  if(r===false) return;
-  g.acted=true;
-  renderActs(); sync();
-  // 行动后自动结算并进入下一轮（给一点停顿感）
-  setHint("结算中…");
-  setTimeout(endRound, 500);
+function doAction(id){
+  if(g.over) return; const a=ACT_DEF[id]; if(!a) return;
+  if(g.acted){ setHint("本轮已行动，结算中…"); return; }
+  const r=a.do(); if(r===false) return;
+  g.acted=true; g.stats.acts++; renderActs(); sync();
+  setHint("结算中…"); setTimeout(endRound,500);
 }
 
 function endRound(){
   if(g.over) return;
-  // 阈值判定
   g.stats.maxop=Math.max(g.stats.maxop,g.op);
-  if(g.op>=80 && !g.shieldGiven80){ g.shield++; g.shieldGiven80=true; sys("🛡 舆论≥80，群管理获得 1 层护盾！","good"); }
-  if(g.op<80) g.shieldGiven80=false;
-  if(g.op<50 && g.op>=20 && !g.impeachWarned){ sys("⚠ 舆论跌破 50，全群开始怀疑你…小心！","bad"); }
-  // 选举（每5轮）
-  if(g.round%5===0 && !g.over){ election(); if(g.over) return; }
-  // 弹劾（<20）
-  if(g.op<20 && !g.over){ impeach(); if(g.over) return; }
-  // 胜利
-  if(g.round>=20){ win(); return; }
-  g.round++;
-  renderInv();
-  startRound();
+  // 舆论≥80 护盾（管理阵营）
+  if(g.roleDef.side==="power"){
+    if(g.op>=80 && !g.shieldGiven80){ g.shield++; g.shieldGiven80=true; sys("🛡 舆论≥80，群管理获得护盾！","good"); }
+    if(g.op<80) g.shieldGiven80=false;
+  }
+  if(g.round%5===0 && !g.over) election();
+  if(g.op<20 && g.role==="qunzhu" && !g.over) impeach();
+  checkEnd(); if(g.over) return;
+  if(g.round>=20){ finalJudge(); return; }
+  g.round++; renderInv(); startRound();
 }
 
 function election(){
-  sys("🗳 —— 第 "+g.round+" 轮：全民选举 —— ","event");
-  const support=clamp(g.op + rand(-12,12), 0,120);
-  if(support>=45){ sys(`✅ 选举通过！支持率 ${Math.round(support)}%，你连任群主。`,"good"); op(g,3); }
-  else { sys(`❌ 选举失败！支持率仅 ${Math.round(support)}%，你被投下台了…`,"bad"); lose("竞选失败，你被赶下了群主之位"); }
+  sys("🗳 —— 全民选举 —— ","court");
+  if(g.role==="member"){ const v=g.meter+rand(-8,10);
+    if(v>=60){ winGame("你当选为新群主！权力更替成功！"); }
+    else sys(`落选（支持 ${Math.round(v)}%<60），继续努力！`,"bad"); }
+  else if(g.role==="qunzhu"){ const s=g.op+rand(-12,12);
+    if(s>=45){ op(3); sys(`✅ 连任成功（支持 ${Math.round(s)}%），舆论+3`,"good"); }
+    else loseGame("竞选失败，你被投下台了"); }
+  else if(g.role==="admin"){ if(g.rep<2 && Math.random()<0.4){ rep(-1); sys("⬇ 官方考核，你差点被开除…信誉-1","bad"); } else sys("选举与你无关，静观其变。"); }
+  else sys("选举进行中，你冷眼旁观，暗中行事。");
 }
 
 function impeach(){
-  sys("🗳 —— 弹劾大会 —— ","event");
-  sys("舆论过低，全群发起弹劾投票！","bad");
-  const passFire = Math.random() < (0.35 + (20-g.op)*0.03);  // 舆论越低越危险
-  if(g.inv.report>0){ g.inv.report--; op(g,10); sys("📣 你打出举报卡自辩，舆论 +10！","good"); renderInv(); }
-  if(g.op>=20 && !passFire){ sys("😮‍💨 你惊险过关，暂时保住了位置。","good"); }
-  else if(passFire){ lose("弹劾通过，你被踢出了群主之位"); }
-  else { sys("😮‍💨 舆论回升，弹劾未通过。","good"); }
+  sys("🗳 —— 弹劾大会 —— ","court"); sys("舆论过低，全群发起弹劾！","bad");
+  if(g.inv.report>0){ g.inv.report--; op(10); sys("📣 举报卡自辩，舆论+10！","good"); renderInv(); }
+  const fire=Math.random()<(0.35+(20-g.op)*0.03);
+  if(g.op>=20 || !fire) sys("😮‍💨 你惊险保住了位置。","good");
+  else loseGame("弹劾通过，你被赶下群主之位");
 }
 
-function checkDeath(){
-  if(g.hp>0) return false;
-  if(g.inv.revive>0){ g.inv.revive--; g.hp=3; sys("🎟 复活券生效！你满血归来（❤3）。","good"); renderInv(); return false; }
-  lose("你被攻击淘汰了（❤ 归零）"); return true;
+function checkEnd(){
+  if(g.over) return;
+  if(g.hp<=0){ if(g.inv.revive>0){ g.inv.revive--; g.hp=3; sys("🎟 复活券生效！满血归来（❤3）","good"); renderInv(); }
+    else { loseGame("你被攻击淘汰了（❤ 归零）"); return; } }
+  if(g.roleDef.meter && g.roleDef.meter.bad && g.meter>=g.roleDef.meter.max){ loseGame("怀疑度拉满，你的卧底身份被识破！"); return; }
+  if(g.role==="media" && g.meter>=100){ winGame("曝光进度拉满，微信总监被扳倒，你赢了！"); return; }
+  sync();
+}
+function finalJudge(){   // 撑到第20轮的最终裁定
+  if(g.role==="qunzhu"){ winGame("你守住群主之位，撑过全部20轮！"); }
+  else if(g.role==="admin"){ g.rep>0?winGame("你稳坐管理员到最后，功成身退！"):loseGame("信誉崩塌，你被降为普通成员"); }
+  else if(g.role==="wodi"){ winGame("你潜伏到最后从未暴露，卧底大成功！"); }
+  else if(g.role==="hacker"){ g.meter>=6?winGame(`你破解了 ${g.meter} 人并全身而退！`):loseGame(`只破解了 ${g.meter}/6 人，任务失败`); }
+  else if(g.role==="media"){ loseGame("到最后也没能扳倒总监，曝光失败"); }
+  else if(g.role==="member"){ loseGame("20轮内始终没能当选群主"); }
 }
 
 /*==================== 结束 ====================*/
-function win(){ g.over=true; showOver(true); }
-function lose(reason){ g.over=true; g.loseReason=reason; showOver(false); }
-
-function showOver(won){
+function winGame(reason){ if(g.over)return; g.over=true; g.won=true; g.endReason=reason; showOver(); }
+function loseGame(reason){ if(g.over)return; g.over=true; g.won=false; g.endReason=reason; showOver(); }
+function showOver(){
   document.getElementById("acts").innerHTML="";
-  const power=g.op + g.coins*2 + g.hp*5 + g.round*3;
-  document.getElementById("overTitle").textContent = won? "🏆 你守住了群主之位！" : "💀 群主之位不保";
-  document.getElementById("overSub").innerHTML = (won
-    ? `撑过全部 20 轮！最终舆论 <b>${g.op}</b>`
-    : `第 ${g.round} 轮 · ${g.loseReason}`) + ` · 权力值 <b>${power}</b>`;
-  // 成就
-  const A=[];
-  const s=g.stats;
-  if(won) A.push(["🏅","最强群主","坐稳20轮宝座"]);
-  if(s.maxop>=110) A.push(["📈","民心所向","舆论一度超过110"]);
-  if(s.redpackets>=3) A.push(["🧧","红包大户","发了"+s.redpackets+"个红包收买人心"]);
-  if(s.gongguan>=3) A.push(["🤝","公关大师",""+s.gongguan+"次成功公关"]);
-  if(s.kicks>=4) A.push(["👢","铁腕群主","踢了"+s.kicks+"次人"]);
-  if(s.attacksTaken>=5) A.push(["🛡","挨打王","硬抗了"+s.attacksTaken+"次攻击"]);
-  if(s.speeches>=6) A.push(["🎤","嘴强王者","发言拉票"+s.speeches+"次"]);
+  const power=g.op+g.coins*2+g.hp*5+g.rep*4+g.round*3+g.meter*2;
+  document.getElementById("overTitle").textContent=g.won?`🏆 ${g.roleDef.ico}${g.roleDef.nm} 胜利！`:`💀 ${g.roleDef.ico}${g.roleDef.nm} 失败`;
+  document.getElementById("overSub").innerHTML=`${g.endReason}<br>第 ${g.round} 轮 · 权力值 <b>${power}</b>`;
+  const A=[], s=g.stats;
+  if(g.won) A.push([g.roleDef.ico,"任务达成",`以「${g.roleDef.nm}」身份获胜`]);
+  if(s.reveals>=3) A.push(["🧾","证据大师","公开了"+s.reveals+"份真证据"]);
+  if(s.fakes>=1) A.push(["🤥","翻车现场","公开假证据被抓包"]);
+  if(s.attacksTaken>=5) A.push(["🛡","挨打王","硬抗"+s.attacksTaken+"次攻击"]);
+  if(s.gongguan>=3) A.push(["🤝","公关大师",s.gongguan+"次成功公关"]);
+  if(s.hacks>=5) A.push(["💻","顶级黑客","破解"+s.hacks+"次"]);
+  if(s.exposes>=4) A.push(["📰","金牌记者","曝光"+s.exposes+"次"]);
+  if(s.redpackets>=3) A.push(["🧧","红包大户","发了"+s.redpackets+"个红包"]);
   if(g.coins>=15) A.push(["💰","财大气粗","攒下"+g.coins+"金币"]);
-  if(A.length===0) A.push(["🎗","参与奖","下次一定当上最强群主！"]);
-  document.getElementById("achList").innerHTML = A.map(a=>
-    `<div class="ach"><span class="m">${a[0]}</span><div><div class="at">${a[1]}</div><div class="ad">${a[2]}</div></div></div>`).join("");
+  if(A.length===0) A.push(["🎗","参与奖","下次换个身份再战！"]);
+  document.getElementById("achList").innerHTML=A.map(a=>`<div class="ach"><span class="m">${a[0]}</span><div><div class="at">${a[1]}</div><div class="ad">${a[2]}</div></div></div>`).join("");
   document.getElementById("overScreen").classList.remove("hidden");
 }
 
 /*==================== 商店 & 道具 ====================*/
-function openShop(){
-  const grid=document.getElementById("shopGrid"); grid.innerHTML="";
+function openShop(){ const grid=document.getElementById("shopGrid"); grid.innerHTML="";
   document.getElementById("shopCoins").textContent=g.coins;
-  SHOP.forEach(it=>{
-    const el=document.createElement("div"); el.className="shopitem";
+  SHOP.forEach(it=>{ const el=document.createElement("div"); el.className="shopitem";
     el.innerHTML=`<span class="si">${it.ico}</span><div class="sinfo"><div class="snm">${it.nm}</div><div class="sdesc">${it.d}</div></div>`;
-    const b=document.createElement("button"); b.className="buy"+(g.coins<it.price?" own":"");
-    b.textContent="💰"+it.price; b.onclick=()=>buy(it); el.appendChild(b); grid.appendChild(el);
-  });
-  document.getElementById("shopScreen").classList.remove("hidden");
-}
-function buy(it){
-  if(g.coins<it.price){ setHint("金币不足"); return; }
-  g.coins-=it.price; g.stats.coinsSpent+=it.price;
+    const b=document.createElement("button"); b.className="buy"+(g.coins<it.price?" own":""); b.textContent="💰"+it.price; b.onclick=()=>buy(it);
+    el.appendChild(b); grid.appendChild(el); });
+  document.getElementById("shopScreen").classList.remove("hidden"); }
+function buy(it){ if(g.coins<it.price){ setHint("金币不足"); return; }
+  g.coins-=it.price;
   if(it.id==="shield") g.shield++;
+  else if(it.id==="evidence"){ g.evidence.push(makeEvidence(0.35)); renderEv(); }
   else g.inv[it.id]=(g.inv[it.id]||0)+1;
-  openShop(); renderInv(); sync();
-  sys(`🛒 购买了「${it.nm}」`,"good");
-}
-function useItem(id){
-  if(g.over) return;
+  openShop(); renderInv(); sync(); sys(`🛒 购买了「${it.nm}」`,"good"); }
+function useItem(id){ if(g.over) return;
   if(g.itemsLocked){ setHint("⚠ 腾讯维护中，本轮道具失效"); return; }
-  if(!g.inv[id]||g.inv[id]<=0) return;
-  const it=ITEM[id];
-  g.inv[id]--; g.stats.itemsUsed++;
-  if(id==="medkit"){ g.hp=Math.min(g.maxhp,g.hp+1); sys("💊 使用医疗包，❤+1","good"); }
-  else if(id==="report"){ op(g,6); sys("📣 使用举报卡，舆论 +6","good"); }
-  else if(id==="investigate"){ g.threats=Math.max(0,g.threats-1); op(g,2); sys("🔍 调查卡揪出一个闹事者，舆论 +2","good"); }
-  else if(id==="disguise"){ g.disguised=true; sys("🎭 身份伪装，下一轮不被攻击","good"); }
-  else if(id==="spam"){ op(g,3); g.exposeQueued=0; sys("💥 刷屏搅局，舆论 +3，曝光被顶下去了","good"); }
-  else if(id==="shield"){ g.shield++; sys("🛡 使用护盾","good"); }
-  renderInv(); sync();
-}
-function renderInv(){
-  const bar=document.getElementById("invBar"); bar.innerHTML="";
-  const order=["shield","medkit","report","investigate","disguise","spam","revive"];
-  let any=false;
+  if(!g.inv[id]||g.inv[id]<=0) return; g.inv[id]--;
+  if(id==="medkit"){ g.hp=Math.min(g.maxhp,g.hp+1); sys("💊 医疗包，❤+1","good"); }
+  else if(id==="report"){ op(6); sys("📣 举报卡，舆论+6","good"); }
+  else if(id==="disguise"){ g.disguised=true; if(g.roleDef.meter&&g.roleDef.meter.bad) addMeter(-20); sys("🎭 身份伪装，下一轮不被针对","good"); }
+  else if(id==="spam"){ op(3); g.exposeQueued=0; sys("💥 刷屏搅局，舆论+3","good"); }
+  renderInv(); sync(); }
+
+/*==================== 渲染 ====================*/
+function renderEv(){ const bar=document.getElementById("evBar"); bar.innerHTML="";
+  if(!g.evidence.length){ bar.innerHTML='<span class="ev" style="border-style:solid;opacity:.5;">🧾 暂无证据（调查/购买/事件获取）</span>'; return; }
+  g.evidence.forEach(e=>{ const el=document.createElement("span"); el.className="ev"+(e.fake?" fake":"");
+    el.textContent=`${e.ico}${e.nm}${e.fake?"?":""}`; bar.appendChild(el); }); }
+function renderInv(){ const bar=document.getElementById("invBar"); bar.innerHTML="";
+  const order=["shield","medkit","report","disguise","spam","revive"]; let any=false;
   order.forEach(id=>{ const n=(id==="shield"?g.shield:g.inv[id])||0; if(n<=0) return; any=true;
-    const it=ITEM[id]; const el=document.createElement("span"); el.className="inv"+((g.itemsLocked&&id!=="shield")?" dis":"");
+    const it=ITEM[id]; const el=document.createElement("span"); el.className="inv"+((g.itemsLocked&&id!=="shield"&&id!=="revive")?" dis":"");
     el.textContent=`${it.ico}${it.nm}×${n}`;
-    if(id!=="shield"&&id!=="revive") el.onclick=()=>useItem(id);
-    bar.appendChild(el); });
-  if(!any){ const el=document.createElement("span"); el.className="inv dis"; el.textContent="🎒 背包空（去商店买道具）"; bar.appendChild(el); }
-}
+    if(id!=="shield"&&id!=="revive") el.onclick=()=>useItem(id); bar.appendChild(el); });
+  if(!any){ const el=document.createElement("span"); el.className="inv dis"; el.textContent="🎒 背包空"; bar.appendChild(el); } }
 
 /*==================== 工具 ====================*/
-function spend(n){ if(g.coins<n){ setHint("金币不足，去商店或发言攒钱"); return false; } g.coins-=n; g.stats.coinsSpent+=n; return true; }
+function spend(n){ if(g.coins<n){ setHint("金币不足，去商店或发言攒钱"); return false; } g.coins-=n; return true; }
 function setHint(t){ document.getElementById("hint").textContent=t; }
-function flashOp(t){ sys("✅ "+t,"good"); }
+function good(t){ sys("✅ "+t,"good"); }
 function sync(){
   document.getElementById("roundN").textContent=g.round;
   document.getElementById("coinN").textContent=g.coins;
   document.getElementById("hpN").textContent=Math.max(0,g.hp);
   document.getElementById("shieldN").textContent=g.shield;
-  const o=g.op; const bar=document.getElementById("opBar"), txt=document.getElementById("opTxt");
-  bar.style.width=Math.min(100,o/120*100)+"%";
-  bar.style.background = o>=80?"linear-gradient(90deg,#07c160,#39d67f)" : o>=50?"linear-gradient(90deg,#ffbe3d,#ffd76a)" : o>=20?"linear-gradient(90deg,#ff8c3b,#ffab5e)" : "linear-gradient(90deg,#fa5151,#ff7a7a)";
-  txt.textContent=o;
-  document.getElementById("hdCount").textContent="("+(128 - (5-Math.max(0,g.hp)))+")";
+  document.getElementById("repN").textContent=g.rep;
+  const o=g.op, obar=document.getElementById("opBar");
+  obar.style.width=Math.min(100,o/120*100)+"%";
+  obar.style.background=o>=80?"linear-gradient(90deg,#07c160,#39d67f)":o>=50?"linear-gradient(90deg,#ffbe3d,#ffd76a)":o>=20?"linear-gradient(90deg,#ff8c3b,#ffab5e)":"linear-gradient(90deg,#fa5151,#ff7a7a)";
+  document.getElementById("opTxt").textContent=o;
+  const mw=document.getElementById("meterWrap");
+  if(g.roleDef.meter){ mw.style.display="flex"; const m=g.roleDef.meter;
+    document.getElementById("meterLab").textContent=(m.bad?"⚠":"🎯")+m.lab;
+    const mb=document.getElementById("meterBar"); mb.style.width=Math.min(100,g.meter/m.max*100)+"%";
+    mb.style.background=m.bad?"linear-gradient(90deg,#fa5151,#ff9a9a)":"linear-gradient(90deg,#10aeff,#6fd0ff)";
+    document.getElementById("meterTxt").textContent=m.max<=10?(g.meter+"/"+m.max):g.meter;
+  } else mw.style.display="none";
+  document.getElementById("goalLine").textContent="🎯 "+g.roleDef.goal;
+  renderEv(); renderInv();
+  document.getElementById("hdCount").textContent="("+(128-(g.maxhp-Math.max(0,g.hp)))+")";
 }
 
 /*==================== 按钮 ====================*/
@@ -437,11 +546,10 @@ document.getElementById("startBtn").onclick=()=>{ document.getElementById("start
 document.getElementById("shopClose").onclick=()=>document.getElementById("shopScreen").classList.add("hidden");
 document.getElementById("shopTop").onclick=()=>{ if(g&&!g.over) openShop(); };
 document.getElementById("againBtn").onclick=()=>{ document.getElementById("overScreen").classList.add("hidden"); newGame(); };
-document.getElementById("quitBtn").onclick=()=>{ if(history.length>1) history.back(); else location.href="index.html"; };
+document.getElementById("quitBtn").onclick=()=>{ location.href="index.html"; };
 document.getElementById("homeBtn2").onclick=()=>{ location.href="index.html"; };
 
-/* 暴露给测试 */
-if(typeof window!=="undefined") window.__ww={get g(){return g;}, newGame, doAction, ACTIONS, endRound, aiAct, buy, useItem, ITEM};
+if(typeof window!=="undefined") window.__ww={get g(){return g;}, newGame, doAction, endRound, buy, useItem, ITEM, ROLE_KEYS, ACT_DEF, court, aiOne};
 </script>
 </body>
 </html>
