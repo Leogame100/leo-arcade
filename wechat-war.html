@@ -281,6 +281,16 @@
     </div>
   </div>
 
+  <!-- 指定踢人 -->
+  <div class="overlay hidden" id="kickScreen">
+    <div class="sheet">
+      <h2>👢 踢谁出群？</h2>
+      <div class="sub">好感低的踢了群众叫好；踢人缘好的会被同阵营围攻（占本轮行动）</div>
+      <div id="kickList"></div>
+      <button class="btn ghost" id="kickCancel">取消</button>
+    </div>
+  </div>
+
   <!-- 单人·私聊群成员 -->
   <div class="overlay hidden" id="whisperScreen">
     <div class="sheet">
@@ -412,6 +422,44 @@ const NPCS=[
 ];
 const npcBy=e=>{ const f=NPCS.filter(n=>n.a===e); return pick(f.length?f:NPCS); };
 
+/*==================== 好感值 & 同阵营互助 ====================*/
+function aff(name){ return g.npcAff?(g.npcAff[name]??50):50; }
+function addAff(name,d){ if(!g.npcAff) return; g.npcAff[name]=clamp((g.npcAff[name]??50)+d,0,100); }
+function factionAff(emoji){ const f=NPCS.filter(n=>n.a===emoji); if(!f.length) return 50;
+  return f.reduce((s,n)=>s+aff(n.n),0)/f.length; }
+function addFactionAff(emoji,d){ NPCS.filter(n=>n.a===emoji).forEach(n=>addAff(n.n,d)); }
+function affHearts(v){ const h=Math.round(v/20); return "❤".repeat(h)+"🤍".repeat(5-h); }
+
+/*==================== 群里的喧闹（每回合大量NPC发言 + 人机行动） ====================*/
+const CHATTER=[
+  "6666","哈哈哈哈哈","？？？","蹲一个瓜","前排围观","有内鬼","up主加油","坐等大结局",
+  "红包呢红包呢","楼上说得对","这群好乱啊","我啥也没看见","摸鱼中🐟","打卡～","+1","有点意思",
+  "笑死我了🤣","别吵别吵","冷静冷静","吃瓜吃瓜🍉","牛的","蚌埠住了","typing…","在的在的",
+];
+// 一个NPC的自主行动（返回是否已产出效果消息）
+function npcAction(npc){
+  const r=Math.random(), faff=factionAff(npc.a);
+  if(r<0.14){ // 发红包（人机刷红包）→ 你抢到金币
+    const c=1+Math.floor(Math.random()*3); g.coins+=c;
+    msg(npc.n,npc.a,pick(["【发了一个红包】🧧","红包拿去～🧧","手气最佳来抢！🧧"]));
+    sys(`🧧 你抢到 ${npc.n} 的红包：💰+${c}`,"good"); return; }
+  if(r<0.24 && (npc.a==="🛡"||npc.a==="🏢"||npc.a==="📢")){ // 人机踢人
+    const victim=npcBy(pick(["👥","👀"])); popChange("member",-1); popChange("kicked",1);
+    msg(npc.n,npc.a,`把 ${victim.n} 踢了！👢`); sys(`👢 ${npc.n} 踢掉了一名成员`,""); return; }
+  if(r<0.30){ // 刷屏
+    msg(npc.n,npc.a,pick(["刷屏刷屏","6666666666","啊啊啊啊啊啊","🤣🤣🤣🤣🤣"])); return; }
+  if(r<0.40){ // 举报/攻击/或（好感高则）挺你
+    if(faff>=62){ addFactionAff(npc.a,1); op(1); msg(npc.n,npc.a,pick(["其实群主挺靠谱的","别黑了，我挺TA","支持一下👍"])); }
+    else if(faff<=32){ op(-1); msg(npc.n,npc.a,pick(["这群主不行","我举报！","下台吧","别惯着TA"])); }
+    else msg(npc.n,npc.a,pick(CHATTER));
+    return; }
+  msg(npc.n,npc.a,pick(CHATTER)); // 纯灌水
+}
+function groupChatter(){
+  const n=8+Math.floor(Math.random()*4);   // 一回合约 8~11 条
+  for(let i=0;i<n && !g.over;i++){ npcAction(npcBy(pick(NPCS).a)); }
+}
+
 /*==================== 证据 ====================*/
 const EV_TYPES=[
   {k:"chat",nm:"聊天记录",ico:"📱"},{k:"shot",nm:"截图",ico:"📷"},{k:"report",nm:"举报记录",ico:"📑"},
@@ -491,6 +539,7 @@ function newGame(forceRole){
       exposeQueued:0, shieldGiven80:false, bombUsed:false, silenceNext:0, muted:false, redpacketClaimed:false,
       bmOpen:false, bmBought:false, bmStock:[], timedBomb:0, cloak:0, bribeNext:false, dmUsed:false,
       pop:Object.fromEntries(POP_DEF.map(p=>[p.k,p.n])),
+      npcAff:Object.fromEntries(NPCS.map(n=>[n.n, Math.round(rand(38,62))])),
       stats:{acts:0,reveals:0,fakes:0,attacksTaken:0,gongguan:0,kicks:0,redpackets:0,hacks:0,exposes:0,maxop:100},
   };
   // 初始证据
@@ -526,6 +575,8 @@ function startRound(){
   if(safe){ let why = g.cloak>0?`🕶 隐身披风生效(剩${g.cloak}轮)`:(g.bribeNext?"💵 贿赂生效，无人敢动你":"🎭 你伪装成普通成员");
     sys(why+"，本轮无人针对你。","good"); g.disguised=false; g.bribeNext=false; if(g.cloak>0) g.cloak--; }
   else aiRound();
+  // 群里其他人的喧闹（发言/发红包/踢人/刷屏）
+  if(!g.over) groupChatter();
   // 空投（偶数轮）
   if(g.round%2===0 && !g.over) airdrop();
   // 黑市（奇数轮开张，与空投错开）
@@ -598,6 +649,13 @@ function aiOne(){
 }
 function resolveAI(act){
   const npc=npcBy(act.who); msg(npc.n,npc.a,pick(act.txt));
+  // 同阵营互助：好感高的阵营会转为声援你，好感低的攻击更狠
+  if(!act.good && !act.noise){ const fa=factionAff(act.who);
+    if(fa>=64 && Math.random()<0.55){ op(4); addFactionAff(act.who,1);
+      sys(`🤝 ${npc.n}（好感高）反过来替你说话：舆论 +4`,"good");
+      msg(npcBy(act.who).n,act.who,pick(["其实群主没那么差","别一起黑TA","我信群主"])); return; }
+    if(fa<=30){ act={...act, op:Math.round((act.op||-3)*1.4)}; }
+  }
   if(act.noise){ if(g.chaos) op(Math.random()<.5?-1:1); return; }
   if(act.good){ if(act.op) op(act.op); if(act.meter) addMeter(act.meter); if(act.op) sys(`👍 ${act.tag}：舆论 ${act.op>0?"+":""}${act.op||0}`,"good"); return; }
   // 卧底怀疑
@@ -657,9 +715,7 @@ const ACT_DEF={
     renderEv(); }},
   // 群主/管理员
   pr:{ico:"🤝",nm:"公关",cost:2,do:()=>{ if(!spend(2))return false; op(8); g.exposeQueued=0; g.stats.gongguan++; meSay("这事我处理好了，官方打好招呼了。"); good("公关 舆论+8，曝光压下"); }},
-  kick:{ico:"👢",nm:"踢人",do:()=>{ popChange("member",-1); popChange("kicked",1);
-    if(Math.random()<0.2){ op(-5); rep(-1); g.stats.kicks++; meSay("这刺头，踢了！"); sys("😱 你踢错了人！舆论-5 信誉-1","bad"); checkEnd(); }
-    else { g.threats=Math.max(0,g.threats-1); op(2); g.stats.kicks++; meSay("搞事的，踢出去。"); good("踢掉一个威胁，舆论+2"); } }},
+  kick:{ico:"👢",nm:"踢人",do:()=>{ openKickTarget(); return false; }},   // 指定踢谁
   muteact:{ico:"🔇",nm:"禁言组员",do:()=>{ g.silenceNext=(g.silenceNext||0)+1; g.threats=Math.max(0,g.threats-1); popChange("member",-1); popChange("muted",1); meSay("这位组员太闹，禁言10分钟。"); good("禁言一个组员：下一轮敌方攻击-1"); }},
   redpacket:{ico:"🧧",nm:"发红包",cost:3,do:()=>{ if(!spend(3))return false; op(10); if(g.role==="member") addMeter(12); g.stats.redpackets++; meSay("【发了一个88元红包】🧧"); good(`发红包 舆论+10${g.role==="member"?"，上位支持+12":""}`); }},
   // 媒体
@@ -890,6 +946,30 @@ function pickRed(o){
   document.getElementById("redGiveScreen").classList.add("hidden");
   meSay(`【群主发红包】🧧 ${o.nm}`); sys("🧧 群主红包："+o.d,"good");
   redAnim("群主红包", o.nm);
+  g.coins-=0; addFactionAff(o.ico==="👥"?"👥":o.ico==="🛡"?"🛡":o.ico==="📰"?"📰":o.ico, 6);  // 发红包涨好感
+  g.acted=true; g.stats.acts++; renderActs(); sync(); checkEnd();
+  if(!g.over){ setHint("结算中…"); setTimeout(endRound,600); }
+}
+
+/*==================== 👢 指定踢人（含好感/同阵营互助） ====================*/
+function openKickTarget(){
+  if(g.acted){ setHint("本轮已行动"); return; }
+  const box=document.getElementById("kickList"); box.innerHTML="";
+  const cands=NPCS.filter(n=>n.a!=="💼").slice().sort(()=>Math.random()-0.5).slice(0,5);
+  cands.forEach(npc=>{ const a=aff(npc.n); const el=document.createElement("div"); el.className="redopt";
+    el.innerHTML=`<span class="oi">${npc.a}</span><div class="oinfo"><div class="onm">${npc.n}</div><div class="od">好感 ${affHearts(a)}</div></div><span class="oc">👢踢</span>`;
+    el.onclick=()=>doKick(npc); box.appendChild(el); });
+  document.getElementById("kickScreen").classList.remove("hidden");
+}
+function doKick(npc){
+  document.getElementById("kickScreen").classList.add("hidden");
+  popChange("member",-1); popChange("kicked",1); g.stats.kicks++;
+  const a=aff(npc.n); addFactionAff(npc.a,-12);   // 同阵营都不满
+  meSay(`把 ${npc.n} 踢了！👢`);
+  if(a>=60){ op(-6); rep(-1); sys(`😱 ${npc.n} 人缘极好，你踢错了人！同阵营群起而攻，舆论-6 信誉-1`,"bad");
+    msg(npcBy(npc.a).n,npc.a,pick(["凭什么踢TA！","群主太过分了！","我们要讨个说法","一起举报群主！"])); }
+  else if(a<=40){ g.threats=Math.max(0,g.threats-1); op(3); sys(`👢 ${npc.n} 本就招人烦，踢得好！威胁-1 舆论+3`,"good"); }
+  else { g.threats=Math.max(0,g.threats-1); op(1); sys(`👢 踢掉了 ${npc.n}，威胁-1`,""); }
   g.acted=true; g.stats.acts++; renderActs(); sync(); checkEnd();
   if(!g.over){ setHint("结算中…"); setTimeout(endRound,600); }
 }
@@ -912,7 +992,7 @@ function openWhisper(){
   const box=document.getElementById("whisperList"); box.innerHTML="";
   const cands=NPCS.slice().sort(()=>Math.random()-0.5).slice(0,4);
   cands.forEach(npc=>{ const el=document.createElement("div"); el.className="redopt";
-    el.innerHTML=`<span class="oi">${npc.a}</span><div class="oinfo"><div class="onm">${npc.n}</div><div class="od">点击私聊 TA</div></div><span class="oc">🔒</span>`;
+    el.innerHTML=`<span class="oi">${npc.a}</span><div class="oinfo"><div class="onm">${npc.n}</div><div class="od">好感 ${affHearts(aff(npc.n))}</div></div><span class="oc">🔒</span>`;
     el.onclick=()=>pickWhisper(npc); box.appendChild(el); });
   document.getElementById("whisperScreen").classList.remove("hidden");
 }
@@ -920,9 +1000,10 @@ function pickWhisper(npc){
   if(g.dmUsed) return; g.dmUsed=true;
   document.getElementById("whisperScreen").classList.add("hidden");
   meSay(`🔒 私聊 ${npc.n}：${pick(["在吗？帮个忙呗~","咱俩联手怎么样？","悄悄说个事…","给你发个红包，帮我说句话呗"])}`);
+  addAff(npc.n,10); addFactionAff(npc.a,3);   // 私聊拉近好感
   const r=whisperEffect(npc);
   msg(npc.n+" 🔒", npc.a, r.reply);
-  sys("💬 "+r.txt,"good");
+  sys(`💬 ${r.txt}（与 ${npc.n} 好感 ${affHearts(aff(npc.n))}）`,"good");
   renderActs(); renderEv(); sync(); checkEnd();
 }
 
@@ -1037,6 +1118,12 @@ function openRoster(){
         +`<div class="rbar"><i style="width:${Math.min(100,n/maxN*100)}%"></i></div><span class="rc">${n}</span>`;
       box.appendChild(row); });
     body.appendChild(box); });
+  // 好感度（对你）
+  const ab=document.createElement("div"); ab.className="rgrp"; ab.innerHTML="<h3>❤ 群里对你的好感度</h3>";
+  NPCS.forEach(npc=>{ const v=aff(npc.n); const row=document.createElement("div"); row.className="rrow";
+    row.innerHTML=`<span class="ri">${npc.a}</span><span class="rn">${npc.n}</span><span class="rc" style="font-size:11px;">${affHearts(v)}</span>`;
+    ab.appendChild(row); });
+  body.appendChild(ab);
   document.getElementById("rosterScreen").classList.remove("hidden");
 }
 
@@ -1157,6 +1244,7 @@ $("redGiveCancel").onclick=()=>show("redGiveScreen",false);
 $("bmCancel").onclick=()=>show("bmScreen",false);
 $("rosterClose").onclick=()=>show("rosterScreen",false);
 $("whisperCancel").onclick=()=>show("whisperScreen",false);
+$("kickCancel").onclick=()=>show("kickScreen",false);
 $("hdCount").onclick=()=>{ if(g&&!g.over) openRoster(); };
 $("shopTop").onclick=()=>{ if(g&&!g.over) openShop(); };
 $("againBtn").onclick=()=>{ show("overScreen",false); buildRoleGrid(); show("roleScreen",true); };
@@ -1164,7 +1252,7 @@ $("quitBtn").onclick=()=>{ location.href="index.html"; };
 $("homeBtn2").onclick=()=>{ show("overScreen",false); backToMenu(); };
 refreshAchCount();
 
-if(typeof window!=="undefined") window.__ww={get g(){return g;}, newGame, doAction, endRound, buy, useItem, ITEM, ROLE_KEYS, ACT_DEF, court, aiOne, get WSAVE(){return WSAVE;}, checkAch, ACHIEVEMENTS, claimRed, openRedGive, pickRed, RED_GIVE, openBM, buyBM, BM_ITEMS, swapRole, openRoster, groupCount, POP_DEF, openWhisper, pickWhisper, NPCS};
+if(typeof window!=="undefined") window.__ww={get g(){return g;}, newGame, doAction, endRound, buy, useItem, ITEM, ROLE_KEYS, ACT_DEF, court, aiOne, get WSAVE(){return WSAVE;}, checkAch, ACHIEVEMENTS, claimRed, openRedGive, pickRed, RED_GIVE, openBM, buyBM, BM_ITEMS, swapRole, openRoster, groupCount, POP_DEF, openWhisper, pickWhisper, NPCS, openKickTarget, doKick, aff, factionAff, groupChatter, npcAction};
 </script>
 </body>
 </html>
