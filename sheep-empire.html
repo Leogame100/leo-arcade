@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>羊圈帝国 · Sheep Pen Empire</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;}
+  :root{--bg:#12160f;--panel:#1c2417;--panel2:#26301c;--line:#3a4a28;--ink:#f2f5ea;--muted:#9aa888;
+    --green:#6ab04a;--green-d:#4e8a34;--gold:#e8b83a;--red:#e0554b;--blue:#4fa3e0;--crime:#c0563e;}
+  html,body{height:100%;background:#000;color:var(--ink);overflow:hidden;}
+  #app{height:100%;display:flex;align-items:center;justify-content:center;}
+  #wrap{position:relative;width:100%;max-width:480px;height:100%;max-height:920px;background:
+    radial-gradient(900px 500px at 50% -10%,#25301b,#12160f 70%);display:flex;flex-direction:column;overflow:hidden;
+    box-shadow:0 0 40px rgba(0,0,0,.6);}
+  /* 顶栏 */
+  .top{flex:0 0 auto;background:linear-gradient(180deg,#26301c,#1c2417);border-bottom:1px solid var(--line);padding:8px 12px;}
+  .top .r1{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .top .title{font-weight:900;font-size:15px;letter-spacing:.5px;}
+  .top .title small{color:var(--muted);font-weight:600;font-size:11px;}
+  .rolechip{background:linear-gradient(135deg,#e8b83a,#d89a2a);color:#3a2a00;font-weight:900;font-size:12px;padding:3px 10px;border-radius:20px;}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;}
+  .stat{background:#141a0f;border:1px solid #33421f;border-radius:9px;padding:6px 8px;text-align:center;}
+  .stat .lab{font-size:10px;color:var(--muted);}
+  .stat .val{font-size:14px;font-weight:900;margin-top:1px;}
+  .bar{height:7px;background:#0e1209;border-radius:5px;overflow:hidden;margin-top:4px;}
+  .bar > i{display:block;height:100%;transition:width .4s;}
+  /* 日志 */
+  #log{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;}
+  .msg{font-size:13px;line-height:1.5;padding:6px 10px;border-radius:8px;background:#1a2113;border-left:3px solid #33421f;animation:pop .2s;}
+  .msg.good{border-left-color:var(--green);} .msg.bad{border-left-color:var(--red);}
+  .msg.event{border-left-color:var(--gold);background:#221c0f;} .msg.news{border-left-color:var(--blue);background:#0f1a22;}
+  .msg.crime{border-left-color:var(--crime);background:#221310;}
+  .msg b{color:var(--gold);}
+  @keyframes pop{from{opacity:0;transform:translateY(6px);}to{opacity:1;}}
+  .round-sep{align-self:center;font-size:11px;color:var(--muted);background:#0e1209;padding:2px 12px;border-radius:20px;margin:2px 0;}
+  /* 羊圈面板 */
+  .pens{flex:0 0 auto;max-height:150px;overflow-y:auto;padding:6px 12px;border-top:1px solid var(--line);background:#151a0e;}
+  .penrow{display:flex;align-items:center;gap:8px;background:#1c2417;border:1px solid #33421f;border-radius:8px;padding:5px 9px;margin-bottom:4px;font-size:12px;}
+  .penrow .pi{font-size:18px;} .penrow .pn{flex:1;font-weight:700;} .penrow .pinfo{color:var(--muted);font-size:11px;}
+  .penrow .up{background:var(--gold);color:#3a2a00;border:none;border-radius:6px;padding:3px 8px;font-weight:800;font-size:11px;cursor:pointer;}
+  .penempty{color:var(--muted);font-size:12px;text-align:center;padding:8px;}
+  /* 操作 */
+  .dock{flex:0 0 auto;background:#10140b;border-top:1px solid var(--line);padding:8px;}
+  .acts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+  .act{background:#26301c;border:1px solid #3a4a28;border-radius:10px;padding:8px 3px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .05s;}
+  .act:active{transform:scale(.95);} .act.dis{opacity:.4;pointer-events:none;}
+  .act .ico{font-size:19px;} .act .nm{font-size:10px;font-weight:700;}
+  .act.end{grid-column:span 4;background:var(--green);border-color:var(--green);}
+  .act.end .nm{font-size:14px;color:#fff;} .act.end .ico{display:none;}
+  /* 覆盖层 */
+  .overlay{position:absolute;inset:0;background:rgba(8,10,6,.9);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px;}
+  .overlay.hidden{display:none;}
+  .sheet{background:#1c2417;border:1px solid var(--line);border-radius:16px;width:100%;max-width:420px;max-height:90%;overflow-y:auto;padding:16px;}
+  .sheet h2{font-size:19px;text-align:center;margin-bottom:4px;}
+  .sheet .sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px;line-height:1.6;}
+  .card{background:#141a0f;border:1px solid #33421f;border-radius:12px;padding:11px 12px;margin-bottom:8px;cursor:pointer;transition:border-color .1s,transform .05s;}
+  .card:active{transform:scale(.98);} .card:hover{border-color:var(--green-d);} .card.dis{opacity:.45;}
+  .card .ch{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .card .cn{font-weight:800;font-size:15px;} .card .cprice{color:var(--gold);font-weight:900;font-size:13px;white-space:nowrap;}
+  .card .cd{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5;}
+  .stars{color:var(--gold);font-size:11px;}
+  .btn{display:block;width:100%;background:var(--green);color:#fff;border:none;border-radius:12px;padding:12px;font-size:16px;font-weight:800;cursor:pointer;margin-top:8px;}
+  .btn.ghost{background:#2a331e;color:var(--ink);} .btn:active{transform:scale(.98);}
+  .jobgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .job{background:#141a0f;border:2px solid #33421f;border-radius:12px;padding:10px;text-align:center;cursor:pointer;transition:border-color .1s;}
+  .job:hover{border-color:var(--gold);} .job .ji{font-size:26px;} .job .jn{font-weight:800;font-size:13px;margin-top:2px;} .job .jd{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.4;}
+  .toast{position:absolute;top:64px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);border:1px solid var(--line);padding:7px 16px;border-radius:20px;font-size:13px;font-weight:700;z-index:30;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;}
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="app"><div id="wrap">
+  <div class="top">
+    <div class="r1">
+      <div class="title">🐑 羊圈帝国 <small>第 <b id="roundN">1</b> 轮</small></div>
+      <span class="rolechip" id="roleChip">👊 打手</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="lab">💰 金币</div><div class="val" id="sCoins">800</div></div>
+      <div class="stat"><div class="lab">🐑 羊</div><div class="val" id="sSheep">0</div></div>
+      <div class="stat"><div class="lab">📊 资产</div><div class="val" id="sWorth">800</div></div>
+      <div class="stat"><div class="lab">😊 满意度</div><div class="val" id="sSat">50</div><div class="bar"><i id="barSat" style="background:var(--green)"></i></div></div>
+      <div class="stat"><div class="lab">🦹 犯罪值</div><div class="val" id="sCrime">0</div><div class="bar"><i id="barCrime" style="background:var(--crime)"></i></div></div>
+      <div class="stat"><div class="lab">🏠 羊圈</div><div class="val" id="sPens">0</div></div>
+    </div>
+  </div>
+  <div id="log"></div>
+  <div class="pens" id="pens"></div>
+  <div class="dock">
+    <div class="acts" id="acts"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- 开始 / 选职业 -->
+  <div class="overlay" id="startScreen">
+    <div class="sheet">
+      <h2>🐑 羊圈帝国</h2>
+      <div class="sub">从<b>打手</b>做起，建羊圈滚钱、爬职位、玩弄权谋，登顶<b>总裁</b>！<br>先选一个职业天赋：</div>
+      <div class="jobgrid" id="jobGrid"></div>
+    </div>
+  </div>
+
+  <!-- 建羊圈 -->
+  <div class="overlay hidden" id="buildScreen">
+    <div class="sheet">
+      <h2>🏗 建造羊圈</h2>
+      <div class="sub">💰 金币 <b id="buildCoins">0</b> · 羊圈每轮产出金币并养羊</div>
+      <div id="buildList"></div>
+      <button class="btn ghost" id="buildClose">关闭</button>
+    </div>
+  </div>
+
+  <!-- 升职/竞选 -->
+  <div class="overlay hidden" id="promoScreen">
+    <div class="sheet">
+      <h2 id="promoTitle">🎖 升职</h2>
+      <div class="sub" id="promoSub"></div>
+      <button class="btn" id="promoDo">冲刺这个职位</button>
+      <button class="btn ghost" id="promoClose">再等等</button>
+    </div>
+  </div>
+
+  <!-- 结算 -->
+  <div class="overlay hidden" id="overScreen">
+    <div class="sheet">
+      <h2 id="overTitle">游戏结束</h2>
+      <div class="sub" id="overSub"></div>
+      <button class="btn" id="againBtn">🔁 再玩一次</button>
+      <button class="btn ghost" id="homeBtn">← 返回游戏厅</button>
+    </div>
+  </div>
+</div></div>
+
+<script>
+"use strict";
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const rand=(a,b)=>a+Math.random()*(b-a);
+const ri=(a,b)=>Math.floor(rand(a,b+1));
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const fmt=n=>{ n=Math.round(n); if(n>=1e8)return (n/1e8).toFixed(2)+"亿"; if(n>=1e4)return (n/1e4).toFixed(1)+"万"; return ""+n; };
+
+/*==================== 数据 ====================*/
+const JOBS=[
+  {id:"merchant",ico:"💼",nm:"商人",d:"买卖羊/建造省20%"},
+  {id:"architect",ico:"🏗",nm:"建筑师",d:"建羊圈省30%"},
+  {id:"vet",ico:"🩺",nm:"兽医",d:"羊永不生病"},
+  {id:"guard",ico:"🛡",nm:"保安",d:"狼袭击-80%"},
+  {id:"politician",ico:"🎩",nm:"政客",d:"竞选票数+3"},
+  {id:"hacker",ico:"🕵️",nm:"黑客",d:"每轮偷100~500金"},
+];
+// 职位阶梯：达到资产&满意度可升；总裁需董事投票
+const POSITIONS=[
+  {nm:"打手",   ico:"👊", salary:60},
+  {nm:"管理员", ico:"🛡", salary:150,  reqNW:1500,   reqSat:40},
+  {nm:"负责人", ico:"📋", salary:380,  reqNW:5000,   reqSat:45},
+  {nm:"总负责人",ico:"🗂", salary:850,  reqNW:14000,  reqSat:50},
+  {nm:"总监",   ico:"🔍", salary:1800, reqNW:35000,  reqSat:55},
+  {nm:"副总裁", ico:"🎖", salary:3800, reqNW:85000,  reqSat:60},
+  {nm:"总裁",   ico:"👑", salary:9000, reqNW:200000, reqSat:65, vote:true},
+];
+// 羊圈类型
+const PENS=[
+  {id:"trash",  ico:"🗑", nm:"垃圾羊圈", cost:150,  income:35,  growth:1, star:1, sick:0.18, d:"便宜，但羊易生病"},
+  {id:"normal", ico:"🏠", nm:"普通羊圈", cost:400,  income:85,  growth:1, star:3, d:"最基础的羊圈"},
+  {id:"prison", ico:"🔒", nm:"监狱羊圈", cost:900,  income:260, growth:2, star:5, waste:0.2, d:"收益最高，但每轮20%概率暴动浪费"},
+  {id:"fine",   ico:"✨", nm:"精品羊圈", cost:1400, income:200, growth:2, star:4, d:"羊成长快、品质高"},
+  {id:"luxury", ico:"💎", nm:"豪华羊圈", cost:3200, income:430, growth:3, star:5, upTo:"supreme", d:"可升级为极品羊圈"},
+  {id:"supreme",ico:"👑", nm:"极品羊圈", cost:8000, income:950, growth:4, star:6, d:"最高品质，产出惊人"},
+  {id:"lavish", ico:"🦄", nm:"奢华羊圈", cost:6000, income:720, growth:3, star:6, d:"专养稀有羊，收益丰厚"},
+  {id:"president",ico:"🏛",nm:"总统羊圈", cost:55000,income:3200,growth:6, star:7, unique:true, d:"唯一建筑，全羊幸福+20%"},
+];
+const PEN_BY=Object.fromEntries(PENS.map(p=>[p.id,p]));
+const EVENTS=[
+  {t:"🐺 狼群袭击",f:()=>{ let loss=ri(5,20); if(g.job==="guard") loss=Math.ceil(loss*0.2); g.sheep=Math.max(0,g.sheep-loss); return `狼群来袭，损失 ${loss} 只羊`; },bad:1},
+  {t:"🦠 羊瘟爆发",f:()=>{ if(g.job==="vet") return "兽医护航，羊瘟被压制，安然无恙"; const loss=Math.round(g.sheep*0.2); g.sheep-=loss; return `羊瘟蔓延，羊群 -20%（损失 ${loss} 只）`; },bad:1},
+  {t:"💰 神秘投资",f:()=>{ const c=ri(500,3000); g.coins+=c; return `神秘富豪注资，💰 +${fmt(c)}`; }},
+  {t:"🔥 羊圈火灾",f:()=>{ if(!g.pens.length) return "一处空地着火，无损失"; const i=ri(0,g.pens.length-1); const p=g.pens.splice(i,1)[0]; return `火灾烧毁了「${PEN_BY[p.id].nm}」！`; },bad:1},
+  {t:"🎉 大丰收",f:()=>{ const add=Math.max(4,Math.round(g.sheep*0.25)); g.sheep+=add; return `牧草丰美，羊群大量繁殖 +${add} 只`; }},
+  {t:"📉 羊价大跌",f:()=>{ g.sheepPrice=Math.max(12,Math.round(g.sheepPrice*0.6)); return `市场低迷，羊价大跌！`; },bad:1},
+  {t:"📈 羊价飙升",f:()=>{ g.sheepPrice=Math.round(g.sheepPrice*1.6); return `稀有羊走俏，羊价飙升！`; }},
+  {t:"🏦 政府补贴",f:()=>{ const c=g.pens.length*200+300; g.coins+=c; g.sat=clamp(g.sat+3,0,100); return `政府发放养殖补贴 💰+${fmt(c)}，满意度+3`; }},
+];
+
+/*==================== 状态 ====================*/
+let g=null;
+function mod(){ return {
+  buyMult: g.job==="merchant"?0.8:1,
+  buildMult: g.job==="architect"?0.7:(g.job==="merchant"?0.8:1),
+  voteBonus: g.job==="politician"?3:0,
+}; }
+function newGame(job){
+  g={ job, round:1, pos:0, coins:800, sheep:0, sheepPrice:30, sat:50, crime:0,
+      pens:[], over:false, acted:{}, presidentTurns:0, boardSupport:50, news:null, newsCrime:0 };
+  document.getElementById("log").innerHTML="";
+  const J=JOBS.find(j=>j.id===job);
+  log(`🎲 你选择了职业：${J.ico}${J.nm}（${J.d}）`,"good");
+  log("🐑 你是羊圈公司最底层的 👊打手，目标：登顶 👑总裁！","event");
+  log("💡 用金币建羊圈→每轮产金养羊→资产达标即可升职。小心犯罪值！");
+  renderAll();
+}
+
+/*==================== 日志/渲染 ====================*/
+const logEl=document.getElementById("log");
+function log(t,cls){ const d=document.createElement("div"); d.className="msg"+(cls?" "+cls:""); d.innerHTML=t; logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight; }
+function toast(t){ const el=document.getElementById("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),1500); }
+function netWorth(){ let w=g.coins + g.sheep*g.sheepPrice; for(const p of g.pens) w+=PEN_BY[p.id].cost*0.6; return Math.round(w); }
+function curPos(){ return POSITIONS[g.pos]; }
+function nextPos(){ return POSITIONS[g.pos+1]; }
+
+function renderAll(){ renderStats(); renderPens(); renderActs(); }
+function renderStats(){
+  document.getElementById("roundN").textContent=g.round;
+  const P=curPos(); document.getElementById("roleChip").textContent=`${P.ico} ${P.nm}`;
+  document.getElementById("sCoins").textContent=fmt(g.coins);
+  document.getElementById("sSheep").textContent=g.sheep;
+  document.getElementById("sWorth").textContent=fmt(netWorth());
+  document.getElementById("sSat").textContent=Math.round(g.sat);
+  document.getElementById("sCrime").textContent=Math.round(g.crime);
+  document.getElementById("sPens").textContent=g.pens.length;
+  document.getElementById("barSat").style.width=g.sat+"%";
+  const cb=document.getElementById("barCrime"); cb.style.width=g.crime+"%";
+  cb.style.background = g.crime>=61?"#e0554b":g.crime>=41?"#e8b83a":"#c0563e";
+}
+function renderPens(){
+  const box=document.getElementById("pens"); box.innerHTML="";
+  if(!g.pens.length){ box.innerHTML='<div class="penempty">还没有羊圈，点下方「🏗建羊圈」开始经营</div>'; return; }
+  const counts={}; g.pens.forEach(p=>counts[p.id]=(counts[p.id]||0)+1);
+  const shown={};
+  g.pens.forEach((p,idx)=>{ const d=PEN_BY[p.id];
+    const row=document.createElement("div"); row.className="penrow";
+    row.innerHTML=`<span class="pi">${d.ico}</span><span class="pn">${d.nm}</span>`
+      +`<span class="pinfo">💰${d.income}/轮 · 🐑+${d.growth}</span>`;
+    if(d.upTo){ const b=document.createElement("button"); b.className="up"; b.textContent="升级"; b.onclick=()=>upgradePen(idx); row.appendChild(b); }
+    box.appendChild(row); });
+}
+
+/*==================== 操作 ====================*/
+const ACTIONS=[
+  {id:"build", ico:"🏗", nm:"建羊圈", do:openBuild},
+  {id:"buy",   ico:"🐑", nm:"买羊",   do:()=>trade(1)},
+  {id:"sell",  ico:"💵", nm:"卖羊",   do:()=>trade(-1)},
+  {id:"work",  ico:"💼", nm:"加班",   once:true, do:doWork},
+  {id:"graft", ico:"🤑", nm:"贪污",   once:true, do:doGraft},
+  {id:"bribe", ico:"🎁", nm:"贿赂董事",once:true, do:doBribe},
+  {id:"welfare",ico:"🎉",nm:"发福利", once:true, do:doWelfare},
+  {id:"promote",ico:"🎖",nm:"升职",   do:openPromo},
+];
+function renderActs(){
+  const box=document.getElementById("acts"); box.innerHTML="";
+  for(const a of ACTIONS){
+    const el=document.createElement("div"); el.className="act"+((a.once&&g.acted[a.id])?" dis":"");
+    if(a.id==="promote" && !canPromote()) el.className+=" dis";
+    el.innerHTML=`<div class="ico">${a.ico}</div><div class="nm">${a.nm}</div>`;
+    el.onclick=a.do; box.appendChild(el);
+  }
+  const end=document.createElement("div"); end.className="act end"; end.innerHTML=`<div class="nm">⏭ 结束回合（收租/事件）</div>`;
+  end.onclick=endRound; box.appendChild(end);
+}
+function once(id){ if(g.acted[id]){ toast("本轮该操作已用"); return false; } g.acted[id]=true; return true; }
+
+function openBuild(){ const box=document.getElementById("buildList"); box.innerHTML="";
+  document.getElementById("buildCoins").textContent=fmt(g.coins);
+  PENS.forEach(p=>{
+    if(p.id==="supreme") return;                       // 极品只能由豪华升级
+    const cost=Math.round(p.cost*mod().buildMult);
+    const owned=p.unique && g.pens.some(x=>x.id===p.id);
+    const can=g.coins>=cost && !owned;
+    const el=document.createElement("div"); el.className="card"+(can?"":" dis");
+    el.innerHTML=`<div class="ch"><span class="cn">${p.ico} ${p.nm}</span><span class="cprice">💰${fmt(cost)}</span></div>
+      <div class="stars">${"★".repeat(p.star)}</div><div class="cd">💰${p.income}/轮 · 🐑成长+${p.growth} · ${p.d}${owned?"（已拥有·唯一）":""}</div>`;
+    if(can) el.onclick=()=>buildPen(p);
+    box.appendChild(el);
+  });
+  document.getElementById("buildScreen").classList.remove("hidden");
+}
+function buildPen(p){ const cost=Math.round(p.cost*mod().buildMult);
+  if(g.coins<cost){ toast("金币不足"); return; }
+  g.coins-=cost; g.pens.push({id:p.id}); g.sheep+=Math.ceil(p.growth*1.5);
+  log(`🏗 建成「${p.nm}」，花费 💰${fmt(cost)}`,"good");
+  openBuild(); renderAll();
+}
+function upgradePen(idx){ const p=g.pens[idx]; const d=PEN_BY[p.id]; if(!d.upTo) return;
+  const target=PEN_BY[d.upTo]; const cost=Math.round((target.cost-d.cost)*mod().buildMult);
+  if(g.coins<cost){ toast(`升级需 💰${fmt(cost)}`); return; }
+  g.coins-=cost; p.id=d.upTo; log(`⬆ 「${d.nm}」升级为「${target.nm}」，花费 💰${fmt(cost)}`,"good"); renderAll();
+}
+function trade(dir){
+  const n=10;
+  if(dir>0){ const price=Math.round(g.sheepPrice*1.3*mod().buyMult); const cost=price*n;
+    if(g.coins<cost){ toast("金币不足买羊"); return; } g.coins-=cost; g.sheep+=n;
+    log(`🐑 买入 ${n} 只羊，花费 💰${fmt(cost)}`); }
+  else { if(g.sheep<n){ toast("羊不够卖"); return; } const price=Math.round(g.sheepPrice*(g.job==="merchant"?1.0:0.85)); const gain=price*n;
+    g.sheep-=n; g.coins+=gain; log(`💵 卖出 ${n} 只羊，得到 💰${fmt(gain)}`,"good"); }
+  renderAll();
+}
+function doWork(){ if(!once("work")) return; const pay=Math.round(curPos().salary*rand(0.8,1.3));
+  g.coins+=pay; g.sat=clamp(g.sat-1,0,100); log(`💼 加班执行任务，工资 💰+${fmt(pay)}`,"good"); renderAll(); }
+function doGraft(){ if(!once("graft")) return; const take=Math.round((curPos().salary*3+g.pens.length*150)*rand(0.8,1.4));
+  g.coins+=take; g.crime=clamp(g.crime+ri(6,14),0,100); log(`🤑 你贪污了公款 💰+${fmt(take)}（犯罪值上升）`,"crime"); renderAll(); }
+function doBribe(){ if(!once("bribe")) return; const cost=Math.round(curPos().salary*2+500);
+  if(g.coins<cost){ toast(`贿赂需 💰${fmt(cost)}`); g.acted.bribe=false; return; }
+  g.coins-=cost; g.boardSupport=clamp(g.boardSupport+ri(8,16),0,100); g.sat=clamp(g.sat+4,0,100); g.crime=clamp(g.crime+10,0,100);
+  log(`🎁 给董事塞钱 💰-${fmt(cost)}，董事支持↑ 满意度↑（犯罪值+10）`,"crime"); renderAll(); }
+function doWelfare(){ if(!once("welfare")) return; const cost=Math.round(300+g.pens.length*120);
+  if(g.coins<cost){ toast(`发福利需 💰${fmt(cost)}`); g.acted.welfare=false; return; }
+  g.coins-=cost; g.sat=clamp(g.sat+ri(6,12),0,100); log(`🎉 给员工发福利 💰-${fmt(cost)}，满意度大涨`,"good"); renderAll(); }
+
+/*==================== 升职/竞选 ====================*/
+function canPromote(){ const np=nextPos(); if(!np) return false;
+  return netWorth()>=np.reqNW && g.sat>=np.reqSat; }
+function openPromo(){ const np=nextPos();
+  if(!np){ toast("你已是最高职位 👑总裁！"); return; }
+  document.getElementById("promoTitle").textContent=`🎖 冲刺：${np.ico} ${np.nm}`;
+  let sub=`要求：资产 ≥ <b>${fmt(np.reqNW)}</b>（当前 ${fmt(netWorth())}）· 满意度 ≥ <b>${np.reqSat}</b>（当前 ${Math.round(g.sat)}）<br>`;
+  if(!canPromote()) sub+=`<span style="color:#e0554b">条件尚未满足</span>`;
+  else if(np.vote) sub+=`✅ 条件满足！但总裁需<b>董事会投票</b>（当前董事支持 ${Math.round(g.boardSupport)}%，政客/贿赂可加成）`;
+  else sub+=`✅ 条件满足，可直接上任！`;
+  document.getElementById("promoSub").innerHTML=sub;
+  document.getElementById("promoDo").style.display=canPromote()?"block":"none";
+  document.getElementById("promoScreen").classList.remove("hidden");
+}
+function doPromo(){ const np=nextPos(); if(!np||!canPromote()) return;
+  document.getElementById("promoScreen").classList.add("hidden");
+  if(np.vote){ const support=g.boardSupport+mod().voteBonus*6+rand(-10,10);
+    log(`🗳 董事会就你的总裁提名投票…（支持约 ${Math.round(support)}%）`,"event");
+    if(support>=55){ g.pos++; log(`👑 董事会通过！你正式成为 <b>总裁</b>！`,"good"); winCheck(true); }
+    else { g.sat=clamp(g.sat-6,0,100); log(`❌ 董事会否决了你的总裁提名，声望受损。多贿赂/攒满意度再来。`,"bad"); }
+  } else { g.pos++; g.sat=clamp(g.sat+4,0,100); log(`🎖 恭喜升职为 <b>${np.nm}</b>！工资大涨。`,"good"); }
+  renderAll();
+}
+
+/*==================== 回合结算 ====================*/
+function endRound(){
+  if(g.over) return;
+  logEl.appendChild(Object.assign(document.createElement("div"),{className:"round-sep",textContent:`第 ${g.round} 轮结算`}));
+  // 1) 羊圈产出 + 养羊
+  let income=0, grow=0; const happy=g.pens.some(p=>p.id==="president")?1.2:1;
+  for(const p of g.pens){ const d=PEN_BY[p.id];
+    if(d.waste && Math.random()<d.waste){ log(`🔒 「${d.nm}」发生暴动，本轮颗粒无收`,"bad"); continue; }
+    if(d.sick && g.job!=="vet" && Math.random()<d.sick){ const l=ri(1,3); g.sheep=Math.max(0,g.sheep-l); }
+    income+=d.income; grow+=d.growth;
+  }
+  income=Math.round(income*happy);
+  if(income>0){ g.coins+=income; }
+  g.sheep+=grow;
+  // 2) 工资
+  const pay=curPos().salary; g.coins+=pay;
+  if(g.pens.length||income) log(`🏠 羊圈产出 💰+${fmt(income)}，羊群 +${grow}；💼 工资 💰+${fmt(pay)}`,"good");
+  else log(`💼 工资 💰+${fmt(pay)}`);
+  // 黑客被动
+  if(g.job==="hacker"){ const s=ri(100,500); g.coins+=s; g.crime=clamp(g.crime+2,0,100); log(`🕵️ 你黑进对手账户偷了 💰+${fmt(s)}`,"crime"); }
+  // 3) 满意度自然漂移（发工资养员工）
+  g.sat=clamp(g.sat + (g.coins>pay*3?1:-1), 0,100);
+  // 4) 随机事件
+  if(Math.random()<0.7){ const ev=pick(EVENTS); const r=ev.f(); log(`${ev.t}：${r}`, ev.bad?"bad":"event"); }
+  // 5) 媒体（每5轮）
+  if(g.round%5===0) media();
+  // 6) 审计（每10轮）
+  if(g.round%10===0) audit();
+  // 7) 犯罪值后果
+  crimeEffects();
+  // 8) 犯罪值自然消退
+  g.crime=clamp(g.crime-2,0,100);
+  if(g.over){ return; }
+  // 推进
+  g.round++; g.acted={};
+  if(g.pos>=POSITIONS.length-1) g.presidentTurns++;
+  winCheck(false);
+  if(g.over) return;
+  // 升职提示
+  if(canPromote()) log(`🎖 你已满足升职「${nextPos().nm}」的条件，点「升职」冲刺！`,"event");
+  renderAll();
+}
+function media(){
+  if(g.crime>=41 && Math.random()< (g.crime>=61?0.8:0.4)){
+    const topic=pick(["涉嫌偷税","私卖公司羊","账目造假","收受贿赂","非法圈地"]);
+    g.news=topic; g.sat=clamp(g.sat-8,0,100); g.coins=Math.round(g.coins*0.95);
+    log(`📺【头条新闻】你的羊圈公司「${topic}」被曝光！满意度-8，收入受损`,"news");
+  } else { log(`📺【新闻】本轮风平浪静，暂无你的负面报道。`,"news"); }
+}
+function audit(){
+  log(`⚖ 年度审计突击抽查…`,"event");
+  if(g.crime>=45 && Math.random()<0.6){
+    const fine=Math.round(g.coins*0.2)+g.crime*100; g.coins-=fine; g.crime=clamp(g.crime-30,0,100);
+    log(`⚖ 审计查出黑账！罚款 💰-${fmt(fine)}，犯罪值下降但声誉受损`,"bad");
+    g.sat=clamp(g.sat-5,0,100);
+    if(g.pos>0 && Math.random()<0.5){ g.pos--; log(`⬇ 因违规被降职为 ${curPos().nm}！`,"bad"); }
+  } else log(`⚖ 审计未发现大问题，你暂时安全。`,"good");
+}
+function crimeEffects(){
+  if(g.crime>=81){
+    log(`🚨 犯罪值过高，纪委介入调查！`,"crime");
+    if(Math.random()<0.6){
+      if(g.pos<=1){ lose(`调查坐实，你被开除并送去坐牢。羊圈帝国梦碎。`); return; }
+      g.pos=Math.max(0,g.pos-2); g.crime=clamp(g.crime-40,0,100); g.sat=clamp(g.sat-10,0,100);
+      log(`⬇ 调查成功，你被连降两级到 ${curPos().nm}，犯罪值清洗。`,"bad");
+    } else log(`😮‍💨 你打点关系压下了调查，暂时脱身。`,"good");
+  } else if(g.crime>=61){ log(`⚠ 犯罪值偏高，媒体正紧盯着你（曝光率+50%）。`,"crime"); }
+  else if(g.crime>=41){ if(Math.random()<0.3) log(`👀 有员工开始怀疑你的账目…`,"crime"); }
+}
+
+/*==================== 胜负 ====================*/
+function winCheck(justBecameCEO){
+  if(g.over) return;
+  if(g.pos>=POSITIONS.length-1){ win(`👑 你从底层<b>打手</b>一路杀到<b>总裁</b>，成为羊圈帝国的最高统治者！`); return; }
+  if(g.sheep>=2000){ win(`🐑 你的羊群突破 <b>2000</b> 只，成为无冕的羊圈之王！`); return; }
+  if(netWorth()>=1e8){ win(`💰 你的资产突破 <b>1亿</b>，富可敌国！`); return; }
+  // 破产
+  if(g.coins< -3000){ lose(`资金链断裂，公司破产清算，你被扫地出门。`); return; }
+}
+function win(reason){ g.over=true; showOver(true,reason); }
+function lose(reason){ g.over=true; showOver(false,reason); }
+function showOver(won,reason){
+  document.getElementById("overTitle").textContent = won?"🏆 帝国霸业达成！":"💀 出局";
+  document.getElementById("overSub").innerHTML = reason
+    + `<br><br>职位：${curPos().ico}${curPos().nm} · 第 ${g.round} 轮<br>💰 资产 ${fmt(netWorth())} · 🐑 ${g.sheep} 只羊 · 🏠 ${g.pens.length} 座羊圈`;
+  document.getElementById("overScreen").classList.remove("hidden");
+}
+
+/*==================== 按钮 ====================*/
+function buildJobs(){ const box=document.getElementById("jobGrid"); box.innerHTML="";
+  JOBS.forEach(j=>{ const el=document.createElement("div"); el.className="job";
+    el.innerHTML=`<div class="ji">${j.ico}</div><div class="jn">${j.nm}</div><div class="jd">${j.d}</div>`;
+    el.onclick=()=>{ document.getElementById("startScreen").classList.add("hidden"); newGame(j.id); };
+    box.appendChild(el); }); }
+document.getElementById("buildClose").onclick=()=>document.getElementById("buildScreen").classList.add("hidden");
+document.getElementById("promoClose").onclick=()=>document.getElementById("promoScreen").classList.add("hidden");
+document.getElementById("promoDo").onclick=doPromo;
+document.getElementById("againBtn").onclick=()=>{ document.getElementById("overScreen").classList.add("hidden"); document.getElementById("startScreen").classList.remove("hidden"); buildJobs(); };
+document.getElementById("homeBtn").onclick=()=>{ location.href="index.html"; };
+buildJobs();
+
+if(typeof window!=="undefined") window.__se={get g(){return g;}, newGame, endRound, buildPen, PENS, PEN_BY, POSITIONS, JOBS, netWorth, canPromote, doPromo, trade, doGraft, doBribe, doWork, doWelfare, upgradePen};
+</script>
+</body>
+</html>

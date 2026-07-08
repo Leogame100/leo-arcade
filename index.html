@@ -38,6 +38,11 @@
   .wxb{max-width:72%;background:#fff;border-radius:5px;padding:5px 8px;font-size:10px;color:#222;box-shadow:0 1px 1px rgba(0,0,0,.06);}
   .wxb.me{align-self:flex-end;background:#95ec69;}
   .wx-prev .row0{margin-top:22px;}
+  .sheep-prev{position:absolute;inset:0;overflow:hidden;background:#12160f;}
+  .sheep-prev .sky{position:absolute;top:0;left:0;right:0;height:52%;background:radial-gradient(180px 90px at 70% 10%,#3a4a28,#1a2210);}
+  .sheep-prev .field{position:absolute;bottom:0;left:0;right:0;height:52%;background:linear-gradient(180deg,#3f6a2a,#2c4a1c);}
+  .sheep-prev .flock{position:absolute;bottom:16%;left:0;right:0;text-align:center;font-size:20px;letter-spacing:3px;}
+  .sheep-prev .pen{position:absolute;top:10px;left:0;right:0;text-align:center;font-size:18px;letter-spacing:4px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4));}
   .cabmeta{display:flex;align-items:center;justify-content:space-between;gap:10px;}
   .cabname{font-weight:800;font-size:17px;} .cabtag{color:var(--muted);font-size:12px;margin-top:2px;}
   .badge{font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;padding:4px 8px;border-radius:6px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;}
@@ -79,6 +84,14 @@
       <div class="cabmeta"><div><div class="cabname" data-i18n="wxName">微信群权力战争</div><div class="cabtag" data-i18n="wxTag">身份权谋 · 舆论/金币/护盾 · 弹劾与选举</div></div><div class="badge" data-i18n="wxBadge">策略 / 权谋</div></div>
       <div class="play" data-i18n="play">▶ 开始游戏</div>
     </a>
+    <a class="cab" href="sheep-empire.html">
+      <div class="screen"><div class="sheep-prev">
+        <div class="sky"></div><div class="field"></div>
+        <div class="flock">🐑🐑🐑🐑🐑</div><div class="pen">🔒 🏠 ✨ 💎 🏛</div>
+      </div><div class="glow"></div></div>
+      <div class="cabmeta"><div><div class="cabname" data-i18n="sheepName">羊圈帝国</div><div class="cabtag" data-i18n="sheepTag">经营+权谋 · 从打手爬到总裁 · 犯罪/媒体/审计</div></div><div class="badge" data-i18n="sheepBadge">模拟 / 经营</div></div>
+      <div class="play" data-i18n="play">▶ 开始游戏</div>
+    </a>
   </div>
   <div class="foot" data-i18n="foot">进度存档保存在你自己的浏览器里。想开启全球实时排行榜，请在 brick-breaker.html 顶部 NET_CONFIG 填入 Firebase 数据库网址。</div>
 </div>
@@ -95,6 +108,9 @@
     wxName:{zh:"微信群权力战争",en:"WeChat Group Power War"},
     wxTag:{zh:"身份权谋 · 舆论/金币/护盾 · 弹劾与选举",en:"Hidden roles · opinion/coins/shield · impeach & elect"},
     wxBadge:{zh:"策略 / 权谋",en:"Strategy / Intrigue"},
+    sheepName:{zh:"羊圈帝国",en:"Sheep Pen Empire"},
+    sheepTag:{zh:"经营+权谋 · 从打手爬到总裁 · 犯罪/媒体/审计",en:"Tycoon + intrigue · thug to CEO · crime/media/audit"},
+    sheepBadge:{zh:"模拟 / 经营",en:"Sim / Tycoon"},
     play:{zh:"▶ 开始游戏",en:"▶ Play"},
     foot:{zh:"进度存档保存在你自己的浏览器里。想开启全球实时排行榜，请在 brick-breaker.html 顶部 NET_CONFIG 填入 Firebase 数据库网址。",
           en:"Progress is saved in your own browser. Global live leaderboard is built in for Brick Breaker on this hosted site."},
