@@ -98,7 +98,6 @@
     <button class="btn ghost" id="shopBtn" data-i18n="🛒 道具商店">🛒 道具商店</button>
     <button class="btn ghost" id="manualBtn" data-i18n="📖 游戏说明书">📖 游戏说明书</button>
     <button class="btn ghost" id="lbBtn" data-i18n="🏆 排行榜">🏆 排行榜</button>
-    <button class="btn sm red" id="cheatBtn" data-i18n="🐞 外挂菜单" style="margin-top:4px;">🐞 外挂菜单</button>
   </div>
 
   <!-- 难度选择 -->
@@ -108,16 +107,6 @@
     <div class="diff" id="diffList"></div>
   </div>
 
-  <!-- 外挂菜单 -->
-  <div class="screen hidden" id="cheatScreen">
-    <span class="close-x" data-back>✕</span>
-    <h1 class="title" data-i18n="🐞 外挂菜单" style="font-size:22px;">🐞 外挂菜单</h1>
-    <p class="hint" data-i18n="⚠ 开启任意外挂后，本局分数将不会计入排行榜与最高分。">⚠ 开启任意外挂后，本局分数将不会计入排行榜与最高分。</p>
-    <div class="toggle"><span data-i18n="无限金币">无限金币</span><div class="sw" data-cheat="coins"></div></div>
-    <div class="toggle"><span data-i18n="无限血量">无限血量</span><div class="sw" data-cheat="hp"></div></div>
-    <div class="toggle"><span data-i18n="无限攻击">无限攻击</span><div class="sw" data-cheat="atk"></div></div>
-    <div class="toggle"><span data-i18n="无限天赋">无限天赋</span><div class="sw" data-cheat="talent"></div></div>
-  </div>
 
   <!-- 天赋树 -->
   <div class="screen hidden" id="talentScreen">
@@ -1245,7 +1234,7 @@ window.addEventListener("keydown",e=>{
 /*========================================================================
   界面 / 菜单
 ========================================================================*/
-const SCREENS=["menu","diffScreen","cheatScreen","talentScreen","shopScreen","manualScreen","lbScreen","overScreen"];
+const SCREENS=["menu","diffScreen","talentScreen","shopScreen","manualScreen","lbScreen","overScreen"];
 let screenStack=[];
 function showScreen(id){
   for(const s of SCREENS){ document.getElementById(s).classList.toggle("hidden", s!==id); }
@@ -1280,7 +1269,6 @@ document.getElementById("talentBtn").onclick=()=>openTalent();
 document.getElementById("shopBtn").onclick=()=>openShop();
 document.getElementById("manualBtn").onclick=()=>openManual();
 document.getElementById("lbBtn").onclick=()=>openLb();
-document.getElementById("cheatBtn").onclick=()=>{ buildCheat(); showScreen("cheatScreen"); };
 document.getElementById("refreshBtn").onclick=()=>{ syncHud(); toast("已刷新"); };
 
 /* 难度 */
@@ -1304,15 +1292,6 @@ function startGame(diff){
   document.getElementById("pauseBtn").textContent="⏸";
   document.getElementById("hudCtl").style.display="flex";
   newGame(diff);
-  if(cheatOn()) toast("🐞 外挂已开启，本局不计分");
-}
-
-/* 外挂 */
-function buildCheat(){
-  document.querySelectorAll("[data-cheat]").forEach(sw=>{
-    const k=sw.dataset.cheat; sw.classList.toggle("on",CHEAT[k]);
-    sw.onclick=()=>{ CHEAT[k]=!CHEAT[k]; sw.classList.toggle("on",CHEAT[k]); };
-  });
 }
 
 /* 天赋树 */
