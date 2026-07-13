@@ -17,8 +17,9 @@
     background:linear-gradient(180deg,rgba(20,30,22,.95),rgba(20,30,22,.4));font-size:12px;font-weight:800;pointer-events:none;}
   #hud .sugar{color:var(--sugar);} #hud .timer{margin-left:auto;font-family:ui-monospace,monospace;}
   #hud .nodes{color:var(--muted);font-weight:700;}
-  #langBtn{position:absolute;top:44px;right:8px;z-index:12;background:#25352a;color:#eafff0;border:1px solid var(--line);border-radius:14px;padding:3px 10px;font-weight:800;font-size:11px;cursor:pointer;}
-  /* 顶部攻击栏（2v2） */
+  #langBtn{position:absolute;top:44px;right:8px;z-index:14;background:#25352a;color:#eafff0;border:1px solid var(--line);border-radius:16px;padding:7px 15px;font-weight:900;font-size:15px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;box-shadow:0 2px 8px rgba(0,0,0,.4);}
+  #langBtn:active{cursor:grabbing;}
+  /* 顶部攻击栏（双人 P2） */
   #topbar{position:absolute;left:0;right:0;top:38px;display:none;gap:4px;padding:4px 6px;overflow-x:auto;z-index:6;
     background:linear-gradient(180deg,rgba(40,20,20,.55),transparent);scrollbar-width:none;} #topbar::-webkit-scrollbar{display:none;}
   #topbar.show{display:flex;}
@@ -80,7 +81,7 @@
     <span class="nodes">🍎 <b id="hNodesY">0</b>:<b id="hNodesE">0</b></span>
     <span class="timer" id="hTimer">4:00</span>
   </div>
-  <button id="langBtn" onclick="toggleLang()">EN</button>
+  <button id="langBtn" title="拖动可移动 · 轻点切换语言">EN</button>
   <div id="topbar"></div>
   <div class="toast" id="toast"></div>
   <div id="dock">
@@ -152,7 +153,7 @@ const TR={
   "模式":"Mode","难度":"Difficulty","选择英雄开始":"Pick a hero to start","科技树":"Tech Tree",
   "用糖源永久强化你的军队（本局有效）":"Spend sugar to permanently upgrade your army (this match)",
   "关闭":"Close","🔁 再战一局":"🔁 Rematch","← 返回游戏厅":"← Back to arcade",
-  "1v1":"1v1","2v2":"2v2","生存":"Survival","排位":"Ranked","关卡":"Levels",
+  "1v1":"1v1","双人":"2-Player","生存":"Survival","排位":"Ranked","关卡":"Levels",
   "天堂":"Heaven","新手":"Novice","普通":"Normal","中间":"Middle","困难":"Hard","地狱":"Hell","魔鬼":"Devil",
   // 模式/说明
   "📖 图文说明":"📖 How to Play","图文说明":"How to Play","当前段位":"Rank","积分":"Pts","已通关":"Cleared","未解锁":"Locked",
@@ -207,15 +208,15 @@ const DIFFS=[
   {id:"hell",  nm:"地狱",eco:1.75,buff:1.28,foeHp:1.5},
   {id:"devil", nm:"魔鬼",eco:2.1, buff:1.42,foeHp:1.75},
 ];
-const MODES=["1v1","survival","ranked","challenge","2v2"];
-const MODE_LBL={"1v1":"1v1","survival":"生存","ranked":"排位","challenge":"关卡","2v2":"2v2"};
+const MODES=["1v1","survival","ranked","challenge","duo"];
+const MODE_LBL={"1v1":"1v1","survival":"生存","ranked":"排位","challenge":"关卡","duo":"双人"};
 const CHALLENGES=[
-  {nm:"厨房遭遇", diff:"novice"},
-  {nm:"果园混战", diff:"normal"},
-  {nm:"垃圾场围城", diff:"middle"},
-  {nm:"冰箱深处", diff:"hard"},
-  {nm:"灭虫剂风暴", diff:"hell"},
-  {nm:"魔王果核", diff:"devil"},
+  {nm:"厨房遭遇", diff:"novice", map:[[0.5,0.5,"🍎",1],[0.26,0.4,"🥤"],[0.74,0.6,"🍞"]]},
+  {nm:"果园混战", diff:"normal", map:[[0.5,0.5,"🍎",1],[0.2,0.34,"🥤"],[0.8,0.34,"🍞"],[0.2,0.66,"🍞"],[0.8,0.66,"🥤"]]},
+  {nm:"垃圾场围城", diff:"middle", map:[[0.5,0.28,"🍎",1],[0.5,0.72,"🍎",1],[0.2,0.5,"🥤"],[0.8,0.5,"🍞"]]},
+  {nm:"冰箱深处", diff:"hard", map:[[0.32,0.5,"🍎",1],[0.68,0.5,"🍞"],[0.5,0.24,"🥤"],[0.5,0.76,"🥤"],[0.16,0.3,"🍞"],[0.84,0.7,"🍞"]]},
+  {nm:"灭虫剂风暴", diff:"hell", map:[[0.5,0.5,"🍎",1],[0.5,0.2,"🍞"],[0.5,0.8,"🥤"],[0.2,0.5,"🥤"],[0.8,0.5,"🍞"]]},
+  {nm:"魔王果核", diff:"devil", map:[[0.5,0.5,"🍎",1],[0.22,0.26,"🥤"],[0.78,0.26,"🍞"],[0.22,0.74,"🍞"],[0.78,0.74,"🥤"],[0.5,0.2,"🍞"],[0.5,0.8,"🥤"]]},
 ];
 const RANK_TIERS=[{nm:"青铜",diff:"novice"},{nm:"白银",diff:"normal"},{nm:"黄金",diff:"middle"},{nm:"铂金",diff:"hard"},{nm:"钻石",diff:"hell"},{nm:"王者",diff:"devil"}];
 function getRankPts(){ try{return parseInt(localStorage.getItem("flyRankPts")||"1000",10);}catch(e){return 1000;} }
@@ -277,7 +278,7 @@ function tmod(team){ return team===0?MOD:MOD2; }
 function addBase(team,x,y,main,hpBase){ const hp=hpBase*(main?1:0.78); const b={team,x,y,hp,max:hp,main:!!main,zap:0,dead:false}; g.bases.push(b); return b; }
 function newGame(heroId){
   const hero=HEROES.find(h=>h.id===heroId);
-  const hotseat=(MODE==="2v2");
+  const hotseat=(MODE==="duo");
   const hero2 = hotseat ? pick(HEROES) : null;
   g={ running:true, over:false, t:0, timeLeft:240, mode:MODE, hotseat, survival:MODE==="survival", ranked:MODE==="ranked",
       heroObj:hero, hero:heroId, heroObj2:hero2,
@@ -289,30 +290,43 @@ function newGame(heroId){
   MOD=computeMod(hero,g.tech);
   MOD2 = hotseat ? computeMod(hero2,g.tech2) : aiMod();
   const youHp=1100*MOD.baseHp, foeHp=(hotseat?1100*MOD2.baseHp:1150*DIFF.foeHp);
-  if(hotseat){
-    g.you=addBase(0, W*0.30, H-BOT-24, true, youHp);
-    addBase(0, W*0.72, H-BOT+6, false, youHp*0.85);
-    g.you2=addBase(1, W*0.70, TOP+40, true, foeHp);
-    addBase(1, W*0.28, TOP+64, false, foeHp*0.85);
-  } else if(g.survival){
-    g.you=addBase(0, W/2, H-BOT-24, true, youHp*1.7);
-    g.spawnPt={x:W/2, y:TOP+30};   // 敌人从顶部涌出（无敌方母巢）
-  } else {
-    g.you=addBase(0, W/2, H-BOT-24, true, youHp);
-    addBase(1, W/2, TOP+40, true, foeHp);
-  }
-  const nodeDefs = hotseat
-    ? [{x:W*0.5,y:H*0.5,kind:"🍎",big:1},{x:W*0.16,y:H*0.4,kind:"🥤"},{x:W*0.84,y:H*0.4,kind:"🍞"},
-       {x:W*0.16,y:H*0.6,kind:"🍞"},{x:W*0.84,y:H*0.6,kind:"🥤"},{x:W*0.5,y:H*0.3,kind:"🍞"},{x:W*0.5,y:H*0.7,kind:"🥤"}]
-    : [{x:W*0.5,y:H*0.5,kind:"🍎",big:1},{x:W*0.2,y:H*0.38,kind:"🥤"},{x:W*0.8,y:H*0.38,kind:"🍞"},
-       {x:W*0.2,y:H*0.62,kind:"🍞"},{x:W*0.8,y:H*0.62,kind:"🥤"}];
-  g.nodes=nodeDefs.map(n=>({...n,x:n.x,y:n.y,ctrl:0,owner:-1}));
-  genObstacles(ri(4,7));
+  setupMap(youHp,foeHp);   // 各模式不同地图
   g.neutrals.push(mkNeutral("🐜",g.nodes[0].x-26,g.nodes[0].y), mkNeutral("🕷️",g.nodes[0].x+26,g.nodes[0].y));
   UNITS.forEach(u=>g.cd[u.k]=0); SKILLS.forEach(s=>{g.skillCd[s.id]=0; g.skillCd2[s.id]=0;});
   document.getElementById("topbar").classList.toggle("show", hotseat);
   if(hotseat) toast((LANG==="en"?"P2 hero: ":"P2 英雄：")+hero2.ico+tr(hero2.nm));
   buildBars(); syncHud();
+}
+function nodeSet(defs){ return defs.map(d=>({x:W*d[0], y:TOP+(H-TOP-BOT)*d[1], kind:d[2], big:d[3]?1:0, ctrl:0, owner:-1})); }
+function setupMap(youHp,foeHp){
+  const M=g.mode;
+  if(M==="duo"){                         // 双人 1V1 决斗：上下各一母巢，资源点更多够两名玩家抢
+    g.you =addBase(0, W*0.5, H-BOT-22, true, youHp);
+    g.you2=addBase(1, W*0.5, TOP+38,  true, foeHp);
+    g.nodes=nodeSet([[0.5,0.5,"🍎",1],[0.16,0.30,"🥤"],[0.84,0.30,"🍞"],[0.16,0.70,"🍞"],[0.84,0.70,"🥤"],
+      [0.5,0.20,"🍞"],[0.5,0.80,"🥤"],[0.30,0.5,"🥤"],[0.70,0.5,"🍞"]]);
+    genObstacles(ri(4,6));
+  } else if(M==="survival"){             // 生存：资源点缩在下半场便于固守，铁块多形成关口
+    g.you=addBase(0, W/2, H-BOT-22, true, youHp*1.7);
+    g.spawnPt={x:W/2, y:TOP+30};
+    g.nodes=nodeSet([[0.5,0.60,"🍎",1],[0.22,0.72,"🥤"],[0.78,0.72,"🍞"],[0.5,0.84,"🍞"],[0.24,0.5,"🥤"],[0.76,0.5,"🍞"]]);
+    genObstacles(ri(6,9));
+  } else if(M==="challenge"){            // 关卡：每关地图不同，越后障碍越多
+    g.you=addBase(0, W/2, H-BOT-22, true, youHp);
+    addBase(1, W/2, TOP+38, true, foeHp);
+    g.nodes=nodeSet(CHALLENGES[selChal].map);
+    genObstacles(3+selChal);
+  } else if(M==="ranked"){               // 排位：斜向布点
+    g.you=addBase(0, W/2, H-BOT-22, true, youHp);
+    addBase(1, W/2, TOP+38, true, foeHp);
+    g.nodes=nodeSet([[0.5,0.5,"🍎",1],[0.30,0.26,"🥤"],[0.70,0.26,"🍞"],[0.30,0.74,"🍞"],[0.70,0.74,"🥤"],[0.14,0.5,"🍞"],[0.86,0.5,"🥤"]]);
+    genObstacles(ri(4,7));
+  } else {                               // 1v1 标准对称
+    g.you=addBase(0, W/2, H-BOT-22, true, youHp);
+    addBase(1, W/2, TOP+38, true, foeHp);
+    g.nodes=nodeSet([[0.5,0.5,"🍎",1],[0.2,0.36,"🥤"],[0.8,0.36,"🍞"],[0.2,0.64,"🍞"],[0.8,0.64,"🥤"]]);
+    genObstacles(ri(4,7));
+  }
 }
 function genObstacles(n){
   let tries=0;
@@ -628,9 +642,9 @@ cv.addEventListener("touchstart",e=>command(e),{passive:true});
 /*==================== 胜负 ====================*/
 function endGame(won,reason){ g.over=true; g.running=false; g.won=won;
   let extra="";
-  // 2v2：胜负以队伍论；标题按 P1/P2
+  // 双人：上下各一母巢，标题按 P1/P2
   if(g.hotseat){
-    const p1win=won; document.getElementById("overTitle").textContent=(LANG==="en"?(p1win?"🔵 P1 Team Wins!":"🔴 P2 Team Wins!"):(p1win?"🔵 P1 队获胜！":"🔴 P2 队获胜！"));
+    const p1win=won; document.getElementById("overTitle").textContent=(LANG==="en"?(p1win?"🔵 P1 Wins!":"🔴 P2 Wins!"):(p1win?"🔵 P1 获胜！":"🔴 P2 获胜！"));
     extra = `<br>P1 ${g.heroObj.ico}${tr(g.heroObj.nm)}　vs　P2 ${g.heroObj2.ico}${tr(g.heroObj2.nm)}`;
   } else {
     document.getElementById("overTitle").textContent=won?(LANG==="en"?"🏆 Victory!":"🏆 胜利！"):(LANG==="en"?"💀 Defeat":"💀 失败");
@@ -671,13 +685,13 @@ function buildStart(){
     ? "🍬 <b>Only captured fruit nodes</b> produce sugar → build units → raze enemy hives. Tap a node to send your swarm. Iron blocks force detours. 🔬 Tech upgrades your army."
     : "🍬 <b>只有占领水果资源点</b>才会产糖 → 造兵 → 摧毁敌方母巢。点资源点派全军占领；铁块需绕道；🔬科技树强化军队。";
   let extra="";
-  if(MODE==="2v2") extra = "<br>👥 <b>2V2 "+(LANG==="en"?"local real battle":"真人对战")+"</b>："+tr("上半屏由 P2 用手指指挥（🏴），下半屏 P1 指挥（🚩）")+(LANG==="en"?". P2 has own hero/skills/tech in the TOP bar (reversed side)!":"。P2 拥有独立英雄/技能/科技，操作顶部控制栏（方向相反）！");
+  if(MODE==="duo") extra = "<br>👥 <b>"+(LANG==="en"?"2-Player local battle":"双人真人对战")+"</b>："+tr("上半屏由 P2 用手指指挥（🏴），下半屏 P1 指挥（🚩）")+(LANG==="en"?". Each side ONE hive; P2 has own hero/skills/tech in the TOP bar (reversed). Raze the enemy hive to win!":"。上下各一母巢，P2 拥有独立英雄/技能/科技，操作顶部攻击栏（方向相反），先拆掉对方母巢者胜！");
   else if(MODE==="survival") extra = "<br>🌊 "+(LANG==="en"?"<b>Survival</b>: endless surging swarm — hold your single hive for <b>5:00</b>. No enemy hive to kill.":"<b>生存</b>：敌潮无尽涌来，守住唯一母巢 <b>5 分钟</b>即胜，越到后面越猛。");
   else if(MODE==="ranked"){ const t=rankTier(); extra = "<br>🏅 <b>"+tr("排位")+"</b> · "+tr("当前段位")+"：<b>"+tr(t.nm)+"</b>（"+getRankPts()+" "+tr("积分")+"，"+(LANG==="en"?"win +30 / lose −20":"胜 +30 / 负 −20")+"）。"+(LANG==="en"?"Difficulty scales with your rank.":"难度随段位自动提升。"); }
   else if(MODE==="challenge") extra = "<br>🗺 <b>"+tr("关卡")+"</b>："+(LANG==="en"?"clear a level to unlock the next.":"通关后解锁下一关，难度递增。");
   rb.innerHTML = base + extra;
   // 英雄
-  document.getElementById("heroLbl").textContent = MODE==="2v2" ? (LANG==="en"?"Pick P1 hero (P2 = random)":"选择 P1 英雄（P2 随机）") : tr("选择英雄开始");
+  document.getElementById("heroLbl").textContent = MODE==="duo" ? (LANG==="en"?"Pick P1 hero (P2 = random)":"选择 P1 英雄（P2 随机）") : tr("选择英雄开始");
   const hg=document.getElementById("heroGrid"); hg.innerHTML="";
   HEROES.forEach(h=>{ const el=document.createElement("div"); el.className="hero";
     el.innerHTML=`<div class="hi">${h.ico}</div><div class="hn">${tr(h.nm)}</div><div class="hd">${tr(h.d)}</div>`;
@@ -696,8 +710,8 @@ function buildHelp(){
     ["🧱","<b>铁块障碍</b>：地图随机 4–7 块铁障，果蝇会自动绕道，可挡子弹、卡住冲锋——利用它布防。"],
     ["🔬","<b>科技树 & 技能</b>：右下🔬花糖永久强化本局军队；三个技能（糖爆发/快速孵化/黑风暴）有冷却，关键时机开。"],
     ["🦸","<b>英雄</b>：10 位英雄各有独特加成（女王便宜、将军高攻、守护者龟壳、兽王收编中立…）。开局按打法选英雄。"],
-    ["🗺","<b>模式</b>：1v1 打 AI（7 难度）｜生存 守 5 分钟｜排位 段位越高越难、胜负加减分｜关卡 逐关解锁｜2V2 真人同屏对战。"],
-    ["👥","<b>2V2 真人对战</b>：下半屏 P1（🚩）、上半屏 P2（🏴）各自指挥。P2 有独立英雄/糖/技能/科技，操作<b>顶部控制栏</b>，方向相反，先拆光对方两个母巢者胜。"],
+    ["🗺","<b>模式（地图各不同）</b>：1v1 打 AI（7 难度）｜生存 守 5 分钟｜排位 段位越高越难、胜负加减分｜关卡 逐关解锁｜双人 真人同屏对战。"],
+    ["👥","<b>双人真人对战</b>：下半屏 P1（🚩）、上半屏 P2（🏴）各自用手指指挥。上下各一个母巢，P2 有独立英雄/糖/技能/科技，操作<b>顶部攻击栏</b>，方向相反，先拆掉对方母巢者胜。"],
   ];
   const en=[
     ["🍬","<b>Sugar = everything.</b> Only captured fruit nodes (🍎🥤🍞) produce sugar; spend it on units & tech. Grab the central 🍎 first."],
@@ -706,8 +720,8 @@ function buildHelp(){
     ["🧱","<b>Iron blocks:</b> 4–7 random obstacles; flies auto-detour around them and they block shots — use them for defense."],
     ["🔬","<b>Tech & skills:</b> the 🔬 button spends sugar for permanent upgrades (this match); 3 skills (Sugar Rush / Fast Hatch / Dark Storm) have cooldowns."],
     ["🦸","<b>Heroes:</b> 10 heroes with unique bonuses (Queen cheap, General high-dmg, Guardian tanky hive, Beastlord tames neutrals…). Pick to fit your style."],
-    ["🗺","<b>Modes:</b> 1v1 vs AI (7 difficulties) | Survival hold 5:00 | Ranked scales with your rank (±pts) | Levels unlock in order | 2V2 real local battle."],
-    ["👥","<b>2V2 real battle:</b> bottom half = P1 (🚩), top half = P2 (🏴). P2 has own hero/sugar/skills/tech in the <b>top bar</b>, reversed side. Raze both enemy hives to win."],
+    ["🗺","<b>Modes (each has its own map):</b> 1v1 vs AI (7 difficulties) | Survival hold 5:00 | Ranked scales with your rank (±pts) | Levels unlock in order | 2-Player real local battle."],
+    ["👥","<b>2-Player real battle:</b> bottom half = P1 (🚩), top half = P2 (🏴). One hive each; P2 has own hero/sugar/skills/tech in the <b>top bar</b>, reversed side. Raze the enemy hive to win."],
   ];
   const rows=(LANG==="en"?en:zh);
   document.getElementById("helpBody").innerHTML = rows.map(r=>`<div class="hsec"><div class="hicon">${r[0]}</div><div class="htext">${r[1]}</div></div>`).join("");
@@ -715,6 +729,20 @@ function buildHelp(){
 document.getElementById("helpBtn").onclick=()=>{ buildHelp(); document.getElementById("helpScreen").classList.remove("hidden"); };
 document.getElementById("helpClose").onclick=()=>document.getElementById("helpScreen").classList.add("hidden");
 
+// 语言按钮：可拖动（拖开避免挡字），轻点切换语言
+(function(){ const b=document.getElementById("langBtn"); if(!b||!b.addEventListener) return;
+  let drag=false, moved=false, sx=0, sy=0, ox=0, oy=0;
+  b.addEventListener("pointerdown",e=>{ drag=true; moved=false; sx=e.clientX; sy=e.clientY;
+    const r=b.getBoundingClientRect(), pr=b.parentElement.getBoundingClientRect(); ox=r.left-pr.left; oy=r.top-pr.top;
+    try{b.setPointerCapture(e.pointerId);}catch(_){} });
+  b.addEventListener("pointermove",e=>{ if(!drag) return; const dx=e.clientX-sx, dy=e.clientY-sy;
+    if(Math.abs(dx)+Math.abs(dy)>4) moved=true;
+    const pr=b.parentElement.getBoundingClientRect();
+    let nx=clamp(ox+dx,2,pr.width-b.offsetWidth-2), ny=clamp(oy+dy,2,pr.height-b.offsetHeight-2);
+    b.style.left=nx+"px"; b.style.top=ny+"px"; b.style.right="auto"; });
+  b.addEventListener("pointerup",()=>{ if(!drag) return; drag=false; if(!moved) toggleLang(); });
+  b.addEventListener("pointercancel",()=>{ drag=false; });
+})();
 applyLang(); buildStart();
 
 if(typeof window!=="undefined") window.__mw={get g(){return g;}, newGame, update, spawnAt, tryBuild, useSkill, buyTech, UNITS, UBY, HEROES, DIFFS, TECHS,
