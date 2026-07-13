@@ -306,11 +306,12 @@ function setupMap(youHp,foeHp){
     g.nodes=nodeSet([[0.5,0.5,"🍎",1],[0.16,0.30,"🥤"],[0.84,0.30,"🍞"],[0.16,0.70,"🍞"],[0.84,0.70,"🥤"],
       [0.5,0.20,"🍞"],[0.5,0.80,"🥤"],[0.30,0.5,"🥤"],[0.70,0.5,"🍞"]]);
     genObstacles(ri(4,6));
-  } else if(M==="survival"){             // 生存：资源点缩在下半场便于固守，铁块多形成关口
+  } else if(M==="survival"){             // 生存：10 关波次闯关，资源点缩在下半场便于固守
     g.you=addBase(0, W/2, H-BOT-22, true, youHp*1.7);
     g.spawnPt={x:W/2, y:TOP+30};
     g.nodes=nodeSet([[0.5,0.60,"🍎",1],[0.22,0.72,"🥤"],[0.78,0.72,"🍞"],[0.5,0.84,"🍞"],[0.24,0.5,"🥤"],[0.76,0.5,"🍞"]]);
-    genObstacles(ri(6,9));
+    genObstacles(ri(4,7));
+    g.wave=1; g.waveState="intro"; g.waveT=3.5; g.waveSpawnLeft=0; g.waveClock=0;   // 第一关 3.5s 后来袭
   } else if(M==="challenge"){            // 关卡：每关地图不同，越后障碍越多
     g.you=addBase(0, W/2, H-BOT-22, true, youHp);
     addBase(1, W/2, TOP+38, true, foeHp);
@@ -411,8 +412,8 @@ function update(dt){
   // 胜负
   const foeAlive=g.bases.some(b=>b.team===1), youAlive=g.bases.some(b=>b.team===0);
   if(g.survival){
-    if(g.t>=300){ endGame(true,(LANG==="en"?"Survived 5:00 — you held the line!":"坚持满5分钟，生存成功！")); return; }
-    if(!youAlive){ const mm=Math.floor(g.t/60),ss=Math.floor(g.t%60); endGame(false,(LANG==="en"?`Survived ${mm}:${String(ss).padStart(2,"0")}`:`你坚持了 ${mm}:${String(ss).padStart(2,"0")}`)); return; }
+    if(g.waveState==="won"){ endGame(true,(LANG==="en"?`All ${SURV_WAVES} waves cleared — final BOSS slain! 👑`:`通关 ${SURV_WAVES} 关 · 击杀最终 Boss！👑`)); return; }
+    if(!youAlive){ endGame(false,(LANG==="en"?`Fell on Wave ${g.wave}/${SURV_WAVES}`:`第 ${g.wave}/${SURV_WAVES} 关阵亡`)); return; }
     syncHud(); return;
   }
   if(!foeAlive){ endGame(true, tr("摧毁敌方全部母巢！") ); return; }
@@ -467,7 +468,7 @@ function lowAlly(u){ let best=null,bd=1; for(const o of g.units){ if(o.dead||o.t
 /* 障碍避让移动 */
 function blockedAt(x,y,pad){ for(const o of g.obstacles){ if(x>o.x-pad&&x<o.x+o.w+pad&&y>o.y-pad&&y<o.y+o.h+pad) return o; } return null; }
 const AVOID=[0,26,-26,52,-52,84,-84,120,-120,155,-155];
-function moveToward(u,t,dt,spdOverride){ let dx=t.x-u.x, dy=t.y-u.y, d=Math.hypot(dx,dy)||1; dx/=d; dy/=d;
+function moveToward(u,t,dt,spdOverride){ if(!t) return; let dx=t.x-u.x, dy=t.y-u.y, d=Math.hypot(dx,dy)||1; dx/=d; dy/=d;
   const step=(spdOverride||u.spd)*dt, pad=(u.r||6)+2;
   for(const a of AVOID){ const r=a*Math.PI/180, c=Math.cos(r), s=Math.sin(r);
     const ndx=dx*c-dy*s, ndy=dx*s+dy*c, nx=u.x+ndx*step, ny=u.y+ndy*step;
@@ -490,16 +491,66 @@ function onDeath(u){ spawnParts(u.x,u.y,u.team===0?"#48d17a":"#e0554b",8);
   if(u.boom){ aoeDamage(u,40,30,u); g.shake=0.15; } }
 
 /*==================== 敌 AI / 盟友 AI ====================*/
+const SURV_WAVES=10;
+function wavePool(w){
+  if(w<=3) return ["scout","melee","zerk","melee","scout"];
+  if(w<=6) return ["melee","tank","acid","zerk","split","melee"];
+  if(w<=9) return ["tank","acid","poison","boom","zerk","heal","melee"];
+  return ["tank","storm","poison","acid","boom","zerk","split"]; // 第10关
+}
+function waveCount(w){ return 5 + w*2; }                 // 第1关7 … 第10关25
+function waveInterval(w){ return Math.max(0.4, 1.35 - w*0.085); }
+function waveTimeLimit(w){ return w===SURV_WAVES ? 34 : 13 + w*1.2; } // 超时则强制进关（残兵留场）
+function isBossWave(w){ return w===5 || w===SURV_WAVES; }
+function spawnWaveFoe(k,bossBoost){
+  const e=spawnAt(1,k,g.spawnPt,true); e.tgtBase=1;
+  const boost=(1+g.wave*0.038)*(bossBoost||1);
+  e.max=Math.round(e.max*boost); e.hp=e.max;
+  if(bossBoost){ e.dmg*=1.4; e.r=(e.r||9)+6; e.boss=1; }
+  return e;
+}
+// 生存 = 10 关波次闯关
+function waveTick(dt){
+  if(g.waveState==="intro"){
+    g.waveT-=dt;
+    if(g.waveT<=0){
+      g.waveState="fighting"; g.waveSpawnLeft=waveCount(g.wave); g.eSpawnT=0.3; g.waveClock=0;
+      if(isBossWave(g.wave)){ const boss=spawnWaveFoe("storm",2.5); if(g.wave===SURV_WAVES) g.finalBoss=boss; g.waveSpawnLeft--; toast("👑 "+(LANG==="en"?`Wave ${g.wave} BOSS!`:`第 ${g.wave} 关 · Boss 降临！`)); }
+      else toast(LANG==="en"?`Wave ${g.wave} / ${SURV_WAVES}`:`第 ${g.wave} / ${SURV_WAVES} 关`);
+    }
+    return;
+  }
+  if(g.waveState!=="fighting") return;
+  g.waveClock+=dt; g.eSpawnT-=dt;
+  if(g.waveSpawnLeft>0 && g.eSpawnT<=0){
+    spawnWaveFoe(pick(wavePool(g.wave))); g.waveSpawnLeft--;
+    g.eSpawnT=waveInterval(g.wave)*rand(0.8,1.25);
+    if(Math.random()<0.15) g.buffFoe=Math.max(g.buffFoe,4);
+  }
+  // 最终关 = Boss 战：亲手击杀 Boss 即胜（不必等小兵出完；躺不赢、也不卡关）
+  if(g.wave>=SURV_WAVES){
+    if(g.finalBoss && (g.finalBoss.dead || g.finalBoss.hp<=0)) g.waveState="won";
+    return;
+  }
+  // 1-9 关：兵出完后，清光 或 超时 → 进下一关（残兵留场继续施压）
+  if(g.waveSpawnLeft<=0){
+    const cleared = !g.units.some(u=>u.team===1);
+    if(cleared || g.waveClock>=waveTimeLimit(g.wave)){
+      g.wave++; g.waveState="intro"; g.waveT=4; g.sugar+=60;
+      toast(cleared?(LANG==="en"?`Wave cleared! +🍬60 · Next in 4s`:`清关！+🍬60 · 4秒后第 ${g.wave} 关`)
+                   :(LANG==="en"?`Wave survived! +🍬60 · Next in 4s`:`撑过本关！+🍬60 · 4秒后第 ${g.wave} 关`)); }
+  }
+}
 function enemyAI(dt){
   if(g.hotseat) return;                     // P2 是真人，不跑 AI
-  if(g.survival) g.eSugar += (5 + g.t*0.115)*dt;   // 生存：随时间加速涌兵
+  if(g.survival){ waveTick(dt); return; }   // 生存走波次系统
   g.eSpawnT-=dt; g.surgeT-=dt; const surge=g.surgeT<=0;
   if(surge){ g.surgeT=rand(46,64); g.buffFoe=6; toast(tr("敌军黑潮突袭！")); }
   if(g.eSpawnT<=0){ const affordable=UNITS.filter(u=>u.cost<=g.eSugar);
     if(affordable.length){ let c; if(g.eSugar>200&&Math.random()<0.4) c=UBY.storm.cost<=g.eSugar?UBY.storm:pick(affordable); else c=pick(affordable);
-      g.eSugar-=c.cost; const from = g.survival ? g.spawnPt : (pick(g.bases.filter(b=>b.team===1))||{x:W/2,y:TOP+40});
-      const e=spawnAt(1,c.k,from,true); if(surge||g.survival) e.tgtBase=1; }
-    const rate = g.survival ? rand(1.3,2.3)*Math.max(0.3,1-g.t*0.0022) : rand(1.1,2.1)*(g.timeLeft<120?0.7:1)*(surge?0.55:1)/Math.max(0.6,DIFF.eco*0.8);
+      g.eSugar-=c.cost; const from = pick(g.bases.filter(b=>b.team===1))||{x:W/2,y:TOP+40};
+      const e=spawnAt(1,c.k,from,true); if(surge) e.tgtBase=1; }
+    const rate = rand(1.1,2.1)*(g.timeLeft<120?0.7:1)*(surge?0.55:1)/Math.max(0.6,DIFF.eco*0.8);
     g.eSpawnT=rate;
     if(Math.random()<0.18) g.buffFoe=Math.max(g.buffFoe,5);
   }
@@ -560,9 +611,12 @@ function drawBase(b){ const col=b.team===0?"#48d17a":"#e0554b"; const sz=b.main?
   const w=b.main?64:52,h=6,y=b.y+(b.team===0?24:-30); ctx.fillStyle="rgba(0,0,0,.5)"; ctx.fillRect(b.x-w/2,y,w,h);
   ctx.fillStyle=col; ctx.fillRect(b.x-w/2,y,w*Math.max(0,b.hp/b.max),h);
   ctx.strokeStyle=col; ctx.lineWidth=2; ctx.strokeRect(b.x-sz/2*0.55,b.y-sz/2*0.5,sz*0.55,sz*0.5); }
-function drawUnit(u,col){ const r=u.r||7; ctx.fillStyle=u.flash>0?"#fff":col; ctx.beginPath(); ctx.arc(u.x,u.y,r,0,7); ctx.fill();
+function drawUnit(u,col){ const r=u.r||7;
+  if(u.boss){ ctx.strokeStyle="#ffd76a"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(u.x,u.y,r+3,0,7); ctx.stroke(); }
+  ctx.fillStyle=u.flash>0?"#fff":col; ctx.beginPath(); ctx.arc(u.x,u.y,r,0,7); ctx.fill();
   if(u.flash>0)u.flash-=0.03; ctx.font=(r*1.5)+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(u.ico,u.x,u.y+0.5);
-  if(u.hp<u.max){ const w=r*2.2,h=3,y=u.y-r-5; ctx.fillStyle="rgba(0,0,0,.6)"; ctx.fillRect(u.x-w/2,y,w,h);
+  if(u.boss){ ctx.font="13px sans-serif"; ctx.fillText("👑",u.x,u.y-r-7); }
+  if(u.hp<u.max||u.boss){ const w=Math.max(r*2.2,u.boss?30:0),h=u.boss?4:3,y=u.y-r-(u.boss?15:5); ctx.fillStyle="rgba(0,0,0,.6)"; ctx.fillRect(u.x-w/2,y,w,h);
     ctx.fillStyle=u.team===0?"#8effc0":(u.team===2?"#ffd76a":"#ff8f88"); ctx.fillRect(u.x-w/2,y,w*Math.max(0,u.hp/u.max),h); } }
 function spawnParts(x,y,col,n){ if(!g)return; for(let i=0;i<n;i++){ const a=rand(0,7),s=rand(30,110); g.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,r:rand(1.5,3),col,life:0.4,max:0.4}); } }
 
@@ -598,9 +652,12 @@ function syncHud(){ if(!g) return;
   document.getElementById("hSugar").textContent=g.hotseat?(Math.floor(g.sugar)+" / "+Math.floor(g.eSugar)):Math.floor(g.sugar);
   document.getElementById("hNodesY").textContent=g.nodes.filter(n=>n.owner===0).length;
   document.getElementById("hNodesE").textContent=g.nodes.filter(n=>n.owner===1).length;
-  let tl = g.survival ? Math.max(0,300-g.t) : g.timeLeft;
-  const m=Math.max(0,Math.floor(tl/60)),s=Math.max(0,Math.floor(tl%60));
-  document.getElementById("hTimer").textContent=m+":"+String(s).padStart(2,"0");
+  if(g.survival){
+    document.getElementById("hTimer").textContent=(LANG==="en"?"Wave ":"关 ")+g.wave+"/"+SURV_WAVES+(g.waveState==="intro"?" ⏳":"");
+  } else {
+    const m=Math.max(0,Math.floor(g.timeLeft/60)),s=Math.max(0,Math.floor(g.timeLeft%60));
+    document.getElementById("hTimer").textContent=m+":"+String(s).padStart(2,"0");
+  }
   document.querySelectorAll(".ucard").forEach(el=>{ const u=UBY[el.dataset.k]; const cost=Math.round(u.cost*MOD.costMult);
     el.classList.toggle("dis",g.sugar<cost||g.cd[u.k]>0); el.querySelector(".cd").style.height=(g.cd[u.k]>0?(g.cd[u.k]/(u.cd*MOD.hatchMult)*100):0)+"%"; });
   document.querySelectorAll(".skill[data-s]").forEach(el=>{ const s=SKILLS.find(x=>x.id===el.dataset.s);
@@ -686,7 +743,7 @@ function buildStart(){
     : "🍬 <b>只有占领水果资源点</b>才会产糖 → 造兵 → 摧毁敌方母巢。点资源点派全军占领；铁块需绕道；🔬科技树强化军队。";
   let extra="";
   if(MODE==="duo") extra = "<br>👥 <b>"+(LANG==="en"?"2-Player local battle":"双人真人对战")+"</b>："+tr("上半屏由 P2 用手指指挥（🏴），下半屏 P1 指挥（🚩）")+(LANG==="en"?". Each side ONE hive; P2 has own hero/skills/tech in the TOP bar (reversed). Raze the enemy hive to win!":"。上下各一母巢，P2 拥有独立英雄/技能/科技，操作顶部攻击栏（方向相反），先拆掉对方母巢者胜！");
-  else if(MODE==="survival") extra = "<br>🌊 "+(LANG==="en"?"<b>Survival</b>: endless surging swarm — hold your single hive for <b>5:00</b>. No enemy hive to kill.":"<b>生存</b>：敌潮无尽涌来，守住唯一母巢 <b>5 分钟</b>即胜，越到后面越猛。");
+  else if(MODE==="survival") extra = "<br>🌊 "+(LANG==="en"?"<b>Survival · 10 Waves</b>: clear all 10 escalating waves (bosses on 5 & 10). Enemies pour from the top; hold your single hive. Breather + 🍬60 between waves.":"<b>生存 · 10 关</b>：逐波抵御，清光当前波进入下一关，通关第 <b>10 关</b>即胜（第 5、10 关有 Boss）。敌人从顶部涌下，守住唯一母巢；过关有喘息并奖励 🍬60。");
   else if(MODE==="ranked"){ const t=rankTier(); extra = "<br>🏅 <b>"+tr("排位")+"</b> · "+tr("当前段位")+"：<b>"+tr(t.nm)+"</b>（"+getRankPts()+" "+tr("积分")+"，"+(LANG==="en"?"win +30 / lose −20":"胜 +30 / 负 −20")+"）。"+(LANG==="en"?"Difficulty scales with your rank.":"难度随段位自动提升。"); }
   else if(MODE==="challenge") extra = "<br>🗺 <b>"+tr("关卡")+"</b>："+(LANG==="en"?"clear a level to unlock the next.":"通关后解锁下一关，难度递增。");
   rb.innerHTML = base + extra;
@@ -710,7 +767,7 @@ function buildHelp(){
     ["🧱","<b>铁块障碍</b>：地图随机 4–7 块铁障，果蝇会自动绕道，可挡子弹、卡住冲锋——利用它布防。"],
     ["🔬","<b>科技树 & 技能</b>：右下🔬花糖永久强化本局军队；三个技能（糖爆发/快速孵化/黑风暴）有冷却，关键时机开。"],
     ["🦸","<b>英雄</b>：10 位英雄各有独特加成（女王便宜、将军高攻、守护者龟壳、兽王收编中立…）。开局按打法选英雄。"],
-    ["🗺","<b>模式（地图各不同）</b>：1v1 打 AI（7 难度）｜生存 守 5 分钟｜排位 段位越高越难、胜负加减分｜关卡 逐关解锁｜双人 真人同屏对战。"],
+    ["🗺","<b>模式（地图各不同）</b>：1v1 打 AI（7 难度）｜生存 10 关波次闯关（5/10 关有 Boss）｜排位 段位越高越难、胜负加减分｜关卡 逐关解锁｜双人 真人同屏对战。"],
     ["👥","<b>双人真人对战</b>：下半屏 P1（🚩）、上半屏 P2（🏴）各自用手指指挥。上下各一个母巢，P2 有独立英雄/糖/技能/科技，操作<b>顶部攻击栏</b>，方向相反，先拆掉对方母巢者胜。"],
   ];
   const en=[
@@ -720,7 +777,7 @@ function buildHelp(){
     ["🧱","<b>Iron blocks:</b> 4–7 random obstacles; flies auto-detour around them and they block shots — use them for defense."],
     ["🔬","<b>Tech & skills:</b> the 🔬 button spends sugar for permanent upgrades (this match); 3 skills (Sugar Rush / Fast Hatch / Dark Storm) have cooldowns."],
     ["🦸","<b>Heroes:</b> 10 heroes with unique bonuses (Queen cheap, General high-dmg, Guardian tanky hive, Beastlord tames neutrals…). Pick to fit your style."],
-    ["🗺","<b>Modes (each has its own map):</b> 1v1 vs AI (7 difficulties) | Survival hold 5:00 | Ranked scales with your rank (±pts) | Levels unlock in order | 2-Player real local battle."],
+    ["🗺","<b>Modes (each has its own map):</b> 1v1 vs AI (7 difficulties) | Survival = 10 escalating waves (bosses on 5 & 10) | Ranked scales with your rank (±pts) | Levels unlock in order | 2-Player real local battle."],
     ["👥","<b>2-Player real battle:</b> bottom half = P1 (🚩), top half = P2 (🏴). One hive each; P2 has own hero/sugar/skills/tech in the <b>top bar</b>, reversed side. Raze the enemy hive to win."],
   ];
   const rows=(LANG==="en"?en:zh);
