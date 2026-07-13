@@ -62,6 +62,14 @@
   .toast{position:absolute;top:78px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);border:1px solid var(--line);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;z-index:15;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;}
   .toast.show{opacity:1;}
   .rules{font-size:12px;color:#bfe;line-height:1.7;background:#111a13;border-radius:10px;padding:9px;margin:6px 0;text-align:left;}
+  .helpbtn{width:auto;margin:0 auto 8px;padding:6px 16px;font-size:12px;background:#243a4a;color:#cfe;border:1px solid #2f5a6a;}
+  .seg .opt.lock{opacity:.5;background:#1a1410;border-color:#3a2a1a;}
+  .p2tag{flex:0 0 auto;display:flex;align-items:center;font-size:11px;font-weight:900;color:#ff9a8f;padding:0 4px;}
+  .fcard.sk2{background:rgba(70,40,26,.85);border-color:#7a5030;}
+  .fcard .cd2{color:#ffd76a;min-height:9px;}
+  .hsec{display:flex;gap:10px;background:#111a13;border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:7px;text-align:left;}
+  .hsec .hicon{font-size:24px;flex:0 0 auto;line-height:1.2;} .hsec .htext{font-size:12px;line-height:1.55;color:#cfe;}
+  .hsec .htext b{color:#eafff0;}
 </style>
 </head>
 <body>
@@ -83,15 +91,25 @@
   <!-- 开始 -->
   <div class="overlay" id="startScreen">
     <div class="sheet">
-      <h2>🪰 <span data-i18n="标题">微域战争 · 果蝇帝国</span></h2>
-      <div class="sub" data-i18n="副标题">厨房与果园的微观世界，指挥你的果蝇军团！</div>
+      <h2>🪰 <span data-i18n="微域战争 · 果蝇帝国">微域战争 · 果蝇帝国</span></h2>
+      <div class="sub" data-i18n="厨房与果园的微观世界，指挥你的果蝇军团！">厨房与果园的微观世界，指挥你的果蝇军团！</div>
+      <button class="btn ghost helpbtn" id="helpBtn" data-i18n="📖 图文说明">📖 图文说明</button>
       <div class="lbl" data-i18n="模式">模式</div>
       <div class="seg" id="modeSeg"></div>
-      <div class="lbl" data-i18n="难度">难度</div>
+      <div class="lbl" id="diffLbl" data-i18n="难度">难度</div>
       <div class="seg" id="diffSeg"></div>
       <div class="rules" id="rulesBox"></div>
-      <div class="lbl" data-i18n="选英雄">选择英雄开始</div>
+      <div class="lbl" id="heroLbl" data-i18n="选择英雄开始">选择英雄开始</div>
       <div class="heroes" id="heroGrid"></div>
+    </div>
+  </div>
+
+  <!-- 图文说明 -->
+  <div class="overlay hidden" id="helpScreen">
+    <div class="sheet">
+      <h2>📖 <span data-i18n="图文说明">图文说明</span></h2>
+      <div id="helpBody"></div>
+      <button class="btn" id="helpClose" data-i18n="关闭">关闭</button>
     </div>
   </div>
 
@@ -134,8 +152,14 @@ const TR={
   "模式":"Mode","难度":"Difficulty","选择英雄开始":"Pick a hero to start","科技树":"Tech Tree",
   "用糖源永久强化你的军队（本局有效）":"Spend sugar to permanently upgrade your army (this match)",
   "关闭":"Close","🔁 再战一局":"🔁 Rematch","← 返回游戏厅":"← Back to arcade",
-  "1v1":"1v1","2v2":"2v2",
+  "1v1":"1v1","2v2":"2v2","生存":"Survival","排位":"Ranked","关卡":"Levels",
   "天堂":"Heaven","新手":"Novice","普通":"Normal","中间":"Middle","困难":"Hard","地狱":"Hell","魔鬼":"Devil",
+  // 模式/说明
+  "📖 图文说明":"📖 How to Play","图文说明":"How to Play","当前段位":"Rank","积分":"Pts","已通关":"Cleared","未解锁":"Locked",
+  "厨房遭遇":"Kitchen Skirmish","果园混战":"Orchard Melee","垃圾场围城":"Landfill Siege","冰箱深处":"Deep Freeze","灭虫剂风暴":"Pesticide Storm","魔王果核":"Rotten Core",
+  "青铜":"Bronze","白银":"Silver","黄金":"Gold","铂金":"Platinum","钻石":"Diamond","王者":"Master",
+  "选择挑战关卡":"Pick a challenge level","P2 英雄（随机）":"P2 hero (random)",
+  "上半屏由 P2 用手指指挥（🏴），下半屏 P1 指挥（🚩）":"Top half = P2 command (🏴), bottom half = P1 (🚩)",
   // 英雄
   "女王":"Queen","将军":"General","科学家":"Scientist","工程师":"Engineer","猎手":"Hunter",
   "造兵便宜15%，糖产+20%":"Units -15% cost, sugar +20%","全军攻击+20%":"Army attack +20%",
@@ -167,7 +191,12 @@ const HEROES=[
   {id:"general",ico:"🎖", nm:"将军",  d:"全军攻击+20%"},
   {id:"scientist",ico:"🔬",nm:"科学家",d:"技能冷却-40%"},
   {id:"engineer",ico:"🔧",nm:"工程师",d:"母巢生命+50%"},
-  {id:"hunter", ico:"🏹", nm:"猎手",  d:"侦查/远程射程+25%，视野更广"},
+  {id:"hunter", ico:"🏹", nm:"猎手",  d:"侦查/远程射程+25%"},
+  {id:"toxin",  ico:"🧪", nm:"毒师",  d:"远程兵种伤害+30%"},
+  {id:"windrunner",ico:"⚡",nm:"疾风", d:"全军移动速度+18%"},
+  {id:"guardian",ico:"🏰",nm:"守护者",d:"母巢炮塔+12伤害·母巢+25%血"},
+  {id:"tycoon", ico:"💰", nm:"商贾",  d:"资源点糖产+40%"},
+  {id:"beastlord",ico:"🐺",nm:"兽王", d:"中立不攻击你·击杀中立糖×2"},
 ];
 const DIFFS=[
   {id:"heaven",nm:"天堂",eco:0.55,buff:0.8, foeHp:0.65},
@@ -178,6 +207,24 @@ const DIFFS=[
   {id:"hell",  nm:"地狱",eco:1.75,buff:1.28,foeHp:1.5},
   {id:"devil", nm:"魔鬼",eco:2.1, buff:1.42,foeHp:1.75},
 ];
+const MODES=["1v1","survival","ranked","challenge","2v2"];
+const MODE_LBL={"1v1":"1v1","survival":"生存","ranked":"排位","challenge":"关卡","2v2":"2v2"};
+const CHALLENGES=[
+  {nm:"厨房遭遇", diff:"novice"},
+  {nm:"果园混战", diff:"normal"},
+  {nm:"垃圾场围城", diff:"middle"},
+  {nm:"冰箱深处", diff:"hard"},
+  {nm:"灭虫剂风暴", diff:"hell"},
+  {nm:"魔王果核", diff:"devil"},
+];
+const RANK_TIERS=[{nm:"青铜",diff:"novice"},{nm:"白银",diff:"normal"},{nm:"黄金",diff:"middle"},{nm:"铂金",diff:"hard"},{nm:"钻石",diff:"hell"},{nm:"王者",diff:"devil"}];
+function getRankPts(){ try{return parseInt(localStorage.getItem("flyRankPts")||"1000",10);}catch(e){return 1000;} }
+function setRankPts(v){ try{localStorage.setItem("flyRankPts",String(Math.max(0,v)));}catch(e){} }
+function rankTier(){ const p=getRankPts(); return RANK_TIERS[clamp(Math.floor(p/1000),0,RANK_TIERS.length-1)]; }
+function rankDiff(){ return DIFFS.find(d=>d.id===rankTier().diff)||DIFFS[2]; }
+function getBestChal(){ try{return parseInt(localStorage.getItem("flyChalBest")||"0",10);}catch(e){return 0;} }
+function setBestChal(v){ try{localStorage.setItem("flyChalBest",String(v));}catch(e){} }
+let selChal=0;
 const UNITS=[
   {k:"scout", ico:"🐝", nm:"侦查蝇", cost:20, hp:40,  dmg:6,  range:18, spd:118, cd:1.0, role:"melee", cap:2.2},
   {k:"melee", ico:"🪰", nm:"战斗蝇", cost:35, hp:90,  dmg:14, range:16, spd:78,  cd:0.9, role:"melee"},
@@ -192,9 +239,9 @@ const UNITS=[
 ];
 const UBY=Object.fromEntries(UNITS.map(u=>[u.k,u]));
 const SKILLS=[
-  {id:"burst", ico:"🍬", nm:"糖源爆发", cd:35, do:()=>{ g.sugar+=180; toast("🍬 +180"); }},
-  {id:"hatch", ico:"🥚", nm:"快速孵化", cd:45, do:()=>{ for(let i=0;i<4;i++) spawnAt(0,"melee",g.you,true); toast(tr("快速孵化")); }},
-  {id:"storm", ico:"🌪", nm:"黑风暴",   cd:60, do:()=>{ g.buffYou=8; toast("🌪 +60% ATK 8s"); }},
+  {id:"burst", ico:"🍬", nm:"糖源爆发", cd:35, do:(tm)=>{ if(tm){g.eSugar+=180;}else{g.sugar+=180;} toast("🍬 +180"); }},
+  {id:"hatch", ico:"🥚", nm:"快速孵化", cd:45, do:(tm)=>{ const base=tm?g.you2:g.you; for(let i=0;i<4;i++) spawnAt(tm||0,"melee",base,true); toast(tr("快速孵化")); }},
+  {id:"storm", ico:"🌪", nm:"黑风暴",   cd:60, do:(tm)=>{ if(tm){g.buffFoe=8;}else{g.buffYou=8;} toast("🌪 +60% ATK 8s"); }},
 ];
 const TECHS=[
   {id:"atk", ico:"⚔️", nm:"攻击强化", max:3, cost:[120,220,360], d:"全军攻击 +12%/级"},
@@ -206,55 +253,65 @@ const TECHS=[
 ];
 
 /*==================== 状态 ====================*/
-let g=null, MOD=null, DIFF=null, MODE="1v1";
-function computeMod(){
-  const t=g?g.tech:{}; const hero=g?g.heroObj:{};
+let g=null, MOD=null, MOD2=null, DIFF=null, MODE="1v1";
+function computeMod(hero,tech){ hero=hero||{}; tech=tech||{}; const id=hero.id;
   return {
-    costMult:(hero.id==="queen"?0.85:1)*(1-((t.hatchs||0)*0)),
-    sugarMult:hero.id==="queen"?1.2:1,
-    dmgMult:(hero.id==="general"?1.2:1)*(1+(t.atk||0)*0.12),
-    hpMult:1+(t.hp||0)*0.15,
-    spdMult:1+(t.spd||0)*0.12,
-    skillCd:hero.id==="scientist"?0.6:1,
-    baseHp:hero.id==="engineer"?1.5:1,
-    rangeMult:hero.id==="hunter"?1.25:1,
-    hatchMult:1-(t.hatchs||0)*0.2,
-    nodeBonus:(t.harv||0)*2,
-    turretDmg:16+(t.turret||0)*8,
+    costMult:(id==="queen"?0.85:1),
+    sugarMult:(id==="queen"?1.2:1)*(id==="tycoon"?1.4:1),
+    dmgMult:(id==="general"?1.2:1)*(1+(tech.atk||0)*0.12),
+    rangedDmg:(id==="toxin"?1.3:1),
+    hpMult:1+(tech.hp||0)*0.15,
+    spdMult:(1+(tech.spd||0)*0.12)*(id==="windrunner"?1.18:1),
+    skillCd:id==="scientist"?0.6:1,
+    baseHp:(id==="engineer"?1.5:1)*(id==="guardian"?1.25:1),
+    rangeMult:id==="hunter"?1.25:1,
+    hatchMult:1-(tech.hatchs||0)*0.2,
+    nodeBonus:(tech.harv||0)*2,
+    turretDmg:16+(tech.turret||0)*8+(id==="guardian"?12:0),
+    beast:id==="beastlord",
   };
 }
+function aiMod(){ return {costMult:1,sugarMult:1,dmgMult:DIFF.buff*1.05,rangedDmg:1,hpMult:DIFF.buff,spdMult:1,
+  skillCd:1,baseHp:DIFF.foeHp,rangeMult:1,hatchMult:1,nodeBonus:0,turretDmg:16,beast:false}; }
+function tmod(team){ return team===0?MOD:MOD2; }
 function addBase(team,x,y,main,hpBase){ const hp=hpBase*(main?1:0.78); const b={team,x,y,hp,max:hp,main:!!main,zap:0,dead:false}; g.bases.push(b); return b; }
 function newGame(heroId){
   const hero=HEROES.find(h=>h.id===heroId);
-  g={ running:true, over:false, t:0, timeLeft:240, mode:MODE, heroObj:hero, hero:heroId,
+  const hotseat=(MODE==="2v2");
+  const hero2 = hotseat ? pick(HEROES) : null;
+  g={ running:true, over:false, t:0, timeLeft:240, mode:MODE, hotseat, survival:MODE==="survival", ranked:MODE==="ranked",
+      heroObj:hero, hero:heroId, heroObj2:hero2,
       sugar:150, eSugar:150, allyT:4, buffYou:0, buffFoe:0,
       bases:[], units:[], shots:[], parts:[], nodes:[], neutrals:[], obstacles:[],
-      rally:null, rallyT:0, cd:{}, skillCd:{}, eSpawnT:2, surgeT:rand(30,45), eventT:rand(20,35),
-      tech:{atk:0,hp:0,spd:0,harv:0,hatchs:0,turret:0} };
-  MOD=computeMod();
-  const youHp=1100*MOD.baseHp, foeHp=1150*DIFF.foeHp;
-  if(MODE==="2v2"){
+      rally:null, rallyT:0, rally2:null, rally2T:0, cd:{}, skillCd:{}, skillCd2:{},
+      eSpawnT:2, surgeT:rand(30,45), eventT:rand(20,35),
+      tech:{atk:0,hp:0,spd:0,harv:0,hatchs:0,turret:0}, tech2:{atk:0,hp:0,spd:0,harv:0,hatchs:0,turret:0} };
+  MOD=computeMod(hero,g.tech);
+  MOD2 = hotseat ? computeMod(hero2,g.tech2) : aiMod();
+  const youHp=1100*MOD.baseHp, foeHp=(hotseat?1100*MOD2.baseHp:1150*DIFF.foeHp);
+  if(hotseat){
     g.you=addBase(0, W*0.30, H-BOT-24, true, youHp);
-    addBase(0, W*0.72, H-BOT+6, false, youHp);        // 我方盟友(AI)
-    addBase(1, W*0.30, TOP+40, true, foeHp);
-    addBase(1, W*0.72, TOP+64, false, foeHp);
+    addBase(0, W*0.72, H-BOT+6, false, youHp*0.85);
+    g.you2=addBase(1, W*0.70, TOP+40, true, foeHp);
+    addBase(1, W*0.28, TOP+64, false, foeHp*0.85);
+  } else if(g.survival){
+    g.you=addBase(0, W/2, H-BOT-24, true, youHp*1.7);
+    g.spawnPt={x:W/2, y:TOP+30};   // 敌人从顶部涌出（无敌方母巢）
   } else {
     g.you=addBase(0, W/2, H-BOT-24, true, youHp);
     addBase(1, W/2, TOP+40, true, foeHp);
   }
-  // 资源点
-  const nodeDefs = MODE==="2v2"
+  const nodeDefs = hotseat
     ? [{x:W*0.5,y:H*0.5,kind:"🍎",big:1},{x:W*0.16,y:H*0.4,kind:"🥤"},{x:W*0.84,y:H*0.4,kind:"🍞"},
        {x:W*0.16,y:H*0.6,kind:"🍞"},{x:W*0.84,y:H*0.6,kind:"🥤"},{x:W*0.5,y:H*0.3,kind:"🍞"},{x:W*0.5,y:H*0.7,kind:"🥤"}]
     : [{x:W*0.5,y:H*0.5,kind:"🍎",big:1},{x:W*0.2,y:H*0.38,kind:"🥤"},{x:W*0.8,y:H*0.38,kind:"🍞"},
        {x:W*0.2,y:H*0.62,kind:"🍞"},{x:W*0.8,y:H*0.62,kind:"🥤"}];
   g.nodes=nodeDefs.map(n=>({...n,x:n.x,y:n.y,ctrl:0,owner:-1}));
-  // 障碍物 4~7 长方形铁块
   genObstacles(ri(4,7));
-  // 中立守中心
   g.neutrals.push(mkNeutral("🐜",g.nodes[0].x-26,g.nodes[0].y), mkNeutral("🕷️",g.nodes[0].x+26,g.nodes[0].y));
-  UNITS.forEach(u=>g.cd[u.k]=0); SKILLS.forEach(s=>g.skillCd[s.id]=0);
-  document.getElementById("topbar").classList.toggle("show", MODE==="2v2");
+  UNITS.forEach(u=>g.cd[u.k]=0); SKILLS.forEach(s=>{g.skillCd[s.id]=0; g.skillCd2[s.id]=0;});
+  document.getElementById("topbar").classList.toggle("show", hotseat);
+  if(hotseat) toast((LANG==="en"?"P2 hero: ":"P2 英雄：")+hero2.ico+tr(hero2.nm));
   buildBars(); syncHud();
 }
 function genObstacles(n){
@@ -276,8 +333,7 @@ function mkNeutral(ico,x,y){ const s=ico==="🐜"?{hp:220,dmg:14,def:.5}:{hp:120
 function spawnAt(team,key,at,free){
   const u=UBY[key];
   const e={ ...u, team, x:at.x+rand(-24,24), y:at.y+(team===0?-28:28), atk:0, poiT:0, r:u.k==="storm"?12:(u.k==="tank"?9:7) };
-  e.max = team===0 ? Math.round(u.hp*MOD.hpMult) : Math.round(u.hp*DIFF.buff);
-  e.hp=e.max; e.dmg = team===0 ? u.dmg : u.dmg*DIFF.buff*1.05;
+  e.max = Math.round(u.hp*tmod(team).hpMult); e.hp=e.max; e.dmg=u.dmg;
   g.units.push(e); spawnParts(e.x,e.y,team===0?"#48d17a":"#e0554b",5);
   return e;
 }
@@ -291,6 +347,11 @@ function tryBuild(key, forward){
   if(!forward) g.cd[key]=u.cd*MOD.hatchMult;
   syncHud();
 }
+function tryBuild2(key){
+  const u=UBY[key]; const cost=Math.round(u.cost*MOD2.costMult);
+  if(g.eSugar<cost){ toast(tr("糖源不足")); return; }
+  g.eSugar-=cost; spawnAt(1,key,g.you2,true); syncHud();
+}
 
 /*==================== 更新 ====================*/
 function update(dt){
@@ -299,12 +360,14 @@ function update(dt){
   if(g.buffYou>0) g.buffYou-=dt; if(g.buffFoe>0) g.buffFoe-=dt;
   for(const k in g.cd) if(g.cd[k]>0) g.cd[k]=Math.max(0,g.cd[k]-dt);
   for(const s in g.skillCd) if(g.skillCd[s]>0) g.skillCd[s]=Math.max(0,g.skillCd[s]-dt);
-  if(g.rallyT>0) g.rallyT-=dt;
+  for(const s in g.skillCd2) if(g.skillCd2[s]>0) g.skillCd2[s]=Math.max(0,g.skillCd2[s]-dt);
+  if(g.rallyT>0) g.rallyT-=dt; if(g.rally2T>0) g.rally2T-=dt;
   // 经济：只有占领资源点才产糖
   let yNodes=0,eNodes=0;
   for(const n of g.nodes){ if(n.owner===0)yNodes++; else if(n.owner===1)eNodes++; }
   g.sugar  += yNodes*(5+MOD.nodeBonus)*MOD.sugarMult*dt;
-  g.eSugar += eNodes*5*DIFF.eco*dt;
+  if(g.hotseat) g.eSugar += eNodes*(5+MOD2.nodeBonus)*MOD2.sugarMult*dt;
+  else if(!g.survival) g.eSugar += eNodes*5*DIFF.eco*dt;
   // 资源点争夺
   for(const n of g.nodes){ let net=0;
     for(const u of g.units){ if(u.dead) continue; if(dist(u,n)<(n.big?55:44)) net+=(u.team===0?1:-1)*(u.cap||1); }
@@ -313,9 +376,10 @@ function update(dt){
   }
   updateUnits(dt);
   baseDefense(dt);
-  // 中立
+  // 中立（兽王：中立不攻击你）
   for(const nu of g.neutrals){ if(nu.dead) continue; nu.atk-=dt;
-    const t=nearestEnemy(nu,72); if(t){ if(dist(nu,t)<nu.range+t.r){ if(nu.atk<=0){nu.atk=1.2; damage(t,nu.dmg,nu);} } else moveToward(nu,t,dt); } }
+    let t=null,bd=72; for(const u of g.units){ if(u.dead) continue; if(u.team===0&&MOD.beast) continue; const d=dist(nu,u); if(d<bd){bd=d;t=u;} }
+    if(t){ if(dist(nu,t)<nu.range+t.r){ if(nu.atk<=0){nu.atk=1.2; damage(t,nu.dmg,nu);} } else moveToward(nu,t,dt); } }
   g.neutrals=g.neutrals.filter(n=>!n.dead);
   // 子弹（被障碍阻挡）
   for(const s of g.shots){ if(s.dead) continue; s.x+=s.vx*dt; s.y+=s.vy*dt; s.life-=dt;
@@ -332,6 +396,11 @@ function update(dt){
   g.bases=g.bases.filter(b=>!b.dead);
   // 胜负
   const foeAlive=g.bases.some(b=>b.team===1), youAlive=g.bases.some(b=>b.team===0);
+  if(g.survival){
+    if(g.t>=300){ endGame(true,(LANG==="en"?"Survived 5:00 — you held the line!":"坚持满5分钟，生存成功！")); return; }
+    if(!youAlive){ const mm=Math.floor(g.t/60),ss=Math.floor(g.t%60); endGame(false,(LANG==="en"?`Survived ${mm}:${String(ss).padStart(2,"0")}`:`你坚持了 ${mm}:${String(ss).padStart(2,"0")}`)); return; }
+    syncHud(); return;
+  }
   if(!foeAlive){ endGame(true, tr("摧毁敌方全部母巢！") ); return; }
   if(!youAlive){ endGame(false, tr("你的母巢全灭…") ); return; }
   if(g.timeLeft<=0){ const yn=g.nodes.filter(n=>n.owner===0).length, en=g.nodes.filter(n=>n.owner===1).length;
@@ -350,8 +419,9 @@ function nearestEnemy(u,aggro){ let best=null,bd=aggro||99999;
 }
 function nearestEnemyBase(u){ let best=null,bd=99999; for(const b of g.bases){ if(b.team===u.team||b.team===2) continue; const d=dist(u,b); if(d<bd){bd=d;best=b;} } return best; }
 function objectiveFor(u){
-  if(u.tgtBase && u.team===1){ const b=nearestEnemyBase(u); if(b) return b; }
-  if(g.rally && g.rallyT>0 && u.team===0) return g.rally;
+  if(u.tgtBase && u.team===1 && !g.hotseat){ const b=nearestEnemyBase(u); if(b) return b; }
+  if(u.team===0 && g.rally && g.rallyT>0) return g.rally;
+  if(u.team===1 && g.hotseat && g.rally2 && g.rally2T>0) return g.rally2;
   let best=null,bd=99999;
   for(const n of g.nodes){ if(n.owner===u.team) continue; const d=dist(u,n); if(d<bd){bd=d;best=n;} }
   const eb=nearestEnemyBase(u);
@@ -360,16 +430,18 @@ function objectiveFor(u){
 }
 function updateUnits(dt){
   for(const u of g.units){ if(u.dead) continue; u.atk-=dt; if(u.poiT>0){ u.poiT-=dt; damage(u,5*dt,null,true); }
+    const M=tmod(u.team);
     const buff=(u.team===0?g.buffYou:g.buffFoe)>0?1.6:1;
-    const spd=u.spd*(u.team===0?MOD.spdMult:1);
+    const spd=u.spd*M.spdMult;
     if(u.role==="heal"){ const f=lowAlly(u); if(f){ if(dist(u,f)<u.range){ if(u.atk<=0){u.atk=u.cd; f.hp=Math.min(f.max,f.hp+u.heal); spawnParts(f.x,f.y,"#8effc0",3);} } else moveToward(u,f,dt,spd); } else moveToward(u,objectiveFor(u),dt,spd); continue; }
-    const range=u.range*(u.role==="ranged"||u.k==="scout"?(u.team===0?MOD.rangeMult:1):1);
+    const range=u.range*(u.role==="ranged"||u.k==="scout"?M.rangeMult:1);
     let target=nearestEnemy(u,150);
     const eb=nearestEnemyBase(u);
     if((!target||(eb&&dist(u,eb)<range+22)) && eb && dist(u,eb)<range+22) target=eb;
     if(target){ const rr=range+(target.r||20);
       if(dist(u,target)<=rr){ if(u.atk<=0){ u.atk=u.cd;
-        let dmg=u.dmg*(u.team===0?MOD.dmgMult:1)*buff;
+        let dmg=u.dmg*M.dmgMult*buff;
+        if(u.role==="ranged") dmg*=M.rangedDmg;
         if(u.zerk) dmg*=1+(1-u.hp/u.max)*1.2;
         if(u.role==="ranged") fireShot(u,target,dmg,u.poison,u.aoe);
         else { damage(target,dmg,u); if(u.aoe) aoeDamage(target,u.aoe,dmg*0.5,u); }
@@ -393,29 +465,33 @@ function fireShot(u,t,dmg,poison,aoe){ const dx=t.x-u.x,dy=t.y-u.y,d=Math.hypot(
 function hitShot(s,t){ damage(t,s.dmg,{team:s.team}); if(s.poison&&t.poiT!==undefined)t.poiT=3; if(s.aoe) aoeDamage(t,s.aoe,s.dmg*0.5,{team:s.team}); spawnParts(s.x,s.y,s.col,4); }
 function aoeDamage(center,radius,dmg,src){ for(const o of g.units){ if(o.dead||(src&&o.team===src.team)) continue; if(dist(o,center)<radius) damage(o,dmg,src); } spawnParts(center.x,center.y,"#ffca6a",8); }
 function damage(t,amount,src,dot){ if(t.def) amount*=(1-t.def); t.hp-=amount; if(!dot)t.flash=0.1;
-  if(t.hp<=0&&t.neutral&&!t.dead){ t.dead=true; const bonus=t.ico==="🐜"?120:90;
-    if(src&&src.team===0){ g.sugar+=bonus; toast(tr("击杀中立")+` +🍬${bonus}`);} else if(src&&src.team===1) g.eSugar+=bonus;
+  if(t.hp<=0&&t.neutral&&!t.dead){ t.dead=true; let bonus=t.ico==="🐜"?120:90;
+    if(src&&src.team===0){ if(MOD.beast)bonus*=2; g.sugar+=bonus; toast(tr("击杀中立")+` +🍬${bonus}`);} else if(src&&src.team===1) g.eSugar+=bonus;
     spawnParts(t.x,t.y,"#ffcf4a",10); } }
 function baseDefense(dt){ for(const base of g.bases){ base.zap-=dt; if(base.zap>0) continue;
   let t=null,bd=105; for(const u of g.units){ if(u.dead||u.team===base.team) continue; const d=dist(u,base); if(d<bd){bd=d;t=u;} }
-  if(t){ base.zap=0.8; damage(t, base.team===0?MOD.turretDmg:16, {team:base.team}); spawnParts(t.x,t.y,base.team===0?"#8effc0":"#ff8f88",4); } } }
+  if(t){ base.zap=0.8; damage(t, tmod(base.team).turretDmg, {team:base.team}); spawnParts(t.x,t.y,base.team===0?"#8effc0":"#ff8f88",4); } } }
 function onDeath(u){ spawnParts(u.x,u.y,u.team===0?"#48d17a":"#e0554b",8);
   if(u.split){ for(let i=0;i<2;i++){ const b=spawnAt(u.team,"scout",u,true); b.x=u.x+rand(-12,12); b.y=u.y+rand(-12,12); b.hp=b.max=28; b.dmg=6; } }
   if(u.boom){ aoeDamage(u,40,30,u); g.shake=0.15; } }
 
 /*==================== 敌 AI / 盟友 AI ====================*/
 function enemyAI(dt){
+  if(g.hotseat) return;                     // P2 是真人，不跑 AI
+  if(g.survival) g.eSugar += (5 + g.t*0.115)*dt;   // 生存：随时间加速涌兵
   g.eSpawnT-=dt; g.surgeT-=dt; const surge=g.surgeT<=0;
   if(surge){ g.surgeT=rand(46,64); g.buffFoe=6; toast(tr("敌军黑潮突袭！")); }
   if(g.eSpawnT<=0){ const affordable=UNITS.filter(u=>u.cost<=g.eSugar);
     if(affordable.length){ let c; if(g.eSugar>200&&Math.random()<0.4) c=UBY.storm.cost<=g.eSugar?UBY.storm:pick(affordable); else c=pick(affordable);
-      g.eSugar-=c.cost; const from=pick(g.bases.filter(b=>b.team===1))||{x:W/2,y:TOP+40}; const e=spawnAt(1,c.k,from,true); if(surge) e.tgtBase=1; }
-    g.eSpawnT=rand(1.1,2.1)*(g.timeLeft<120?0.7:1)*(surge?0.55:1)/Math.max(0.6,DIFF.eco*0.8);
+      g.eSugar-=c.cost; const from = g.survival ? g.spawnPt : (pick(g.bases.filter(b=>b.team===1))||{x:W/2,y:TOP+40});
+      const e=spawnAt(1,c.k,from,true); if(surge||g.survival) e.tgtBase=1; }
+    const rate = g.survival ? rand(1.3,2.3)*Math.max(0.3,1-g.t*0.0022) : rand(1.1,2.1)*(g.timeLeft<120?0.7:1)*(surge?0.55:1)/Math.max(0.6,DIFF.eco*0.8);
+    g.eSpawnT=rate;
     if(Math.random()<0.18) g.buffFoe=Math.max(g.buffFoe,5);
   }
 }
-function allyAI(dt){ if(g.mode!=="2v2") return; g.allyT-=dt; if(g.allyT<=0){ g.allyT=rand(3,5);
-  const ally=g.bases.find(b=>b.team===0&&!b.main); if(ally){ const c=pick(UNITS.filter(u=>u.cost<=90)); spawnAt(0,c.k,ally,true); } } }
+function allyAI(dt){ if(!g.hotseat) return; g.allyT-=dt; if(g.allyT<=0){ g.allyT=rand(3,5);
+  g.bases.filter(b=>!b.main).forEach(b=>{ const c=pick(UNITS.filter(u=>u.cost<=90)); spawnAt(b.team,c.k,b,true); }); } }
 
 /*==================== 随机事件 ====================*/
 function randomEvent(){ const ev=pick([
@@ -426,10 +502,14 @@ function randomEvent(){ const ev=pick([
   ]); ev.f(); toast(ev.t); }
 
 /*==================== 技能 / 科技 ====================*/
-function useSkill(id){ const s=SKILLS.find(x=>x.id===id); if(g.skillCd[id]>0){ toast(tr("技能冷却中")); return; } s.do(); g.skillCd[id]=s.cd*MOD.skillCd; syncHud(); }
+function useSkill(id){ const s=SKILLS.find(x=>x.id===id); if(g.skillCd[id]>0){ toast(tr("技能冷却中")); return; } s.do(0); g.skillCd[id]=s.cd*MOD.skillCd; syncHud(); }
+function useSkill2(id){ const s=SKILLS.find(x=>x.id===id); if(g.skillCd2[id]>0){ toast(tr("技能冷却中")); return; } s.do(1); g.skillCd2[id]=s.cd*MOD2.skillCd; syncHud(); }
 function buyTech(id){ const T=TECHS.find(x=>x.id===id); const lv=g.tech[id]; if(lv>=T.max){ return; }
   const cost=T.cost[lv]; if(g.sugar<cost){ toast(tr("糖源不足")); return; }
-  g.sugar-=cost; g.tech[id]++; MOD=computeMod(); buildTech(); buildBars(); syncHud(); toast("🔬 "+tr(T.nm)+" Lv"+g.tech[id]); }
+  g.sugar-=cost; g.tech[id]++; MOD=computeMod(g.heroObj,g.tech); buildTech(); buildBars(); syncHud(); toast("🔬 "+tr(T.nm)+" Lv"+g.tech[id]); }
+function buyTech2(id){ const T=TECHS.find(x=>x.id===id); const lv=g.tech2[id]; if(lv>=T.max){ return; }
+  const cost=T.cost[lv]; if(g.eSugar<cost){ toast(tr("糖源不足")); return; }
+  g.eSugar-=cost; g.tech2[id]++; MOD2=computeMod(g.heroObj2,g.tech2); buildTop(); syncHud(); toast("🔬 P2 "+tr(T.nm)+" Lv"+g.tech2[id]); }
 
 /*==================== 渲染 ====================*/
 let last=0;
@@ -453,6 +533,7 @@ function render(){ ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,W,H);
     ctx.beginPath(); ctx.arc(n.x,n.y,r+5,-1.57,-1.57+(n.ctrl+100)/200*6.28); ctx.stroke();
     ctx.font=(n.big?"30px":"24px")+" sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(n.kind,n.x,n.y); }
   if(g.rally&&g.rallyT>0){ ctx.font="20px sans-serif"; ctx.textAlign="center"; ctx.fillText("🚩",g.rally.x,g.rally.y-4); }
+  if(g.rally2&&g.rally2T>0){ ctx.font="20px sans-serif"; ctx.textAlign="center"; ctx.fillText("🏴",g.rally2.x,g.rally2.y-4); }
   for(const b of g.bases) drawBase(b);
   for(const nu of g.neutrals) drawUnit(nu,"#c9a24a");
   for(const u of g.units) drawUnit(u,u.team===0?"#48d17a":"#e0554b");
@@ -483,33 +564,50 @@ function buildBars(){
     el.onclick=()=>useSkill(s.id); sk.appendChild(el); });
   const te=document.createElement("div"); te.className="skill tech"; te.innerHTML=`<div class="si">🔬</div><div class="sn">${tr("科技")}</div>`;
   te.onclick=openTech; sk.appendChild(te);
-  // 顶部攻击栏（2v2 前线出击）
+  buildTop();
+}
+// 顶部：P2 真人控制栏（造兵 + 技能 + 科技），方向相反
+function buildTop(){
   const tb=document.getElementById("topbar"); tb.innerHTML="";
-  if(MODE==="2v2"){ UNITS.forEach(u=>{ const el=document.createElement("div"); el.className="fcard"; el.dataset.k=u.k;
-    el.innerHTML=`<div class="ui">${u.ico}</div><div class="uc">🍬${Math.round(u.cost*MOD.costMult*1.4)}</div>`;
-    el.onclick=()=>tryBuild(u.k,true); tb.appendChild(el); }); }
+  if(!g||!g.hotseat) return;
+  const tag=document.createElement("div"); tag.className="p2tag"; tag.textContent="P2 "+(g.heroObj2?g.heroObj2.ico:"");
+  tb.appendChild(tag);
+  UNITS.forEach(u=>{ const el=document.createElement("div"); el.className="fcard"; el.dataset.k=u.k;
+    el.innerHTML=`<div class="ui">${u.ico}</div><div class="uc">🍬${Math.round(u.cost*MOD2.costMult)}</div>`;
+    el.onclick=()=>tryBuild2(u.k); tb.appendChild(el); });
+  SKILLS.forEach(s=>{ const el=document.createElement("div"); el.className="fcard sk2"; el.dataset.s2=s.id;
+    el.innerHTML=`<div class="ui">${s.ico}</div><div class="uc cd2"></div>`; el.onclick=()=>useSkill2(s.id); tb.appendChild(el); });
+  const te=document.createElement("div"); te.className="fcard"; te.innerHTML=`<div class="ui">🔬</div><div class="uc">${tr("科技")}</div>`;
+  te.onclick=openTech2; tb.appendChild(te);
 }
 function syncHud(){ if(!g) return;
-  document.getElementById("hSugar").textContent=Math.floor(g.sugar);
+  document.getElementById("hSugar").textContent=g.hotseat?(Math.floor(g.sugar)+" / "+Math.floor(g.eSugar)):Math.floor(g.sugar);
   document.getElementById("hNodesY").textContent=g.nodes.filter(n=>n.owner===0).length;
   document.getElementById("hNodesE").textContent=g.nodes.filter(n=>n.owner===1).length;
-  const m=Math.max(0,Math.floor(g.timeLeft/60)),s=Math.max(0,Math.floor(g.timeLeft%60));
+  let tl = g.survival ? Math.max(0,300-g.t) : g.timeLeft;
+  const m=Math.max(0,Math.floor(tl/60)),s=Math.max(0,Math.floor(tl%60));
   document.getElementById("hTimer").textContent=m+":"+String(s).padStart(2,"0");
   document.querySelectorAll(".ucard").forEach(el=>{ const u=UBY[el.dataset.k]; const cost=Math.round(u.cost*MOD.costMult);
     el.classList.toggle("dis",g.sugar<cost||g.cd[u.k]>0); el.querySelector(".cd").style.height=(g.cd[u.k]>0?(g.cd[u.k]/(u.cd*MOD.hatchMult)*100):0)+"%"; });
-  document.querySelectorAll(".fcard").forEach(el=>{ const u=UBY[el.dataset.k]; el.classList.toggle("dis",g.sugar<Math.round(u.cost*MOD.costMult*1.4)); });
   document.querySelectorAll(".skill[data-s]").forEach(el=>{ const s=SKILLS.find(x=>x.id===el.dataset.s);
     el.classList.toggle("dis",g.skillCd[s.id]>0); el.querySelector(".cd").style.height=(g.skillCd[s.id]>0?(g.skillCd[s.id]/(s.cd*MOD.skillCd)*100):0)+"%"; });
+  // P2 顶栏
+  document.querySelectorAll("#topbar .fcard[data-k]").forEach(el=>{ const u=UBY[el.dataset.k]; el.classList.toggle("dis",g.eSugar<Math.round(u.cost*MOD2.costMult)); });
+  document.querySelectorAll("#topbar .sk2").forEach(el=>{ const id=el.dataset.s2; el.classList.toggle("dis",g.skillCd2[id]>0);
+    el.querySelector(".cd2").textContent=g.skillCd2[id]>0?Math.ceil(g.skillCd2[id]):""; });
 }
 function toast(t){ const el=document.getElementById("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),1400); }
 
-function openTech(){ buildTech(); document.getElementById("techScreen").classList.remove("hidden"); }
-function buildTech(){ document.getElementById("techSugar").textContent=Math.floor(g.sugar);
+let techTeam=0;
+function openTech(){ techTeam=0; buildTech(); document.getElementById("techScreen").classList.remove("hidden"); }
+function openTech2(){ techTeam=1; buildTech(); document.getElementById("techScreen").classList.remove("hidden"); }
+function buildTech(){ const t2=techTeam===1; const tech=t2?g.tech2:g.tech, sugar=t2?g.eSugar:g.sugar;
+  document.getElementById("techSugar").textContent=Math.floor(sugar);
   const box=document.getElementById("techList"); box.innerHTML="";
-  TECHS.forEach(T=>{ const lv=g.tech[T.id], maxed=lv>=T.max; const el=document.createElement("div"); el.className="techrow";
-    el.innerHTML=`<span class="ti">${T.ico}</span><div class="tinfo"><div class="tn">${tr(T.nm)} <span style="color:#8fb39c">Lv${lv}/${T.max}</span></div><div class="td">${T.d}</div></div>`;
+  TECHS.forEach(T=>{ const lv=tech[T.id], maxed=lv>=T.max; const el=document.createElement("div"); el.className="techrow";
+    el.innerHTML=`<span class="ti">${T.ico}</span><div class="tinfo"><div class="tn">${(t2?"P2 ":"")+tr(T.nm)} <span style="color:#8fb39c">Lv${lv}/${T.max}</span></div><div class="td">${T.d}</div></div>`;
     const b=document.createElement("button"); b.className="tbuy"+(maxed?" max":""); b.textContent=maxed?(LANG==="en"?"MAX":"满级"):("🍬"+T.cost[lv]);
-    if(!maxed) b.onclick=()=>buyTech(T.id); el.appendChild(b); box.appendChild(el); }); }
+    if(!maxed) b.onclick=()=>{ (t2?buyTech2:buyTech)(T.id); }; el.appendChild(b); box.appendChild(el); }); }
 document.getElementById("techClose").onclick=()=>document.getElementById("techScreen").classList.add("hidden");
 
 /*==================== 输入：点地图/资源点 指挥集结 ====================*/
@@ -518,17 +616,31 @@ function toXY(e){ const r=cv.getBoundingClientRect(); const cx=(e.touches?e.touc
 function command(e){ if(!g||!g.running||g.over) return; const p=toXY(e); if(p.y<TOP+6||p.y>H-BOT+30) return;
   // 若点在资源点上，直接派兵占领
   let node=null; for(const n of g.nodes){ if(dist(p,n)<(n.big?34:28)){ node=n; break; } }
-  g.rally = node?{x:node.x,y:node.y}:{x:p.x,y:p.y}; g.rallyT=6;
-  if(node) toast(node.owner===0?(LANG==="en"?"Hold this node!":"守住该资源点！"):(LANG==="en"?"Capture node!":"全军占领资源点！"));
+  const dest = node?{x:node.x,y:node.y}:{x:p.x,y:p.y};
+  const p2 = g.hotseat && p.y < H/2;   // hotseat：上半屏归 P2 指挥
+  if(p2){ g.rally2=dest; g.rally2T=6; }
+  else  { g.rally=dest;  g.rallyT=6; }
+  if(node){ const mine=(p2?1:0); toast(node.owner===mine?(LANG==="en"?"Hold this node!":"守住该资源点！"):(LANG==="en"?"Capture node!":"全军占领资源点！")); }
 }
 cv.addEventListener("click",command);
 cv.addEventListener("touchstart",e=>command(e),{passive:true});
 
 /*==================== 胜负 ====================*/
-function endGame(won,reason){ g.over=true; g.running=false;
-  document.getElementById("overTitle").textContent=won?(LANG==="en"?"🏆 Victory!":"🏆 胜利！"):(LANG==="en"?"💀 Defeat":"💀 失败");
-  const h=g.heroObj;
-  document.getElementById("overSub").innerHTML=reason+`<br><br>${h.ico}${tr(h.nm)} · ${tr(DIFF.nm)} · ${g.mode} · ${LANG==="en"?"time ":"用时 "}${Math.floor((240-g.timeLeft)/60)}:${String(Math.floor((240-g.timeLeft)%60)).padStart(2,"0")}`;
+function endGame(won,reason){ g.over=true; g.running=false; g.won=won;
+  let extra="";
+  // 2v2：胜负以队伍论；标题按 P1/P2
+  if(g.hotseat){
+    const p1win=won; document.getElementById("overTitle").textContent=(LANG==="en"?(p1win?"🔵 P1 Team Wins!":"🔴 P2 Team Wins!"):(p1win?"🔵 P1 队获胜！":"🔴 P2 队获胜！"));
+    extra = `<br>P1 ${g.heroObj.ico}${tr(g.heroObj.nm)}　vs　P2 ${g.heroObj2.ico}${tr(g.heroObj2.nm)}`;
+  } else {
+    document.getElementById("overTitle").textContent=won?(LANG==="en"?"🏆 Victory!":"🏆 胜利！"):(LANG==="en"?"💀 Defeat":"💀 失败");
+    if(g.ranked){ const before=getRankPts(); const d=won?30:-20; setRankPts(before+d); const t=rankTier();
+      extra=`<br>🏅 ${tr("积分")} ${before} → <b>${getRankPts()}</b> (${d>0?"+":""}${d}) · ${tr(t.nm)}`; }
+    if(g.mode==="challenge"){ if(won && selChal>=getBestChal()){ setBestChal(Math.min(CHALLENGES.length-1,selChal+1));
+      extra += "<br>🗺 "+(LANG==="en"?"Next level unlocked!":"已解锁下一关！"); } }
+  }
+  const h=g.heroObj; const used=g.survival?g.t:(240-g.timeLeft);
+  document.getElementById("overSub").innerHTML=reason+extra+`<br><br>${h.ico}${tr(h.nm)} · ${tr(MODE_LBL[g.mode]||g.mode)}${g.hotseat?"":" · "+tr(DIFF.nm)} · ${LANG==="en"?"time ":"用时 "}${Math.floor(used/60)}:${String(Math.floor(used%60)).padStart(2,"0")}`;
   document.getElementById("overScreen").classList.remove("hidden");
 }
 
@@ -536,25 +648,73 @@ function endGame(won,reason){ g.over=true; g.running=false;
 function buildStart(){
   // 模式
   const ms=document.getElementById("modeSeg"); ms.innerHTML="";
-  ["1v1","2v2"].forEach(m=>{ const el=document.createElement("div"); el.className="opt"+(MODE===m?" on":""); el.textContent=tr(m);
+  MODES.forEach(m=>{ const el=document.createElement("div"); el.className="opt"+(MODE===m?" on":""); el.textContent=tr(MODE_LBL[m]);
     el.onclick=()=>{ MODE=m; buildStart(); }; ms.appendChild(el); });
-  // 难度
   if(!DIFF) DIFF=DIFFS[2];
-  const ds=document.getElementById("diffSeg"); ds.innerHTML="";
-  DIFFS.forEach(d=>{ const el=document.createElement("div"); el.className="opt"+(DIFF.id===d.id?" on":""); el.textContent=tr(d.nm);
-    el.onclick=()=>{ DIFF=d; buildStart(); }; ds.appendChild(el); });
-  document.getElementById("rulesBox").innerHTML = LANG==="en"
-    ? "🍬 <b>Only captured fruit nodes</b> produce sugar → build units → raze all enemy hives. Tap a node to send your swarm to capture it. Iron blocks force detours. 🔬 Tech Tree upgrades your army."
-    : "🍬 <b>只有占领水果资源点</b>才会产糖 → 造兵 → 摧毁敌方所有母巢。点资源点派全军占领；铁块需绕道；🔬科技树强化军队。";
+  const ds=document.getElementById("diffSeg"), dl=document.getElementById("diffLbl"); ds.innerHTML="";
+  // 各模式专属：难度 / 关卡 / 排位段位
+  if(MODE==="1v1"){
+    dl.textContent=tr("难度"); dl.style.display=""; ds.style.display="";
+    DIFFS.forEach(d=>{ const el=document.createElement("div"); el.className="opt"+(DIFF.id===d.id?" on":""); el.textContent=tr(d.nm);
+      el.onclick=()=>{ DIFF=d; buildStart(); }; ds.appendChild(el); });
+  } else if(MODE==="challenge"){
+    dl.textContent=tr("选择挑战关卡"); dl.style.display=""; ds.style.display="";
+    const best=getBestChal();
+    CHALLENGES.forEach((c,i)=>{ const locked=i>best; const el=document.createElement("div");
+      el.className="opt"+(selChal===i?" on":"")+(locked?" lock":""); el.textContent=(i<best?"✓ ":locked?"🔒 ":"")+(i+1)+"·"+tr(c.nm);
+      el.onclick=()=>{ if(locked){ toast(tr("未解锁")); return; } selChal=i; DIFF=DIFFS.find(d=>d.id===c.diff); buildStart(); }; ds.appendChild(el); });
+    DIFF=DIFFS.find(d=>d.id===CHALLENGES[selChal].diff);
+  } else { dl.style.display="none"; ds.style.display="none"; }
+  // 规则文案
+  const rb=document.getElementById("rulesBox");
+  const base = LANG==="en"
+    ? "🍬 <b>Only captured fruit nodes</b> produce sugar → build units → raze enemy hives. Tap a node to send your swarm. Iron blocks force detours. 🔬 Tech upgrades your army."
+    : "🍬 <b>只有占领水果资源点</b>才会产糖 → 造兵 → 摧毁敌方母巢。点资源点派全军占领；铁块需绕道；🔬科技树强化军队。";
+  let extra="";
+  if(MODE==="2v2") extra = "<br>👥 <b>2V2 "+(LANG==="en"?"local real battle":"真人对战")+"</b>："+tr("上半屏由 P2 用手指指挥（🏴），下半屏 P1 指挥（🚩）")+(LANG==="en"?". P2 has own hero/skills/tech in the TOP bar (reversed side)!":"。P2 拥有独立英雄/技能/科技，操作顶部控制栏（方向相反）！");
+  else if(MODE==="survival") extra = "<br>🌊 "+(LANG==="en"?"<b>Survival</b>: endless surging swarm — hold your single hive for <b>5:00</b>. No enemy hive to kill.":"<b>生存</b>：敌潮无尽涌来，守住唯一母巢 <b>5 分钟</b>即胜，越到后面越猛。");
+  else if(MODE==="ranked"){ const t=rankTier(); extra = "<br>🏅 <b>"+tr("排位")+"</b> · "+tr("当前段位")+"：<b>"+tr(t.nm)+"</b>（"+getRankPts()+" "+tr("积分")+"，"+(LANG==="en"?"win +30 / lose −20":"胜 +30 / 负 −20")+"）。"+(LANG==="en"?"Difficulty scales with your rank.":"难度随段位自动提升。"); }
+  else if(MODE==="challenge") extra = "<br>🗺 <b>"+tr("关卡")+"</b>："+(LANG==="en"?"clear a level to unlock the next.":"通关后解锁下一关，难度递增。");
+  rb.innerHTML = base + extra;
   // 英雄
+  document.getElementById("heroLbl").textContent = MODE==="2v2" ? (LANG==="en"?"Pick P1 hero (P2 = random)":"选择 P1 英雄（P2 随机）") : tr("选择英雄开始");
   const hg=document.getElementById("heroGrid"); hg.innerHTML="";
   HEROES.forEach(h=>{ const el=document.createElement("div"); el.className="hero";
     el.innerHTML=`<div class="hi">${h.ico}</div><div class="hn">${tr(h.nm)}</div><div class="hd">${tr(h.d)}</div>`;
-    el.onclick=()=>{ document.getElementById("startScreen").classList.add("hidden"); newGame(h.id); };
+    el.onclick=()=>{ if(MODE==="ranked") DIFF=rankDiff(); document.getElementById("startScreen").classList.add("hidden"); newGame(h.id); };
     hg.appendChild(el); });
 }
 document.getElementById("againBtn").onclick=()=>{ document.getElementById("overScreen").classList.add("hidden"); document.getElementById("startScreen").classList.remove("hidden"); buildStart(); };
 document.getElementById("homeBtn").onclick=()=>{ location.href="index.html"; };
+
+/*==================== 图文说明 ====================*/
+function buildHelp(){
+  const zh=[
+    ["🍬","<b>糖=一切</b>。只有占领水果资源点（🍎🥤🍞）才会产糖，糖用来造兵与升级科技。开局先抢中央大果 🍎。"],
+    ["👆","<b>点击指挥</b>：点地图任意处，全军奔向该点（🚩）；点资源点则派全军去占领它。合理调度是取胜关键。"],
+    ["🪰","<b>造兵</b>：底部卡片造兵（有孵化冷却）。侦查🐝快且占点强，重甲🛡肉，远程🟢🟣放风筝，狂暴😡越残血越猛，风暴🌪范围炮。"],
+    ["🧱","<b>铁块障碍</b>：地图随机 4–7 块铁障，果蝇会自动绕道，可挡子弹、卡住冲锋——利用它布防。"],
+    ["🔬","<b>科技树 & 技能</b>：右下🔬花糖永久强化本局军队；三个技能（糖爆发/快速孵化/黑风暴）有冷却，关键时机开。"],
+    ["🦸","<b>英雄</b>：10 位英雄各有独特加成（女王便宜、将军高攻、守护者龟壳、兽王收编中立…）。开局按打法选英雄。"],
+    ["🗺","<b>模式</b>：1v1 打 AI（7 难度）｜生存 守 5 分钟｜排位 段位越高越难、胜负加减分｜关卡 逐关解锁｜2V2 真人同屏对战。"],
+    ["👥","<b>2V2 真人对战</b>：下半屏 P1（🚩）、上半屏 P2（🏴）各自指挥。P2 有独立英雄/糖/技能/科技，操作<b>顶部控制栏</b>，方向相反，先拆光对方两个母巢者胜。"],
+  ];
+  const en=[
+    ["🍬","<b>Sugar = everything.</b> Only captured fruit nodes (🍎🥤🍞) produce sugar; spend it on units & tech. Grab the central 🍎 first."],
+    ["👆","<b>Tap to command:</b> tap anywhere and your whole swarm rushes there (🚩); tap a node to send everyone to capture it."],
+    ["🪰","<b>Build units</b> from the bottom cards (hatch cooldown). Scout🐝 fast+captures, Armor🛡 tanky, ranged🟢🟣 kite, Berserk😡 rages when low, Storm🌪 AoE."],
+    ["🧱","<b>Iron blocks:</b> 4–7 random obstacles; flies auto-detour around them and they block shots — use them for defense."],
+    ["🔬","<b>Tech & skills:</b> the 🔬 button spends sugar for permanent upgrades (this match); 3 skills (Sugar Rush / Fast Hatch / Dark Storm) have cooldowns."],
+    ["🦸","<b>Heroes:</b> 10 heroes with unique bonuses (Queen cheap, General high-dmg, Guardian tanky hive, Beastlord tames neutrals…). Pick to fit your style."],
+    ["🗺","<b>Modes:</b> 1v1 vs AI (7 difficulties) | Survival hold 5:00 | Ranked scales with your rank (±pts) | Levels unlock in order | 2V2 real local battle."],
+    ["👥","<b>2V2 real battle:</b> bottom half = P1 (🚩), top half = P2 (🏴). P2 has own hero/sugar/skills/tech in the <b>top bar</b>, reversed side. Raze both enemy hives to win."],
+  ];
+  const rows=(LANG==="en"?en:zh);
+  document.getElementById("helpBody").innerHTML = rows.map(r=>`<div class="hsec"><div class="hicon">${r[0]}</div><div class="htext">${r[1]}</div></div>`).join("");
+}
+document.getElementById("helpBtn").onclick=()=>{ buildHelp(); document.getElementById("helpScreen").classList.remove("hidden"); };
+document.getElementById("helpClose").onclick=()=>document.getElementById("helpScreen").classList.add("hidden");
+
 applyLang(); buildStart();
 
 if(typeof window!=="undefined") window.__mw={get g(){return g;}, newGame, update, spawnAt, tryBuild, useSkill, buyTech, UNITS, UBY, HEROES, DIFFS, TECHS,
