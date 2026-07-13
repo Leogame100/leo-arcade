@@ -146,9 +146,10 @@
 </style>
 </head>
 <body>
+<script>function goArcade(){if(window.top!==window.self){try{window.parent.postMessage("leo-arcade-home","*");}catch(e){}}else{location.href="index.html";}}</script>
 <div id="app"><div id="phone">
   <div class="nav">
-    <span class="back" id="quitBtn">‹</span>
+    <span class="back" id="quitBtn" title="返回游戏厅" aria-label="返回游戏厅">🏠</span>
     <span class="gname">微信群权力战争 <small id="hdCount">(128)</small></span>
     <span class="more" id="shopTop">···</span>
   </div>
@@ -1248,7 +1249,7 @@ $("kickCancel").onclick=()=>show("kickScreen",false);
 $("hdCount").onclick=()=>{ if(g&&!g.over) openRoster(); };
 $("shopTop").onclick=()=>{ if(g&&!g.over) openShop(); };
 $("againBtn").onclick=()=>{ show("overScreen",false); buildRoleGrid(); show("roleScreen",true); };
-$("quitBtn").onclick=()=>{ location.href="index.html"; };
+$("quitBtn").onclick=()=>{ goArcade(); };
 $("homeBtn2").onclick=()=>{ show("overScreen",false); backToMenu(); };
 refreshAchCount();
 

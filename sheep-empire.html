@@ -71,9 +71,11 @@
 </style>
 </head>
 <body>
+<script>function goArcade(){if(window.top!==window.self){try{window.parent.postMessage("leo-arcade-home","*");}catch(e){}}else{location.href="index.html";}}</script>
 <div id="app"><div id="wrap">
   <div class="top">
     <div class="r1">
+      <button onclick="goArcade()" title="返回游戏厅" aria-label="返回游戏厅" style="flex:0 0 auto;background:rgba(130,130,140,.22);border:1px solid rgba(160,160,170,.55);border-radius:9px;padding:3px 9px;font-size:15px;line-height:1.2;cursor:pointer;color:inherit;">🏠</button>
       <div class="title">🐑 羊圈帝国 <small>第 <b id="roundN">1</b> 轮</small></div>
       <span class="rolechip" id="roleChip">👊 打手</span>
     </div>
