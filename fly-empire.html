@@ -11,68 +11,97 @@
     --you:#48d17a;--you-d:#2f9e54;--foe:#e0554b;--sugar:#ffcf4a;--gold:#ffcf4a;}
   html,body{height:100%;background:#000;color:var(--ink);overflow:hidden;}
   #app{height:100%;display:flex;align-items:center;justify-content:center;}
-  #game{position:relative;width:100%;max-width:500px;aspect-ratio:500/760;}
+  #game{position:relative;width:100%;max-width:500px;aspect-ratio:500/780;}
   canvas{width:100%;height:100%;display:block;background:#0d1410;border-radius:12px;touch-action:none;}
-  /* HUD */
-  #hud{position:absolute;top:0;left:0;right:0;height:38px;display:flex;align-items:center;gap:10px;padding:0 10px;
-    background:linear-gradient(180deg,rgba(20,30,22,.95),rgba(20,30,22,.5));font-size:13px;font-weight:800;pointer-events:none;}
+  #hud{position:absolute;top:0;left:0;right:0;height:38px;display:flex;align-items:center;gap:8px;padding:0 8px;
+    background:linear-gradient(180deg,rgba(20,30,22,.95),rgba(20,30,22,.4));font-size:12px;font-weight:800;pointer-events:none;}
   #hud .sugar{color:var(--sugar);} #hud .timer{margin-left:auto;font-family:ui-monospace,monospace;}
-  #hud .nodes{color:var(--muted);font-weight:700;font-size:12px;}
+  #hud .nodes{color:var(--muted);font-weight:700;}
+  #langBtn{position:absolute;top:44px;right:8px;z-index:12;background:#25352a;color:#eafff0;border:1px solid var(--line);border-radius:14px;padding:3px 10px;font-weight:800;font-size:11px;cursor:pointer;}
+  /* 顶部攻击栏（2v2） */
+  #topbar{position:absolute;left:0;right:0;top:38px;display:none;gap:4px;padding:4px 6px;overflow-x:auto;z-index:6;
+    background:linear-gradient(180deg,rgba(40,20,20,.55),transparent);scrollbar-width:none;} #topbar::-webkit-scrollbar{display:none;}
+  #topbar.show{display:flex;}
+  .fcard{flex:0 0 auto;width:48px;background:rgba(60,26,26,.85);border:1px solid #6a3030;border-radius:8px;padding:3px 2px;cursor:pointer;text-align:center;}
+  .fcard:active{transform:scale(.94);} .fcard.dis{opacity:.4;}
+  .fcard .ui{font-size:15px;} .fcard .uc{font-size:9px;color:var(--sugar);font-weight:900;}
   /* 底部操作 */
   #dock{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,rgba(15,22,16,.4),#10160f);
     border-top:1px solid var(--line);padding:6px 6px 8px;}
   .barrow{display:flex;gap:5px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;} .barrow::-webkit-scrollbar{display:none;}
-  .ucard{flex:0 0 auto;width:58px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:5px 3px;cursor:pointer;text-align:center;position:relative;transition:transform .05s;}
+  .ucard{flex:0 0 auto;width:56px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:5px 3px;cursor:pointer;text-align:center;position:relative;transition:transform .05s;}
   .ucard:active{transform:scale(.94);} .ucard.dis{opacity:.4;}
-  .ucard .ui{font-size:19px;} .ucard .un{font-size:9px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ucard .ui{font-size:18px;} .ucard .un{font-size:9px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .ucard .uc{font-size:10px;color:var(--sugar);font-weight:900;}
   .ucard .cd{position:absolute;left:0;bottom:0;width:100%;background:rgba(0,0,0,.55);border-radius:0 0 8px 8px;}
   .skills{display:flex;gap:6px;margin-top:5px;}
   .skill{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:6px 3px;cursor:pointer;text-align:center;position:relative;}
   .skill:active{transform:scale(.96);} .skill.dis{opacity:.45;}
-  .skill .si{font-size:16px;} .skill .sn{font-size:10px;font-weight:700;}
+  .skill .si{font-size:15px;} .skill .sn{font-size:9px;font-weight:700;}
   .skill .cd{position:absolute;left:0;bottom:0;width:100%;background:rgba(0,0,0,.55);height:0;border-radius:0 0 8px 8px;}
+  .skill.tech{background:#243a4a;border-color:#2f5a6a;}
   /* 覆盖层 */
-  .overlay{position:absolute;inset:0;background:rgba(6,10,7,.92);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px;}
+  .overlay{position:absolute;inset:0;background:rgba(6,10,7,.93);display:flex;align-items:center;justify-content:center;z-index:20;padding:14px;}
   .overlay.hidden{display:none;}
-  .sheet{background:var(--panel);border:1px solid var(--line);border-radius:16px;width:100%;max-width:440px;max-height:92%;overflow-y:auto;padding:16px;}
-  .sheet h2{font-size:20px;text-align:center;margin-bottom:4px;}
-  .sheet .sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px;line-height:1.6;}
-  .heroes{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .hero{background:#111a13;border:2px solid var(--line);border-radius:12px;padding:10px;text-align:center;cursor:pointer;transition:border-color .1s;}
-  .hero:hover{border-color:var(--you-d);} .hero .hi{font-size:30px;} .hero .hn{font-weight:800;font-size:14px;margin-top:2px;} .hero .hd{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4;}
-  .btn{display:block;width:100%;background:var(--you);color:#062;border:none;border-radius:12px;padding:12px;font-size:16px;font-weight:900;cursor:pointer;margin-top:10px;}
+  .sheet{background:var(--panel);border:1px solid var(--line);border-radius:16px;width:100%;max-width:440px;max-height:94%;overflow-y:auto;padding:15px;}
+  .sheet h2{font-size:19px;text-align:center;margin-bottom:4px;}
+  .sheet .sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:10px;line-height:1.6;}
+  .seg{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px;}
+  .seg .opt{background:#111a13;border:1px solid var(--line);border-radius:16px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;}
+  .seg .opt.on{background:var(--you);color:#062;border-color:var(--you);}
+  .lbl{font-size:11px;color:var(--muted);text-align:center;margin:6px 0 3px;}
+  .heroes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;}
+  .hero{background:#111a13;border:2px solid var(--line);border-radius:12px;padding:9px;text-align:center;cursor:pointer;transition:border-color .1s;}
+  .hero:hover{border-color:var(--you-d);} .hero .hi{font-size:28px;} .hero .hn{font-weight:800;font-size:13px;margin-top:2px;} .hero .hd{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4;}
+  .btn{display:block;width:100%;background:var(--you);color:#062;border:none;border-radius:12px;padding:11px;font-size:15px;font-weight:900;cursor:pointer;margin-top:8px;}
   .btn.ghost{background:#243;color:var(--ink);} .btn:active{transform:scale(.98);}
-  .toast{position:absolute;top:46px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);border:1px solid var(--line);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;z-index:15;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;}
+  .techrow{display:flex;align-items:center;gap:10px;background:#111a13;border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:7px;}
+  .techrow .ti{font-size:22px;} .techrow .tinfo{flex:1;} .techrow .tn{font-weight:800;font-size:13px;} .techrow .td{font-size:10px;color:var(--muted);}
+  .techrow .tbuy{background:var(--sugar);color:#3a2a00;border:none;border-radius:8px;padding:7px 11px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;}
+  .techrow .tbuy.max{background:#2a3a2c;color:#8fb39c;}
+  .toast{position:absolute;top:78px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);border:1px solid var(--line);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;z-index:15;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;}
   .toast.show{opacity:1;}
-  .rules{font-size:12px;color:#bfe;line-height:1.7;background:#111a13;border-radius:10px;padding:10px;margin:8px 0;text-align:left;}
+  .rules{font-size:12px;color:#bfe;line-height:1.7;background:#111a13;border-radius:10px;padding:9px;margin:6px 0;text-align:left;}
 </style>
 </head>
 <body>
 <div id="app"><div id="game">
-  <canvas id="cv" width="500" height="760"></canvas>
+  <canvas id="cv" width="500" height="780"></canvas>
   <div id="hud">
     <span class="sugar">🍬 <b id="hSugar">0</b></span>
-    <span class="nodes">🍎 你 <b id="hNodesY">0</b> · 敌 <b id="hNodesE">0</b></span>
+    <span class="nodes">🍎 <b id="hNodesY">0</b>:<b id="hNodesE">0</b></span>
     <span class="timer" id="hTimer">4:00</span>
   </div>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+  <div id="topbar"></div>
   <div class="toast" id="toast"></div>
   <div id="dock">
     <div class="barrow" id="uBar"></div>
     <div class="skills" id="skills"></div>
   </div>
 
-  <!-- 开始/选英雄 -->
+  <!-- 开始 -->
   <div class="overlay" id="startScreen">
     <div class="sheet">
-      <h2>🪰 微域战争 · 果蝇帝国</h2>
-      <div class="sub">在厨房与果园的微观世界，指挥你的果蝇军团！</div>
-      <div class="rules">
-        🍬 抢占 <b>水果资源点</b> → 持续产糖 → 造兵 → 推平敌方 <b>母巢🕳</b> 即胜。<br>
-        👆 点下方卡片<b>造兵</b>（在你母巢孵化）；点地图设<b>集结点🚩</b>指挥全军。<br>
-        ⏱ 4 分钟到点则<b>控制资源点多</b>者胜。先选一位英雄：
-      </div>
+      <h2>🪰 <span data-i18n="标题">微域战争 · 果蝇帝国</span></h2>
+      <div class="sub" data-i18n="副标题">厨房与果园的微观世界，指挥你的果蝇军团！</div>
+      <div class="lbl" data-i18n="模式">模式</div>
+      <div class="seg" id="modeSeg"></div>
+      <div class="lbl" data-i18n="难度">难度</div>
+      <div class="seg" id="diffSeg"></div>
+      <div class="rules" id="rulesBox"></div>
+      <div class="lbl" data-i18n="选英雄">选择英雄开始</div>
       <div class="heroes" id="heroGrid"></div>
+    </div>
+  </div>
+
+  <!-- 科技树 -->
+  <div class="overlay hidden" id="techScreen">
+    <div class="sheet">
+      <h2>🔬 <span data-i18n="科技树">科技树</span></h2>
+      <div class="sub">🍬 <b id="techSugar">0</b> · <span data-i18n="科技说明">用糖源永久强化你的军队（本局有效）</span></div>
+      <div id="techList"></div>
+      <button class="btn ghost" id="techClose" data-i18n="关闭">关闭</button>
     </div>
   </div>
 
@@ -81,8 +110,8 @@
     <div class="sheet">
       <h2 id="overTitle">胜利</h2>
       <div class="sub" id="overSub"></div>
-      <button class="btn" id="againBtn">🔁 再战一局</button>
-      <button class="btn ghost" id="homeBtn">← 返回游戏厅</button>
+      <button class="btn" id="againBtn" data-i18n="再战">🔁 再战一局</button>
+      <button class="btn ghost" id="homeBtn" data-i18n="返回">← 返回游戏厅</button>
     </div>
   </div>
 </div></div>
@@ -90,12 +119,47 @@
 <script>
 "use strict";
 const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
-const W=500, H=760, TOP=40, BOT=132;   // 上HUD 40，下操作区约132
+const W=500, H=780, TOP=40, BOT=132;
 const rand=(a,b)=>a+Math.random()*(b-a);
 const ri=(a,b)=>Math.floor(rand(a,b+1));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+
+/*==================== 中英双语 ====================*/
+let LANG=(function(){try{return localStorage.getItem("flyLang")||"zh";}catch(e){return "zh";}})();
+const TR={
+  "微域战争 · 果蝇帝国":"Micro War · Fruit Fly Empire",
+  "厨房与果园的微观世界，指挥你的果蝇军团！":"Command your fruit-fly legion in a microscopic kitchen war!",
+  "模式":"Mode","难度":"Difficulty","选择英雄开始":"Pick a hero to start","科技树":"Tech Tree",
+  "用糖源永久强化你的军队（本局有效）":"Spend sugar to permanently upgrade your army (this match)",
+  "关闭":"Close","🔁 再战一局":"🔁 Rematch","← 返回游戏厅":"← Back to arcade",
+  "1v1":"1v1","2v2":"2v2",
+  "天堂":"Heaven","新手":"Novice","普通":"Normal","中间":"Middle","困难":"Hard","地狱":"Hell","魔鬼":"Devil",
+  // 英雄
+  "女王":"Queen","将军":"General","科学家":"Scientist","工程师":"Engineer","猎手":"Hunter",
+  "造兵便宜15%，糖产+20%":"Units -15% cost, sugar +20%","全军攻击+20%":"Army attack +20%",
+  "技能冷却-40%":"Skill CD -40%","母巢生命+50%":"Hive HP +50%","侦查/远程射程+25%，视野更广":"Scout/ranged range +25%",
+  // 兵种
+  "侦查蝇":"Scout","战斗蝇":"Fighter","重甲蝇":"Armor","狂暴蝇":"Berserk","酸液蝇":"Acid",
+  "毒液蝇":"Venom","裂变蝇":"Splitter","爆裂蝇":"Boomer","治疗蝇":"Healer","风暴巨蝇":"Storm",
+  // 技能
+  "糖源爆发":"Sugar Rush","快速孵化":"Fast Hatch","黑风暴":"Dark Storm","科技":"Tech",
+  // 科技
+  "攻击强化":"Attack Up","装甲强化":"Armor Up","疾速":"Swift","采集":"Harvest","急速孵化":"Hatch Speed","母巢炮塔":"Hive Turret",
+  // HUD/提示
+  "前线出击":"Frontline","糖源不足":"Not enough sugar","孵化中":"Hatching","技能冷却中":"On cooldown",
+  "母巢炮塔已满级":"Turret maxed","快速孵化":"Fast Hatch: 4 fighters",
+  "摧毁敌方全部母巢！":"All enemy hives destroyed!","你的母巢全灭…":"All your hives are gone…",
+  "敌军黑潮突袭！":"⚠ Enemy dark-swarm surge!","击杀中立":"Neutral killed",
+};
+function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
+function applyLang(){ document.documentElement.lang=LANG==="en"?"en":"zh-CN";
+  document.querySelectorAll("[data-i18n]").forEach(el=>{ el.textContent=tr(el.getAttribute("data-i18n")); });
+  const lb=document.getElementById("langBtn"); if(lb) lb.textContent=LANG==="en"?"中":"EN";
+}
+function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("flyLang",LANG);}catch(e){}
+  applyLang(); buildStart(); if(g&&g.running){ buildBars(); } if(!document.getElementById("techScreen").classList.contains("hidden")) buildTech(); }
 
 /*==================== 数据 ====================*/
 const HEROES=[
@@ -105,335 +169,396 @@ const HEROES=[
   {id:"engineer",ico:"🔧",nm:"工程师",d:"母巢生命+50%"},
   {id:"hunter", ico:"🏹", nm:"猎手",  d:"侦查/远程射程+25%，视野更广"},
 ];
-// 兵种（玩家与AI通用）
+const DIFFS=[
+  {id:"heaven",nm:"天堂",eco:0.55,buff:0.8, foeHp:0.65},
+  {id:"novice",nm:"新手",eco:0.75,buff:0.92,foeHp:0.8},
+  {id:"normal",nm:"普通",eco:1.0, buff:1.0, foeHp:1.0},
+  {id:"middle",nm:"中间",eco:1.2, buff:1.08,foeHp:1.12},
+  {id:"hard",  nm:"困难",eco:1.45,buff:1.16,foeHp:1.28},
+  {id:"hell",  nm:"地狱",eco:1.75,buff:1.28,foeHp:1.5},
+  {id:"devil", nm:"魔鬼",eco:2.1, buff:1.42,foeHp:1.75},
+];
 const UNITS=[
-  {k:"scout", ico:"🐝", nm:"侦查蝇", cost:20, hp:40,  dmg:6,  range:18, spd:120, cd:1.0, role:"melee", cap:2.2, desc:"快·抢点"},
-  {k:"melee", ico:"🪰", nm:"战斗蝇", cost:35, hp:90,  dmg:14, range:16, spd:78,  cd:0.9, role:"melee", desc:"标准近战"},
-  {k:"tank",  ico:"🛡", nm:"重甲蝇", cost:70, hp:260, dmg:12, range:16, spd:58,  cd:1.1, role:"melee", def:0.4, desc:"高防肉盾"},
-  {k:"zerk",  ico:"😡", nm:"狂暴蝇", cost:45, hp:80,  dmg:16, range:16, spd:92,  cd:0.7, role:"melee", zerk:1, desc:"血越低攻越高"},
-  {k:"acid",  ico:"🟢", nm:"酸液蝇", cost:50, hp:55,  dmg:16, range:95, spd:66,  cd:1.1, role:"ranged", desc:"远程喷酸"},
-  {k:"poison",ico:"🟣", nm:"毒液蝇", cost:55, hp:55,  dmg:9,  range:85, spd:66,  cd:1.2, role:"ranged", poison:1, desc:"持续中毒"},
-  {k:"split", ico:"🥚", nm:"裂变蝇", cost:40, hp:70,  dmg:10, range:16, spd:80,  cd:0.9, role:"melee", split:1, desc:"死亡分裂"},
-  {k:"boom",  ico:"💥", nm:"爆裂蝇", cost:45, hp:60,  dmg:8,  range:16, spd:100, cd:0.9, role:"melee", boom:1, desc:"死亡爆炸"},
-  {k:"heal",  ico:"➕", nm:"治疗蝇", cost:60, hp:65,  dmg:0,  range:80, spd:70,  cd:0.8, role:"heal", heal:14, desc:"治疗友军"},
-  {k:"storm", ico:"🌪", nm:"风暴巨蝇",cost:180,hp:420, dmg:26, range:70, spd:52,  cd:1.3, role:"ranged", aoe:34, desc:"范围强袭·精英"},
+  {k:"scout", ico:"🐝", nm:"侦查蝇", cost:20, hp:40,  dmg:6,  range:18, spd:118, cd:1.0, role:"melee", cap:2.2},
+  {k:"melee", ico:"🪰", nm:"战斗蝇", cost:35, hp:90,  dmg:14, range:16, spd:78,  cd:0.9, role:"melee"},
+  {k:"tank",  ico:"🛡", nm:"重甲蝇", cost:70, hp:260, dmg:12, range:16, spd:58,  cd:1.1, role:"melee", def:0.4},
+  {k:"zerk",  ico:"😡", nm:"狂暴蝇", cost:45, hp:80,  dmg:16, range:16, spd:92,  cd:0.7, role:"melee", zerk:1},
+  {k:"acid",  ico:"🟢", nm:"酸液蝇", cost:50, hp:55,  dmg:16, range:95, spd:66,  cd:1.1, role:"ranged"},
+  {k:"poison",ico:"🟣", nm:"毒液蝇", cost:55, hp:55,  dmg:9,  range:85, spd:66,  cd:1.2, role:"ranged", poison:1},
+  {k:"split", ico:"🥚", nm:"裂变蝇", cost:40, hp:70,  dmg:10, range:16, spd:80,  cd:0.9, role:"melee", split:1},
+  {k:"boom",  ico:"💥", nm:"爆裂蝇", cost:45, hp:60,  dmg:8,  range:16, spd:100, cd:0.9, role:"melee", boom:1},
+  {k:"heal",  ico:"➕", nm:"治疗蝇", cost:60, hp:65,  dmg:0,  range:80, spd:70,  cd:0.8, role:"heal", heal:14},
+  {k:"storm", ico:"🌪", nm:"风暴巨蝇",cost:180,hp:420, dmg:26, range:70, spd:52,  cd:1.3, role:"ranged", aoe:34},
 ];
 const UBY=Object.fromEntries(UNITS.map(u=>[u.k,u]));
 const SKILLS=[
-  {id:"burst", ico:"🍬", nm:"糖源爆发", cd:35, do:()=>{ g.sugar+=180; toast("🍬 糖源爆发 +180"); }},
-  {id:"hatch", ico:"🥚", nm:"快速孵化", cd:45, do:()=>{ for(let i=0;i<4;i++) spawn(0,"melee",true); toast("🥚 快速孵化：4 战斗蝇"); }},
-  {id:"storm", ico:"🌪", nm:"黑风暴",   cd:60, do:()=>{ g.buffYou=8; toast("🌪 黑风暴：全军攻击+60% 8秒"); }},
+  {id:"burst", ico:"🍬", nm:"糖源爆发", cd:35, do:()=>{ g.sugar+=180; toast("🍬 +180"); }},
+  {id:"hatch", ico:"🥚", nm:"快速孵化", cd:45, do:()=>{ for(let i=0;i<4;i++) spawnAt(0,"melee",g.you,true); toast(tr("快速孵化")); }},
+  {id:"storm", ico:"🌪", nm:"黑风暴",   cd:60, do:()=>{ g.buffYou=8; toast("🌪 +60% ATK 8s"); }},
+];
+const TECHS=[
+  {id:"atk", ico:"⚔️", nm:"攻击强化", max:3, cost:[120,220,360], d:"全军攻击 +12%/级"},
+  {id:"hp",  ico:"❤️", nm:"装甲强化", max:3, cost:[120,220,360], d:"新兵生命 +15%/级"},
+  {id:"spd", ico:"🏃", nm:"疾速",     max:2, cost:[140,260],     d:"全军速度 +12%/级"},
+  {id:"harv",ico:"🍬", nm:"采集",     max:2, cost:[180,320],     d:"每个资源点糖产 +2/级"},
+  {id:"hatchs",ico:"🥚",nm:"急速孵化", max:2, cost:[150,300],     d:"孵化冷却 -20%/级"},
+  {id:"turret",ico:"🗼",nm:"母巢炮塔", max:2, cost:[160,320],     d:"母巢炮塔伤害 +8/级"},
 ];
 
 /*==================== 状态 ====================*/
-let g=null, MOD=null;
+let g=null, MOD=null, DIFF=null, MODE="1v1";
+function computeMod(){
+  const t=g?g.tech:{}; const hero=g?g.heroObj:{};
+  return {
+    costMult:(hero.id==="queen"?0.85:1)*(1-((t.hatchs||0)*0)),
+    sugarMult:hero.id==="queen"?1.2:1,
+    dmgMult:(hero.id==="general"?1.2:1)*(1+(t.atk||0)*0.12),
+    hpMult:1+(t.hp||0)*0.15,
+    spdMult:1+(t.spd||0)*0.12,
+    skillCd:hero.id==="scientist"?0.6:1,
+    baseHp:hero.id==="engineer"?1.5:1,
+    rangeMult:hero.id==="hunter"?1.25:1,
+    hatchMult:1-(t.hatchs||0)*0.2,
+    nodeBonus:(t.harv||0)*2,
+    turretDmg:16+(t.turret||0)*8,
+  };
+}
+function addBase(team,x,y,main,hpBase){ const hp=hpBase*(main?1:0.78); const b={team,x,y,hp,max:hp,main:!!main,zap:0,dead:false}; g.bases.push(b); return b; }
 function newGame(heroId){
   const hero=HEROES.find(h=>h.id===heroId);
-  MOD={ costMult: hero.id==="queen"?0.85:1, sugarMult: hero.id==="queen"?1.2:1,
-        dmgMult: hero.id==="general"?1.2:1, skillCd: hero.id==="scientist"?0.6:1,
-        baseHp: hero.id==="engineer"?1.5:1, rangeMult: hero.id==="hunter"?1.25:1 };
-  const nodes=[
-    {x:W*0.5,  y:H*0.5,  kind:"🍎", big:1},
-    {x:W*0.22, y:H*0.36, kind:"🥤"}, {x:W*0.78, y:H*0.36, kind:"🍞"},
-    {x:W*0.22, y:H*0.64, kind:"🍞"}, {x:W*0.78, y:H*0.64, kind:"🥤"},
-  ].map(n=>({...n, ctrl:0, owner:-1}));
-  g={ running:true, over:false, t:0, timeLeft:240,
-      sugar:120, eSugar:120, buffYou:0, buffFoe:0,
-      you:{x:W/2, y:H-BOT-28, hp:1100*MOD.baseHp, max:1100*MOD.baseHp, team:0, zap:0},
-      foe:{x:W/2, y:TOP+34, hp:1150, max:1150, team:1, zap:0},
-      units:[], shots:[], parts:[], nodes, neutrals:[], rally:null, rallyT:0,
-      cd:{}, skillCd:{}, eSpawnT:2, eventT:rand(20,35), hero:heroId,
-  };
+  g={ running:true, over:false, t:0, timeLeft:240, mode:MODE, heroObj:hero, hero:heroId,
+      sugar:150, eSugar:150, allyT:4, buffYou:0, buffFoe:0,
+      bases:[], units:[], shots:[], parts:[], nodes:[], neutrals:[], obstacles:[],
+      rally:null, rallyT:0, cd:{}, skillCd:{}, eSpawnT:2, surgeT:rand(30,45), eventT:rand(20,35),
+      tech:{atk:0,hp:0,spd:0,harv:0,hatchs:0,turret:0} };
+  MOD=computeMod();
+  const youHp=1100*MOD.baseHp, foeHp=1150*DIFF.foeHp;
+  if(MODE==="2v2"){
+    g.you=addBase(0, W*0.30, H-BOT-24, true, youHp);
+    addBase(0, W*0.72, H-BOT+6, false, youHp);        // 我方盟友(AI)
+    addBase(1, W*0.30, TOP+40, true, foeHp);
+    addBase(1, W*0.72, TOP+64, false, foeHp);
+  } else {
+    g.you=addBase(0, W/2, H-BOT-24, true, youHp);
+    addBase(1, W/2, TOP+40, true, foeHp);
+  }
+  // 资源点
+  const nodeDefs = MODE==="2v2"
+    ? [{x:W*0.5,y:H*0.5,kind:"🍎",big:1},{x:W*0.16,y:H*0.4,kind:"🥤"},{x:W*0.84,y:H*0.4,kind:"🍞"},
+       {x:W*0.16,y:H*0.6,kind:"🍞"},{x:W*0.84,y:H*0.6,kind:"🥤"},{x:W*0.5,y:H*0.3,kind:"🍞"},{x:W*0.5,y:H*0.7,kind:"🥤"}]
+    : [{x:W*0.5,y:H*0.5,kind:"🍎",big:1},{x:W*0.2,y:H*0.38,kind:"🥤"},{x:W*0.8,y:H*0.38,kind:"🍞"},
+       {x:W*0.2,y:H*0.62,kind:"🍞"},{x:W*0.8,y:H*0.62,kind:"🥤"}];
+  g.nodes=nodeDefs.map(n=>({...n,x:n.x,y:n.y,ctrl:0,owner:-1}));
+  // 障碍物 4~7 长方形铁块
+  genObstacles(ri(4,7));
+  // 中立守中心
+  g.neutrals.push(mkNeutral("🐜",g.nodes[0].x-26,g.nodes[0].y), mkNeutral("🕷️",g.nodes[0].x+26,g.nodes[0].y));
   UNITS.forEach(u=>g.cd[u.k]=0); SKILLS.forEach(s=>g.skillCd[s.id]=0);
-  // 中立生物守中心
-  g.neutrals.push(mkNeutral("🐜",g.nodes[0].x-24,g.nodes[0].y), mkNeutral("🕷️",g.nodes[0].x+24,g.nodes[0].y));
+  document.getElementById("topbar").classList.toggle("show", MODE==="2v2");
   buildBars(); syncHud();
+}
+function genObstacles(n){
+  let tries=0;
+  while(g.obstacles.length<n && tries++<200){
+    const w=ri(56,116), h=ri(16,26);
+    const x=ri(24,W-24-w), y=ri(TOP+96, H-BOT-40-h);
+    const rect={x,y,w,h};
+    let ok=true;
+    for(const nd of g.nodes){ if(nd.x>x-38&&nd.x<x+w+38&&nd.y>y-38&&nd.y<y+h+38){ ok=false; break; } }
+    for(const b of g.bases){ if(Math.abs(b.y-(y+h/2))<70){ ok=false; break; } }
+    for(const o of g.obstacles){ if(x<o.x+o.w+18&&x+w>o.x-18&&y<o.y+o.h+18&&y+h>o.y-18){ ok=false; break; } }
+    if(ok) g.obstacles.push(rect);
+  }
 }
 function mkNeutral(ico,x,y){ const s=ico==="🐜"?{hp:220,dmg:14,def:.5}:{hp:120,dmg:22}; return {x,y,ico,team:2,hp:s.hp,max:s.hp,dmg:s.dmg,def:s.def||0,range:22,spd:20,atk:0,neutral:1,r:11}; }
 
 /*==================== 造兵 ====================*/
-function spawn(team,key,free){
-  const u=UBY[key]; const base=team===0?g.you:g.foe;
-  const e={ ...u, team, x:base.x+rand(-26,26), y:base.y+(team===0?-30:30), hp:u.hp, max:u.hp, atk:0, poiT:0, r:u.k==="storm"?12:(u.k==="tank"?9:7) };
-  g.units.push(e);
-  if(!free){ if(team===0) g.cd[key]=u.cd; }
-  spawnParts(e.x,e.y,team===0?"#48d17a":"#e0554b",5);
+function spawnAt(team,key,at,free){
+  const u=UBY[key];
+  const e={ ...u, team, x:at.x+rand(-24,24), y:at.y+(team===0?-28:28), atk:0, poiT:0, r:u.k==="storm"?12:(u.k==="tank"?9:7) };
+  e.max = team===0 ? Math.round(u.hp*MOD.hpMult) : Math.round(u.hp*DIFF.buff);
+  e.hp=e.max; e.dmg = team===0 ? u.dmg : u.dmg*DIFF.buff*1.05;
+  g.units.push(e); spawnParts(e.x,e.y,team===0?"#48d17a":"#e0554b",5);
   return e;
 }
-function tryBuild(key){
-  const u=UBY[key]; const cost=Math.round(u.cost*MOD.costMult);
-  if(g.cd[key]>0){ toast(`${u.nm}孵化中`); return; }
-  if(g.sugar<cost){ toast("🍬 糖源不足"); return; }
-  g.sugar-=cost; spawn(0,key); syncHud();
+function tryBuild(key, forward){
+  const u=UBY[key]; let cost=Math.round(u.cost*MOD.costMult); if(forward) cost=Math.round(cost*1.4);
+  if(!forward && g.cd[key]>0){ toast(tr("孵化中")); return; }
+  if(g.sugar<cost){ toast(tr("糖源不足")); return; }
+  g.sugar-=cost;
+  const at = forward ? {x:W/2, y:H*0.44} : g.you;
+  const e=spawnAt(0,key,at,forward);
+  if(!forward) g.cd[key]=u.cd*MOD.hatchMult;
+  syncHud();
 }
 
-/*==================== 更新（无 canvas） ====================*/
+/*==================== 更新 ====================*/
 function update(dt){
   if(!g||!g.running||g.over) return;
   g.t+=dt; g.timeLeft-=dt;
   if(g.buffYou>0) g.buffYou-=dt; if(g.buffFoe>0) g.buffFoe-=dt;
-  // 冷却
   for(const k in g.cd) if(g.cd[k]>0) g.cd[k]=Math.max(0,g.cd[k]-dt);
   for(const s in g.skillCd) if(g.skillCd[s]>0) g.skillCd[s]=Math.max(0,g.skillCd[s]-dt);
   if(g.rallyT>0) g.rallyT-=dt;
-  // 经济：底噪 + 控制的资源点
+  // 经济：只有占领资源点才产糖
   let yNodes=0,eNodes=0;
   for(const n of g.nodes){ if(n.owner===0)yNodes++; else if(n.owner===1)eNodes++; }
-  g.sugar  += (2 + yNodes*3)*MOD.sugarMult*dt;
-  g.eSugar += (2 + eNodes*3)*1.2*dt;   // AI 经济加成，提升挑战
+  g.sugar  += yNodes*(5+MOD.nodeBonus)*MOD.sugarMult*dt;
+  g.eSugar += eNodes*5*DIFF.eco*dt;
   // 资源点争夺
-  for(const n of g.nodes){
-    let net=0;
-    for(const u of g.units){ if(u.dead) continue; const d=dist(u,n); if(d<(n.big?55:44)){ net += (u.team===0?1:-1)*(u.cap||1); } }
-    n.ctrl=clamp(n.ctrl+net*dt*14, -100,100);
-    n.owner = n.ctrl>=55?0 : n.ctrl<=-55?1 : (Math.abs(n.ctrl)<45? -1 : n.owner);
+  for(const n of g.nodes){ let net=0;
+    for(const u of g.units){ if(u.dead) continue; if(dist(u,n)<(n.big?55:44)) net+=(u.team===0?1:-1)*(u.cap||1); }
+    n.ctrl=clamp(n.ctrl+net*dt*14,-100,100);
+    n.owner=n.ctrl>=55?0:n.ctrl<=-55?1:(Math.abs(n.ctrl)<45?-1:n.owner);
   }
-  // 单位 AI
   updateUnits(dt);
-  // 母巢自卫炮塔
   baseDefense(dt);
   // 中立
   for(const nu of g.neutrals){ if(nu.dead) continue; nu.atk-=dt;
-    const tgt=nearestEnemy(nu, 70); if(tgt){ if(dist(nu,tgt)<nu.range+tgt.r){ if(nu.atk<=0){ nu.atk=1.2; damage(tgt,nu.dmg,nu); } } else moveToward(nu,tgt,dt); }
-  }
+    const t=nearestEnemy(nu,72); if(t){ if(dist(nu,t)<nu.range+t.r){ if(nu.atk<=0){nu.atk=1.2; damage(t,nu.dmg,nu);} } else moveToward(nu,t,dt); } }
   g.neutrals=g.neutrals.filter(n=>!n.dead);
-  // 子弹
+  // 子弹（被障碍阻挡）
   for(const s of g.shots){ if(s.dead) continue; s.x+=s.vx*dt; s.y+=s.vy*dt; s.life-=dt;
-    if(s.life<=0){ s.dead=true; continue; }
-    const t=s.tgt; if(t&&!t.dead && dist(s,t)<t.r+6){ hitShot(s,t); s.dead=true; } }
+    if(s.life<=0||blockedAt(s.x,s.y,0)){ s.dead=true; continue; }
+    const t=s.tgt; if(t&&!t.dead&&dist(s,t)<(t.r||18)+6){ hitShot(s,t); s.dead=true; } }
   g.shots=g.shots.filter(s=>!s.dead);
-  // 粒子
   for(const p of g.parts){ p.life-=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; }
   g.parts=g.parts.filter(p=>p.life>0);
-  // 敌 AI
-  enemyAI(dt);
-  // 随机事件
+  enemyAI(dt); allyAI(dt);
   g.eventT-=dt; if(g.eventT<=0){ g.eventT=rand(28,45); randomEvent(); }
-  // 清理死单位（触发死亡特效）
-  for(const u of g.units){ if(u.hp<=0 && !u.dead){ u.dead=true; onDeath(u); } }
+  for(const u of g.units){ if(u.hp<=0&&!u.dead){ u.dead=true; onDeath(u); } }
   g.units=g.units.filter(u=>!u.dead);
+  g.bases.forEach(b=>{ if(b.hp<=0&&!b.dead){ b.dead=true; spawnParts(b.x,b.y,b.team===0?"#48d17a":"#e0554b",22); g.shake=0.3; } });
+  g.bases=g.bases.filter(b=>!b.dead);
   // 胜负
-  if(g.foe.hp<=0){ endGame(true,"你摧毁了敌方母巢！"); return; }
-  if(g.you.hp<=0){ endGame(false,"你的母巢被攻陷了…"); return; }
+  const foeAlive=g.bases.some(b=>b.team===1), youAlive=g.bases.some(b=>b.team===0);
+  if(!foeAlive){ endGame(true, tr("摧毁敌方全部母巢！") ); return; }
+  if(!youAlive){ endGame(false, tr("你的母巢全灭…") ); return; }
   if(g.timeLeft<=0){ const yn=g.nodes.filter(n=>n.owner===0).length, en=g.nodes.filter(n=>n.owner===1).length;
-    if(yn>en) endGame(true,`时间到！你控制 ${yn} 个资源点 > 敌 ${en}`);
-    else if(en>yn) endGame(false,`时间到！敌方控制 ${en} 个资源点 > 你 ${yn}`);
-    else endGame(g.you.hp>=g.foe.hp, g.you.hp>=g.foe.hp?"时间到！母巢血量占优，险胜！":"时间到！母巢血量落败…"); return; }
+    if(yn>en) endGame(true, (LANG==="en"?`Time! You hold ${yn} > ${en} nodes`:`时间到！你控制 ${yn}>${en} 资源点`));
+    else if(en>yn) endGame(false,(LANG==="en"?`Time! Enemy holds ${en} > ${yn}`:`时间到！敌方控制 ${en}>${yn} 资源点`));
+    else { const yh=g.bases.filter(b=>b.team===0).reduce((s,b)=>s+b.hp,0), eh=g.bases.filter(b=>b.team===1).reduce((s,b)=>s+b.hp,0);
+      endGame(yh>=eh, yh>=eh?(LANG==="en"?"Time! Hive HP edge — win!":"时间到！母巢血量占优，险胜！"):(LANG==="en"?"Time! Hive HP behind…":"时间到！母巢血量落败…")); }
+    return; }
   syncHud();
 }
-
-function nearestEnemy(u, aggro){
-  let best=null,bd=aggro||99999;
-  for(const o of g.units){ if(o.dead||o.team===u.team) continue; if(u.team===2 && o.team===2) continue;
-    const d=dist(u,o); if(d<bd){ bd=d; best=o; } }
-  // 中立也算敌人（对玩家/敌AI）
+function enemyBasesOf(team){ return g.bases.filter(b=>b.team!==team && b.team!==2); }
+function nearestEnemy(u,aggro){ let best=null,bd=aggro||99999;
+  for(const o of g.units){ if(o.dead||o.team===u.team) continue; if(u.team===2&&o.team===2) continue; const d=dist(u,o); if(d<bd){bd=d;best=o;} }
   if(u.team!==2){ for(const nu of g.neutrals){ if(nu.dead) continue; const d=dist(u,nu); if(d<bd){bd=d;best=nu;} } }
   return best;
 }
+function nearestEnemyBase(u){ let best=null,bd=99999; for(const b of g.bases){ if(b.team===u.team||b.team===2) continue; const d=dist(u,b); if(d<bd){bd=d;best=b;} } return best; }
 function objectiveFor(u){
-  // 突袭兵直扑玩家母巢
-  if(u.tgtBase && u.team===1) return g.you;
-  // 优先：集结点 → 未控资源点 → 敌母巢
+  if(u.tgtBase && u.team===1){ const b=nearestEnemyBase(u); if(b) return b; }
   if(g.rally && g.rallyT>0 && u.team===0) return g.rally;
   let best=null,bd=99999;
   for(const n of g.nodes){ if(n.owner===u.team) continue; const d=dist(u,n); if(d<bd){bd=d;best=n;} }
-  const enemyBase=u.team===0?g.foe:g.you;
-  if(!best || dist(u,enemyBase)<bd*0.8) return enemyBase;
+  const eb=nearestEnemyBase(u);
+  if(!best || (eb&&dist(u,eb)<bd*0.85)) return eb||best;
   return best;
 }
 function updateUnits(dt){
-  for(const u of g.units){ if(u.dead) continue; u.atk-=dt; if(u.poiT>0){ u.poiT-=dt; damage(u, 5*dt, null, true); }
-    const buff = (u.team===0?g.buffYou:g.buffFoe)>0 ? 1.6 : 1;
-    if(u.role==="heal"){ const f=lowAlly(u); if(f){ if(dist(u,f)<u.range){ if(u.atk<=0){ u.atk=u.cd; f.hp=Math.min(f.max,f.hp+u.heal); spawnParts(f.x,f.y,"#8effc0",3);} } else moveToward(u,f,dt); }
-      else { const o=objectiveFor(u); moveToward(u,o,dt);} continue; }
-    const range=u.range*(u.role==="ranged"?MOD.rangeMult:1)*(u.k==="scout"?MOD.rangeMult:1);
-    const tgt=nearestEnemy(u, 150);
-    const eb=u.team===0?g.foe:g.you;
-    // 也考虑攻击敌方母巢
-    let target=tgt, isBase=false;
-    if(!target || dist(u,eb)<range+18){ if(dist(u,eb)<range+18){ target=eb; isBase=true; } }
-    if(target){
-      const rr=range+(target.r||18);
+  for(const u of g.units){ if(u.dead) continue; u.atk-=dt; if(u.poiT>0){ u.poiT-=dt; damage(u,5*dt,null,true); }
+    const buff=(u.team===0?g.buffYou:g.buffFoe)>0?1.6:1;
+    const spd=u.spd*(u.team===0?MOD.spdMult:1);
+    if(u.role==="heal"){ const f=lowAlly(u); if(f){ if(dist(u,f)<u.range){ if(u.atk<=0){u.atk=u.cd; f.hp=Math.min(f.max,f.hp+u.heal); spawnParts(f.x,f.y,"#8effc0",3);} } else moveToward(u,f,dt,spd); } else moveToward(u,objectiveFor(u),dt,spd); continue; }
+    const range=u.range*(u.role==="ranged"||u.k==="scout"?(u.team===0?MOD.rangeMult:1):1);
+    let target=nearestEnemy(u,150);
+    const eb=nearestEnemyBase(u);
+    if((!target||(eb&&dist(u,eb)<range+22)) && eb && dist(u,eb)<range+22) target=eb;
+    if(target){ const rr=range+(target.r||20);
       if(dist(u,target)<=rr){ if(u.atk<=0){ u.atk=u.cd;
-        let dmg=u.dmg*dmgMultOf(u)*buff;
-        if(u.zerk) dmg*= 1 + (1-u.hp/u.max)*1.2;
-        if(u.role==="ranged"){ fireShot(u,target,dmg,u.poison,u.aoe); }
+        let dmg=u.dmg*(u.team===0?MOD.dmgMult:1)*buff;
+        if(u.zerk) dmg*=1+(1-u.hp/u.max)*1.2;
+        if(u.role==="ranged") fireShot(u,target,dmg,u.poison,u.aoe);
         else { damage(target,dmg,u); if(u.aoe) aoeDamage(target,u.aoe,dmg*0.5,u); }
-      } }
-      else moveToward(u,target,dt);
-    } else { const o=objectiveFor(u); moveToward(u,o,dt); }
+      } } else moveToward(u,target,dt,spd);
+    } else moveToward(u,objectiveFor(u),dt,spd);
   }
 }
-function lowAlly(u){ let best=null,bd=1; for(const o of g.units){ if(o.dead||o.team!==u.team||o===u) continue; const f=o.hp/o.max; if(f<bd&&f<1){ if(dist(u,o)<160){ bd=f; best=o; } } } return best; }
-function moveToward(u,t,dt){ const dx=t.x-u.x, dy=t.y-u.y, d=Math.hypot(dx,dy)||1; const sp=u.spd*dt;
-  u.x+=dx/d*sp; u.y+=dy/d*sp; u.x=clamp(u.x,8,W-8); u.y=clamp(u.y,TOP+8,H-BOT+40); }
+function lowAlly(u){ let best=null,bd=1; for(const o of g.units){ if(o.dead||o.team!==u.team||o===u) continue; const f=o.hp/o.max; if(f<bd&&f<1&&dist(u,o)<160){bd=f;best=o;} } return best; }
+/* 障碍避让移动 */
+function blockedAt(x,y,pad){ for(const o of g.obstacles){ if(x>o.x-pad&&x<o.x+o.w+pad&&y>o.y-pad&&y<o.y+o.h+pad) return o; } return null; }
+const AVOID=[0,26,-26,52,-52,84,-84,120,-120,155,-155];
+function moveToward(u,t,dt,spdOverride){ let dx=t.x-u.x, dy=t.y-u.y, d=Math.hypot(dx,dy)||1; dx/=d; dy/=d;
+  const step=(spdOverride||u.spd)*dt, pad=(u.r||6)+2;
+  for(const a of AVOID){ const r=a*Math.PI/180, c=Math.cos(r), s=Math.sin(r);
+    const ndx=dx*c-dy*s, ndy=dx*s+dy*c, nx=u.x+ndx*step, ny=u.y+ndy*step;
+    if(!blockedAt(nx,ny,pad)){ u.x=clamp(nx,8,W-8); u.y=clamp(ny,TOP+8,H-BOT+42); return; } }
+}
 function fireShot(u,t,dmg,poison,aoe){ const dx=t.x-u.x,dy=t.y-u.y,d=Math.hypot(dx,dy)||1;
   g.shots.push({x:u.x,y:u.y,vx:dx/d*260,vy:dy/d*260,tgt:t,dmg,poison,aoe,team:u.team,life:1.2,
     col:u.k==="poison"?"#c04cff":u.k==="storm"?"#7ad0ff":"#8ef07a"}); }
-function hitShot(s,t){ damage(t,s.dmg,{team:s.team}); if(s.poison&&t.poiT!==undefined) t.poiT=3;
-  if(s.aoe) aoeDamage(t,s.aoe,s.dmg*0.5,{team:s.team}); spawnParts(s.x,s.y,s.col,4); }
-function aoeDamage(center,radius,dmg,src){ for(const o of g.units){ if(o.dead||(src&&o.team===src.team)) continue; if(dist(o,center)<radius) damage(o,dmg,src); }
-  spawnParts(center.x,center.y,"#ffca6a",8); }
-function damage(t,amount,src,dot){
-  if(t.def) amount*= (1-t.def);
-  t.hp-=amount; if(!dot) t.flash=0.1;
-  if(t.hp<=0 && t.neutral && !t.dead){ t.dead=true; const bonus=t.ico==="🐜"?120:90;
-    if(src&&src.team===0){ g.sugar+=bonus; toast(`击杀中立 +🍬${bonus}`);} else if(src&&src.team===1) g.eSugar+=bonus;
-    spawnParts(t.x,t.y,"#ffcf4a",10); }
-}
-function baseDefense(dt){
-  for(const base of [g.you,g.foe]){ base.zap-=dt; if(base.zap>0) continue;
-    let t=null,bd=105; for(const u of g.units){ if(u.dead||u.team===base.team) continue; const d=dist(u,base); if(d<bd){bd=d;t=u;} }
-    if(t){ base.zap=0.8; damage(t,16,{team:base.team}); spawnParts(t.x,t.y,base.team===0?"#8effc0":"#ff8f88",4); }
-  }
-}
-function onDeath(u){
-  spawnParts(u.x,u.y,u.team===0?"#48d17a":"#e0554b",8);
-  if(u.split){ for(let i=0;i<2;i++){ const b=spawn(u.team,"scout",true); b.x=u.x+rand(-12,12); b.y=u.y+rand(-12,12); b.hp=b.max=28; b.dmg=6; } }
-  if(u.boom){ aoeDamage(u,40,30,u); g.shake=0.15; }
-}
-// 便捷：玩家单位伤害倍率（英雄 将军 +20%）
-function dmgMultOf(u){ return u.team===0?MOD.dmgMult:1; }
+function hitShot(s,t){ damage(t,s.dmg,{team:s.team}); if(s.poison&&t.poiT!==undefined)t.poiT=3; if(s.aoe) aoeDamage(t,s.aoe,s.dmg*0.5,{team:s.team}); spawnParts(s.x,s.y,s.col,4); }
+function aoeDamage(center,radius,dmg,src){ for(const o of g.units){ if(o.dead||(src&&o.team===src.team)) continue; if(dist(o,center)<radius) damage(o,dmg,src); } spawnParts(center.x,center.y,"#ffca6a",8); }
+function damage(t,amount,src,dot){ if(t.def) amount*=(1-t.def); t.hp-=amount; if(!dot)t.flash=0.1;
+  if(t.hp<=0&&t.neutral&&!t.dead){ t.dead=true; const bonus=t.ico==="🐜"?120:90;
+    if(src&&src.team===0){ g.sugar+=bonus; toast(tr("击杀中立")+` +🍬${bonus}`);} else if(src&&src.team===1) g.eSugar+=bonus;
+    spawnParts(t.x,t.y,"#ffcf4a",10); } }
+function baseDefense(dt){ for(const base of g.bases){ base.zap-=dt; if(base.zap>0) continue;
+  let t=null,bd=105; for(const u of g.units){ if(u.dead||u.team===base.team) continue; const d=dist(u,base); if(d<bd){bd=d;t=u;} }
+  if(t){ base.zap=0.8; damage(t, base.team===0?MOD.turretDmg:16, {team:base.team}); spawnParts(t.x,t.y,base.team===0?"#8effc0":"#ff8f88",4); } } }
+function onDeath(u){ spawnParts(u.x,u.y,u.team===0?"#48d17a":"#e0554b",8);
+  if(u.split){ for(let i=0;i<2;i++){ const b=spawnAt(u.team,"scout",u,true); b.x=u.x+rand(-12,12); b.y=u.y+rand(-12,12); b.hp=b.max=28; b.dmg=6; } }
+  if(u.boom){ aoeDamage(u,40,30,u); g.shake=0.15; } }
 
-/*==================== 敌 AI ====================*/
+/*==================== 敌 AI / 盟友 AI ====================*/
 function enemyAI(dt){
-  g.eSpawnT-=dt; g.surgeT=(g.surgeT==null?rand(30,45):g.surgeT)-dt;
-  const surge = g.surgeT<=0;
-  if(surge){ g.surgeT=rand(46,64); g.buffFoe=6; toast("⚠ 敌军发动黑潮突袭！"); }
-  if(g.eSpawnT<=0){
-    const affordable=UNITS.filter(u=>u.cost<=g.eSugar);
-    if(affordable.length){
-      let choice;
-      if(g.eSugar>200 && Math.random()<0.4) choice=UBY.storm.cost<=g.eSugar?UBY.storm:pick(affordable);
-      else choice=pick(affordable);
-      g.eSugar-=choice.cost; const e=spawn(1,choice.k,true);
-      e.max=Math.round(choice.hp*1.12); e.hp=e.max; e.dmg=choice.dmg*1.08;   // AI 强度加成
-      if(surge) e.tgtBase=1;   // 突袭直扑玩家母巢
-    }
-    g.eSpawnT=rand(1.1,2.1) * (g.timeLeft<120?0.7:1) * (surge?0.55:1);
+  g.eSpawnT-=dt; g.surgeT-=dt; const surge=g.surgeT<=0;
+  if(surge){ g.surgeT=rand(46,64); g.buffFoe=6; toast(tr("敌军黑潮突袭！")); }
+  if(g.eSpawnT<=0){ const affordable=UNITS.filter(u=>u.cost<=g.eSugar);
+    if(affordable.length){ let c; if(g.eSugar>200&&Math.random()<0.4) c=UBY.storm.cost<=g.eSugar?UBY.storm:pick(affordable); else c=pick(affordable);
+      g.eSugar-=c.cost; const from=pick(g.bases.filter(b=>b.team===1))||{x:W/2,y:TOP+40}; const e=spawnAt(1,c.k,from,true); if(surge) e.tgtBase=1; }
+    g.eSpawnT=rand(1.1,2.1)*(g.timeLeft<120?0.7:1)*(surge?0.55:1)/Math.max(0.6,DIFF.eco*0.8);
     if(Math.random()<0.18) g.buffFoe=Math.max(g.buffFoe,5);
   }
 }
+function allyAI(dt){ if(g.mode!=="2v2") return; g.allyT-=dt; if(g.allyT<=0){ g.allyT=rand(3,5);
+  const ally=g.bases.find(b=>b.team===0&&!b.main); if(ally){ const c=pick(UNITS.filter(u=>u.cost<=90)); spawnAt(0,c.k,ally,true); } } }
 
 /*==================== 随机事件 ====================*/
-function randomEvent(){
-  const ev=pick([
-    {t:"👋 人类清扫！随机清除部分单位",f:()=>{ let n=0; g.units.forEach(u=>{ if(Math.random()<0.25){u.hp=0;n++;} }); g.neutrals.forEach(x=>{if(Math.random()<0.3)x.hp=0;}); return n; }},
-    {t:"🍎 新水果坠落！中心糖源大增",f:()=>{ g.sugar+=150; g.eSugar+=150; }},
-    {t:"🌬️ 强风吹散蝇群",f:()=>{ g.units.forEach(u=>{ u.x+=rand(-40,40); u.y+=rand(-30,30); }); }},
-    {t:"💧 水流冲刷，双方微量减员",f:()=>{ g.units.forEach(u=>{ if(Math.random()<0.12)u.hp-=30; }); }},
-    {t:"🐞 瓢虫援军！你的全军回血",f:()=>{ g.units.forEach(u=>{ if(u.team===0)u.hp=Math.min(u.max,u.hp+40); }); }},
-  ]);
-  ev.f(); toast(ev.t);
-}
+function randomEvent(){ const ev=pick([
+    {t:"👋 "+(LANG==="en"?"Human sweep!":"人类清扫！"),f:()=>{ g.units.forEach(u=>{if(Math.random()<0.22)u.hp=0;}); g.neutrals.forEach(x=>{if(Math.random()<0.3)x.hp=0;}); }},
+    {t:"🍎 "+(LANG==="en"?"New fruit drops!":"新水果坠落！"),f:()=>{ g.sugar+=140; g.eSugar+=140; }},
+    {t:"🌬️ "+(LANG==="en"?"Strong wind!":"强风吹散蝇群"),f:()=>{ g.units.forEach(u=>{u.x+=rand(-38,38);u.y+=rand(-28,28);}); }},
+    {t:"🐞 "+(LANG==="en"?"Ladybug aid!":"瓢虫援军！"),f:()=>{ g.units.forEach(u=>{if(u.team===0)u.hp=Math.min(u.max,u.hp+40);}); }},
+  ]); ev.f(); toast(ev.t); }
 
-/*==================== 技能 ====================*/
-function useSkill(id){
-  const s=SKILLS.find(x=>x.id===id); if(g.skillCd[id]>0){ toast("技能冷却中"); return; }
-  s.do(); g.skillCd[id]=s.cd*MOD.skillCd; syncHud();
-}
+/*==================== 技能 / 科技 ====================*/
+function useSkill(id){ const s=SKILLS.find(x=>x.id===id); if(g.skillCd[id]>0){ toast(tr("技能冷却中")); return; } s.do(); g.skillCd[id]=s.cd*MOD.skillCd; syncHud(); }
+function buyTech(id){ const T=TECHS.find(x=>x.id===id); const lv=g.tech[id]; if(lv>=T.max){ return; }
+  const cost=T.cost[lv]; if(g.sugar<cost){ toast(tr("糖源不足")); return; }
+  g.sugar-=cost; g.tech[id]++; MOD=computeMod(); buildTech(); buildBars(); syncHud(); toast("🔬 "+tr(T.nm)+" Lv"+g.tech[id]); }
 
 /*==================== 渲染 ====================*/
 let last=0;
-function loop(ts){ requestAnimationFrame(loop); const dt=Math.min(0.05,(ts-last)/1000||0); last=ts;
-  update(dt); render(); }
+function loop(ts){ requestAnimationFrame(loop); const dt=Math.min(0.05,(ts-last)/1000||0); last=ts; update(dt); render(); }
 requestAnimationFrame(loop);
-function render(){
-  ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,W,H);
+function render(){ ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,W,H);
   if(g&&g.shake>0){ ctx.translate(rand(-4,4),rand(-4,4)); g.shake-=0.02; }
-  // 背景（厨房台面网格）
   ctx.fillStyle="#0e150f"; ctx.fillRect(0,0,W,H);
   ctx.strokeStyle="rgba(255,255,255,.03)"; ctx.lineWidth=1;
   for(let x=0;x<W;x+=40){ ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke(); }
   for(let y=0;y<H;y+=40){ ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke(); }
-  if(!g){ return; }
+  if(!g) return;
+  // 障碍物 铁块
+  for(const o of g.obstacles){ ctx.fillStyle="#3a4048"; ctx.fillRect(o.x,o.y,o.w,o.h);
+    ctx.fillStyle="#565e68"; ctx.fillRect(o.x,o.y,o.w,3); ctx.fillStyle="#22262c"; ctx.fillRect(o.x,o.y+o.h-3,o.w,3);
+    ctx.strokeStyle="#1a1d22"; ctx.lineWidth=1; ctx.strokeRect(o.x,o.y,o.w,o.h);
+    for(let i=6;i<o.w-4;i+=14){ ctx.fillStyle="#6a727c"; ctx.fillRect(o.x+i,o.y+o.h/2-1,2,2);} }
   // 资源点
-  for(const n of g.nodes){ const r=n.big?26:20; const col=n.owner===0?"#48d17a":n.owner===1?"#e0554b":"#7d8b80";
+  for(const n of g.nodes){ const r=n.big?26:20, col=n.owner===0?"#48d17a":n.owner===1?"#e0554b":"#7d8b80";
     ctx.strokeStyle=col; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(n.x,n.y,r+5,0,7); ctx.stroke();
-    // 控制条
-    ctx.strokeStyle="rgba(255,255,255,.15)"; ctx.beginPath(); ctx.arc(n.x,n.y,r+5,-1.57, -1.57+(n.ctrl+100)/200*6.28); ctx.strokeStyle=col; ctx.stroke();
+    ctx.beginPath(); ctx.arc(n.x,n.y,r+5,-1.57,-1.57+(n.ctrl+100)/200*6.28); ctx.stroke();
     ctx.font=(n.big?"30px":"24px")+" sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(n.kind,n.x,n.y); }
-  // 集结点
-  if(g.rally && g.rallyT>0){ ctx.font="20px sans-serif"; ctx.textAlign="center"; ctx.fillText("🚩",g.rally.x,g.rally.y-4); }
-  // 母巢
-  drawBase(g.foe,"#e0554b"); drawBase(g.you,"#48d17a");
-  // 中立
-  for(const nu of g.neutrals){ drawUnit(nu,"#c9a24a"); }
-  // 单位
-  for(const u of g.units) drawUnit(u, u.team===0?"#48d17a":"#e0554b");
-  // 子弹
+  if(g.rally&&g.rallyT>0){ ctx.font="20px sans-serif"; ctx.textAlign="center"; ctx.fillText("🚩",g.rally.x,g.rally.y-4); }
+  for(const b of g.bases) drawBase(b);
+  for(const nu of g.neutrals) drawUnit(nu,"#c9a24a");
+  for(const u of g.units) drawUnit(u,u.team===0?"#48d17a":"#e0554b");
   for(const s of g.shots){ ctx.fillStyle=s.col; ctx.beginPath(); ctx.arc(s.x,s.y,4,0,7); ctx.fill(); }
-  // 粒子
   for(const p of g.parts){ ctx.globalAlpha=Math.max(0,p.life/p.max); ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill(); }
   ctx.globalAlpha=1;
 }
-function drawBase(b,col){ ctx.font="40px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
-  ctx.fillText(b.team===0?"🕳️":"🕳️", b.x, b.y);
-  // 血条
-  const w=64,h=6,y=b.y+(b.team===0?26:-32); ctx.fillStyle="rgba(0,0,0,.5)"; ctx.fillRect(b.x-w/2,y,w,h);
+function drawBase(b){ const col=b.team===0?"#48d17a":"#e0554b"; const sz=b.main?40:32;
+  ctx.font=sz+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("🕳️",b.x,b.y);
+  const w=b.main?64:52,h=6,y=b.y+(b.team===0?24:-30); ctx.fillStyle="rgba(0,0,0,.5)"; ctx.fillRect(b.x-w/2,y,w,h);
   ctx.fillStyle=col; ctx.fillRect(b.x-w/2,y,w*Math.max(0,b.hp/b.max),h);
-  ctx.strokeStyle=col; ctx.lineWidth=2; ctx.strokeRect(b.x-22,b.y-20,44,40); }
-function drawUnit(u,col){ const r=u.r||7;
-  ctx.fillStyle=u.flash>0?"#fff":col; ctx.beginPath(); ctx.arc(u.x,u.y,r,0,7); ctx.fill();
-  if(u.flash>0)u.flash-=0.03;
-  ctx.font=(r*1.5)+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(u.ico,u.x,u.y+0.5);
+  ctx.strokeStyle=col; ctx.lineWidth=2; ctx.strokeRect(b.x-sz/2*0.55,b.y-sz/2*0.5,sz*0.55,sz*0.5); }
+function drawUnit(u,col){ const r=u.r||7; ctx.fillStyle=u.flash>0?"#fff":col; ctx.beginPath(); ctx.arc(u.x,u.y,r,0,7); ctx.fill();
+  if(u.flash>0)u.flash-=0.03; ctx.font=(r*1.5)+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(u.ico,u.x,u.y+0.5);
   if(u.hp<u.max){ const w=r*2.2,h=3,y=u.y-r-5; ctx.fillStyle="rgba(0,0,0,.6)"; ctx.fillRect(u.x-w/2,y,w,h);
     ctx.fillStyle=u.team===0?"#8effc0":(u.team===2?"#ffd76a":"#ff8f88"); ctx.fillRect(u.x-w/2,y,w*Math.max(0,u.hp/u.max),h); } }
-function spawnParts(x,y,col,n){ for(let i=0;i<n;i++){ const a=rand(0,7),s=rand(30,110); g.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,r:rand(1.5,3),col,life:0.4,max:0.4}); } }
+function spawnParts(x,y,col,n){ if(!g)return; for(let i=0;i<n;i++){ const a=rand(0,7),s=rand(30,110); g.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,r:rand(1.5,3),col,life:0.4,max:0.4}); } }
 
 /*==================== UI ====================*/
 function buildBars(){
   const ub=document.getElementById("uBar"); ub.innerHTML="";
   UNITS.forEach(u=>{ const el=document.createElement("div"); el.className="ucard"; el.dataset.k=u.k;
-    el.innerHTML=`<div class="ui">${u.ico}</div><div class="un">${u.nm}</div><div class="uc">🍬${Math.round(u.cost*MOD.costMult)}</div><div class="cd"></div>`;
-    el.onclick=()=>tryBuild(u.k); ub.appendChild(el); });
+    el.innerHTML=`<div class="ui">${u.ico}</div><div class="un">${tr(u.nm)}</div><div class="uc">🍬${Math.round(u.cost*MOD.costMult)}</div><div class="cd"></div>`;
+    el.onclick=()=>tryBuild(u.k,false); ub.appendChild(el); });
   const sk=document.getElementById("skills"); sk.innerHTML="";
   SKILLS.forEach(s=>{ const el=document.createElement("div"); el.className="skill"; el.dataset.s=s.id;
-    el.innerHTML=`<div class="si">${s.ico}</div><div class="sn">${s.nm}</div><div class="cd"></div>`;
+    el.innerHTML=`<div class="si">${s.ico}</div><div class="sn">${tr(s.nm)}</div><div class="cd"></div>`;
     el.onclick=()=>useSkill(s.id); sk.appendChild(el); });
+  const te=document.createElement("div"); te.className="skill tech"; te.innerHTML=`<div class="si">🔬</div><div class="sn">${tr("科技")}</div>`;
+  te.onclick=openTech; sk.appendChild(te);
+  // 顶部攻击栏（2v2 前线出击）
+  const tb=document.getElementById("topbar"); tb.innerHTML="";
+  if(MODE==="2v2"){ UNITS.forEach(u=>{ const el=document.createElement("div"); el.className="fcard"; el.dataset.k=u.k;
+    el.innerHTML=`<div class="ui">${u.ico}</div><div class="uc">🍬${Math.round(u.cost*MOD.costMult*1.4)}</div>`;
+    el.onclick=()=>tryBuild(u.k,true); tb.appendChild(el); }); }
 }
-function syncHud(){
+function syncHud(){ if(!g) return;
   document.getElementById("hSugar").textContent=Math.floor(g.sugar);
   document.getElementById("hNodesY").textContent=g.nodes.filter(n=>n.owner===0).length;
   document.getElementById("hNodesE").textContent=g.nodes.filter(n=>n.owner===1).length;
-  const m=Math.max(0,Math.floor(g.timeLeft/60)), s=Math.max(0,Math.floor(g.timeLeft%60));
+  const m=Math.max(0,Math.floor(g.timeLeft/60)),s=Math.max(0,Math.floor(g.timeLeft%60));
   document.getElementById("hTimer").textContent=m+":"+String(s).padStart(2,"0");
-  // 卡片冷却/可购
   document.querySelectorAll(".ucard").forEach(el=>{ const u=UBY[el.dataset.k]; const cost=Math.round(u.cost*MOD.costMult);
-    el.classList.toggle("dis", g.sugar<cost || g.cd[u.k]>0);
-    el.querySelector(".cd").style.height=(g.cd[u.k]>0?(g.cd[u.k]/u.cd*100):0)+"%"; });
-  document.querySelectorAll(".skill").forEach(el=>{ const s=SKILLS.find(x=>x.id===el.dataset.s);
-    el.classList.toggle("dis", g.skillCd[s.id]>0);
-    el.querySelector(".cd").style.height=(g.skillCd[s.id]>0?(g.skillCd[s.id]/(s.cd*MOD.skillCd)*100):0)+"%"; });
+    el.classList.toggle("dis",g.sugar<cost||g.cd[u.k]>0); el.querySelector(".cd").style.height=(g.cd[u.k]>0?(g.cd[u.k]/(u.cd*MOD.hatchMult)*100):0)+"%"; });
+  document.querySelectorAll(".fcard").forEach(el=>{ const u=UBY[el.dataset.k]; el.classList.toggle("dis",g.sugar<Math.round(u.cost*MOD.costMult*1.4)); });
+  document.querySelectorAll(".skill[data-s]").forEach(el=>{ const s=SKILLS.find(x=>x.id===el.dataset.s);
+    el.classList.toggle("dis",g.skillCd[s.id]>0); el.querySelector(".cd").style.height=(g.skillCd[s.id]>0?(g.skillCd[s.id]/(s.cd*MOD.skillCd)*100):0)+"%"; });
 }
 function toast(t){ const el=document.getElementById("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),1400); }
 
-/*==================== 输入：点地图设集结点 ====================*/
-function toXY(e){ const r=cv.getBoundingClientRect(); const cx=(e.touches?e.touches[0].clientX:e.clientX), cy=(e.touches?e.touches[0].clientY:e.clientY);
-  return {x:(cx-r.left)/r.width*W, y:(cy-r.top)/r.height*H}; }
-function setRally(e){ if(!g||!g.running||g.over) return; const p=toXY(e);
-  if(p.y<TOP+6 || p.y>H-BOT+30) return; g.rally={x:p.x,y:p.y}; g.rallyT=6; }
-cv.addEventListener("click",setRally);
-cv.addEventListener("touchstart",e=>{ setRally(e); },{passive:true});
+function openTech(){ buildTech(); document.getElementById("techScreen").classList.remove("hidden"); }
+function buildTech(){ document.getElementById("techSugar").textContent=Math.floor(g.sugar);
+  const box=document.getElementById("techList"); box.innerHTML="";
+  TECHS.forEach(T=>{ const lv=g.tech[T.id], maxed=lv>=T.max; const el=document.createElement("div"); el.className="techrow";
+    el.innerHTML=`<span class="ti">${T.ico}</span><div class="tinfo"><div class="tn">${tr(T.nm)} <span style="color:#8fb39c">Lv${lv}/${T.max}</span></div><div class="td">${T.d}</div></div>`;
+    const b=document.createElement("button"); b.className="tbuy"+(maxed?" max":""); b.textContent=maxed?(LANG==="en"?"MAX":"满级"):("🍬"+T.cost[lv]);
+    if(!maxed) b.onclick=()=>buyTech(T.id); el.appendChild(b); box.appendChild(el); }); }
+document.getElementById("techClose").onclick=()=>document.getElementById("techScreen").classList.add("hidden");
+
+/*==================== 输入：点地图/资源点 指挥集结 ====================*/
+function toXY(e){ const r=cv.getBoundingClientRect(); const cx=(e.touches?e.touches[0].clientX:e.clientX),cy=(e.touches?e.touches[0].clientY:e.clientY);
+  return {x:(cx-r.left)/r.width*W,y:(cy-r.top)/r.height*H}; }
+function command(e){ if(!g||!g.running||g.over) return; const p=toXY(e); if(p.y<TOP+6||p.y>H-BOT+30) return;
+  // 若点在资源点上，直接派兵占领
+  let node=null; for(const n of g.nodes){ if(dist(p,n)<(n.big?34:28)){ node=n; break; } }
+  g.rally = node?{x:node.x,y:node.y}:{x:p.x,y:p.y}; g.rallyT=6;
+  if(node) toast(node.owner===0?(LANG==="en"?"Hold this node!":"守住该资源点！"):(LANG==="en"?"Capture node!":"全军占领资源点！"));
+}
+cv.addEventListener("click",command);
+cv.addEventListener("touchstart",e=>command(e),{passive:true});
 
 /*==================== 胜负 ====================*/
 function endGame(won,reason){ g.over=true; g.running=false;
-  document.getElementById("overTitle").textContent=won?"🏆 胜利！":"💀 失败";
-  document.getElementById("overSub").innerHTML=reason+`<br><br>英雄：${HEROES.find(h=>h.id===g.hero).ico}${HEROES.find(h=>h.id===g.hero).nm} · 用时 ${Math.floor((240-g.timeLeft)/60)}分${Math.floor((240-g.timeLeft)%60)}秒`;
+  document.getElementById("overTitle").textContent=won?(LANG==="en"?"🏆 Victory!":"🏆 胜利！"):(LANG==="en"?"💀 Defeat":"💀 失败");
+  const h=g.heroObj;
+  document.getElementById("overSub").innerHTML=reason+`<br><br>${h.ico}${tr(h.nm)} · ${tr(DIFF.nm)} · ${g.mode} · ${LANG==="en"?"time ":"用时 "}${Math.floor((240-g.timeLeft)/60)}:${String(Math.floor((240-g.timeLeft)%60)).padStart(2,"0")}`;
   document.getElementById("overScreen").classList.remove("hidden");
 }
 
-/*==================== 启动 ====================*/
-function buildHeroes(){ const box=document.getElementById("heroGrid"); box.innerHTML="";
+/*==================== 开始界面 ====================*/
+function buildStart(){
+  // 模式
+  const ms=document.getElementById("modeSeg"); ms.innerHTML="";
+  ["1v1","2v2"].forEach(m=>{ const el=document.createElement("div"); el.className="opt"+(MODE===m?" on":""); el.textContent=tr(m);
+    el.onclick=()=>{ MODE=m; buildStart(); }; ms.appendChild(el); });
+  // 难度
+  if(!DIFF) DIFF=DIFFS[2];
+  const ds=document.getElementById("diffSeg"); ds.innerHTML="";
+  DIFFS.forEach(d=>{ const el=document.createElement("div"); el.className="opt"+(DIFF.id===d.id?" on":""); el.textContent=tr(d.nm);
+    el.onclick=()=>{ DIFF=d; buildStart(); }; ds.appendChild(el); });
+  document.getElementById("rulesBox").innerHTML = LANG==="en"
+    ? "🍬 <b>Only captured fruit nodes</b> produce sugar → build units → raze all enemy hives. Tap a node to send your swarm to capture it. Iron blocks force detours. 🔬 Tech Tree upgrades your army."
+    : "🍬 <b>只有占领水果资源点</b>才会产糖 → 造兵 → 摧毁敌方所有母巢。点资源点派全军占领；铁块需绕道；🔬科技树强化军队。";
+  // 英雄
+  const hg=document.getElementById("heroGrid"); hg.innerHTML="";
   HEROES.forEach(h=>{ const el=document.createElement("div"); el.className="hero";
-    el.innerHTML=`<div class="hi">${h.ico}</div><div class="hn">${h.nm}</div><div class="hd">${h.d}</div>`;
+    el.innerHTML=`<div class="hi">${h.ico}</div><div class="hn">${tr(h.nm)}</div><div class="hd">${tr(h.d)}</div>`;
     el.onclick=()=>{ document.getElementById("startScreen").classList.add("hidden"); newGame(h.id); };
-    box.appendChild(el); }); }
-document.getElementById("againBtn").onclick=()=>{ document.getElementById("overScreen").classList.add("hidden"); document.getElementById("startScreen").classList.remove("hidden"); buildHeroes(); };
+    hg.appendChild(el); });
+}
+document.getElementById("againBtn").onclick=()=>{ document.getElementById("overScreen").classList.add("hidden"); document.getElementById("startScreen").classList.remove("hidden"); buildStart(); };
 document.getElementById("homeBtn").onclick=()=>{ location.href="index.html"; };
-buildHeroes();
+applyLang(); buildStart();
 
-if(typeof window!=="undefined") window.__mw={get g(){return g;}, newGame, update, spawn, tryBuild, useSkill, UNITS, UBY, HEROES, get MOD(){return MOD;}};
+if(typeof window!=="undefined") window.__mw={get g(){return g;}, newGame, update, spawnAt, tryBuild, useSkill, buyTech, UNITS, UBY, HEROES, DIFFS, TECHS,
+  setMode:m=>{MODE=m;}, setDiff:id=>{DIFF=DIFFS.find(d=>d.id===id);}, get MOD(){return MOD;}, get DIFF(){return DIFF;}};
 </script>
 </body>
 </html>
