@@ -80,12 +80,12 @@
 </head>
 <body>
 <script>function goArcade(){if(window.top!==window.self){try{window.parent.postMessage("leo-arcade-home","*");}catch(e){}}else{location.href="index.html";}}</script>
-<button onclick="goArcade()" title="返回游戏厅" aria-label="返回游戏厅" style="position:fixed;top:8px;right:10px;z-index:50;background:rgba(20,20,28,.82);color:#f0f0f5;border:1px solid rgba(200,200,210,.42);border-radius:16px;padding:4px 11px;font-size:15px;line-height:1.2;cursor:pointer;font-family:'Courier New',monospace;">🏠</button>
+<button onclick="goArcade()" title="返回游戏厅" aria-label="返回游戏厅" style="position:fixed;top:8px;right:10px;z-index:50;background:rgba(20,20,28,.9);color:#f0f0f5;border:1px solid rgba(210,210,225,.6);border-radius:16px;padding:6px 14px;font-size:22px;line-height:1;cursor:pointer;font-family:'Courier New',monospace;">🏠</button>
 <div id="app">
 <div id="game">
   <canvas id="cv" width="600" height="660"></canvas>
   <div class="toast" id="toast"></div>
-  <button id="langBtn" onclick="toggleLang()" style="position:absolute;top:8px;left:10px;z-index:30;background:#25252f;color:#f0f0f5;border:1px solid #4b4168;border-radius:16px;padding:4px 12px;font-weight:800;font-size:12px;cursor:pointer;font-family:'Courier New',monospace;">EN</button>
+  <button id="langBtn" onclick="toggleLang()" style="position:absolute;top:8px;left:10px;z-index:30;background:#2f2f3c;color:#f0f0f5;border:1px solid #6a5c8f;border-radius:16px;padding:6px 14px;font-weight:800;font-size:15px;cursor:pointer;font-family:'Courier New',monospace;">EN</button>
 
   <!-- 主界面 -->
   <div class="screen" id="menu">

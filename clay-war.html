@@ -105,32 +105,33 @@
 <script>function goArcade(){if(window.top!==window.self){try{window.parent.postMessage("leo-arcade-home","*");}catch(e){}}else{location.href="index.html";}}</script>
 <div id="app">
   <div id="topbar">
-    <button onclick="goArcade()" title="返回游戏厅" aria-label="返回游戏厅" style="flex:0 0 auto;background:rgba(130,130,140,.22);border:1px solid rgba(160,160,170,.55);border-radius:9px;padding:3px 9px;font-size:15px;line-height:1.2;cursor:pointer;color:inherit;">🏠</button>
-    <div class="title">🪄 橡皮泥：战争塑形前线 <small id="wavelab">· 准备中</small></div>
+    <button onclick="goArcade()" title="返回游戏厅" aria-label="返回游戏厅" style="flex:0 0 auto;background:rgba(42,47,58,.92);border:1px solid rgba(185,195,215,.6);border-radius:10px;padding:4px 11px;font-size:20px;line-height:1;cursor:pointer;color:#fff;">🏠</button>
+    <div class="title"><span data-i18n="🪄 橡皮泥：战争塑形前线">🪄 橡皮泥：战争塑形前线</span> <small id="wavelab">· 准备中</small></div>
     <div class="spacer"></div>
-    <div class="stat">🟤<span class="lab">泥料</span><span id="clay">150</span></div>
-    <div class="stat">❤️<span class="lab">基地</span><span id="lives">5</span></div>
-    <div class="stat">💀<span class="lab">击杀</span><span id="kills">0</span></div>
+    <div class="stat">🟤<span class="lab" data-i18n="泥料">泥料</span><span id="clay">150</span></div>
+    <div class="stat">❤️<span class="lab" data-i18n="基地">基地</span><span id="lives">5</span></div>
+    <div class="stat">💀<span class="lab" data-i18n="击杀">击杀</span><span id="kills">0</span></div>
+    <button id="langBtn" onclick="toggleLang()" style="flex:0 0 auto;background:#2a2f3a;color:#fff;border:1px solid rgba(185,195,215,.6);border-radius:14px;padding:6px 13px;font-weight:800;font-size:15px;cursor:pointer;">EN</button>
     <button class="btn ghost" id="pauseBtn">⏸ 暂停</button>
   </div>
 
   <div id="stage">
     <canvas id="cv" width="1000" height="600"></canvas>
     <div class="hint" id="hint"></div>
-    <div class="tip">💎矿点上建🏭纸工厂/工程兵产量翻倍。🦇飞行敌人只能远程/🛩️防空拦截。双人：P2用方向键+逗号句号选兵+回车。</div>
+    <div class="tip" data-i18n="💎矿点上建🏭纸工厂/工程兵产量翻倍。🦇飞行敌人只能远程/🛩️防空拦截。双人：P2用方向键+逗号句号选兵+回车。">💎矿点上建🏭纸工厂/工程兵产量翻倍。🦇飞行敌人只能远程/🛩️防空拦截。双人：P2用方向键+逗号句号选兵+回车。</div>
 
     <div class="overlay" id="startScreen">
-      <h1>橡皮泥：战争塑形前线<span class="sub">Playdough War · Shaping Frontline</span></h1>
-      <p>黑泥感染正从右侧涌来。用不同颜色的橡皮泥捏出你的军团，守住左侧基地！<br>
-         每种颜色都有独特属性与技能——自由组合，打造你的塑形前线。</p>
+      <h1><span data-i18n="橡皮泥：战争塑形前线">橡皮泥：战争塑形前线</span><span class="sub">Playdough War · Shaping Frontline</span></h1>
+      <p><span data-i18n="黑泥感染正从右侧涌来。用不同颜色的橡皮泥捏出你的军团，守住左侧基地！">黑泥感染正从右侧涌来。用不同颜色的橡皮泥捏出你的军团，守住左侧基地！</span><br>
+         <span data-i18n="每种颜色都有独特属性与技能——自由组合，打造你的塑形前线。">每种颜色都有独特属性与技能——自由组合，打造你的塑形前线。</span></p>
       <div class="lore" id="loreBox"></div>
       <p id="startRecords" style="margin:2px 0 10px;font-size:12px;"></p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
-        <button class="btn" id="campaignBtn" style="font-size:16px;padding:10px 24px;">🗺️ 闯关模式</button>
-        <button class="btn" id="endlessBtn" style="font-size:16px;padding:10px 24px;background:#a45ce0;box-shadow:0 3px 0 #6f2fa8;color:#fff;">🌀 无尽模式</button>
-        <button class="btn" id="coopBtn" style="font-size:16px;padding:10px 24px;background:#5fd0e0;box-shadow:0 3px 0 #3a9aa8;color:#08343a;">👥 双人合作</button>
-        <button class="btn ghost" id="talentBtn" style="font-size:16px;padding:10px 24px;">🌳 天赋树</button>
-        <button class="btn ghost" id="techBtn" style="font-size:16px;padding:10px 24px;">🔬 科技树</button>
+        <button class="btn" id="campaignBtn" style="font-size:16px;padding:10px 24px;" data-i18n="🗺️ 闯关模式">🗺️ 闯关模式</button>
+        <button class="btn" id="endlessBtn" style="font-size:16px;padding:10px 24px;background:#a45ce0;box-shadow:0 3px 0 #6f2fa8;color:#fff;" data-i18n="🌀 无尽模式">🌀 无尽模式</button>
+        <button class="btn" id="coopBtn" style="font-size:16px;padding:10px 24px;background:#5fd0e0;box-shadow:0 3px 0 #3a9aa8;color:#08343a;" data-i18n="👥 双人合作">👥 双人合作</button>
+        <button class="btn ghost" id="talentBtn" style="font-size:16px;padding:10px 24px;" data-i18n="🌳 天赋树">🌳 天赋树</button>
+        <button class="btn ghost" id="techBtn" style="font-size:16px;padding:10px 24px;" data-i18n="🔬 科技树">🔬 科技树</button>
       </div>
     </div>
   </div>
@@ -140,6 +141,135 @@
 
 <script>
 "use strict";
+/* ============================ 中英双语 i18n ============================ */
+let LANG = (function(){try{return localStorage.getItem("clayLang")||"zh";}catch(e){return "zh";}})();
+const TR = {
+  // —— 静态界面 ——
+  "橡皮泥：战争塑形前线":"Playdough War · Shaping Frontline",
+  "🪄 橡皮泥：战争塑形前线":"🪄 Playdough War",
+  "· 准备中":"· Preparing",
+  "泥料":"Clay","基地":"Base","击杀":"Kills",
+  "⏸ 暂停":"⏸ Pause","▶ 继续":"▶ Resume",
+  "黑泥感染正从右侧涌来。用不同颜色的橡皮泥捏出你的军团，守住左侧基地！":"The black-clay infection surges in from the right. Mold your legion out of colored clay and hold the base on the left!",
+  "每种颜色都有独特属性与技能——自由组合，打造你的塑形前线。":"Every color has unique stats and skills — mix them freely to build your shaping frontline.",
+  "💎矿点上建🏭纸工厂/工程兵产量翻倍。🦇飞行敌人只能远程/🛩️防空拦截。双人：P2用方向键+逗号句号选兵+回车。":"💎 Build a 🏭factory / engineer on a node to double output. 🦇Flyers can only be hit by ranged / 🛩️anti-air. 2P: P2 uses arrows + , . to pick + Enter.",
+  "🗺️ 闯关模式":"🗺️ Campaign","🌀 无尽模式":"🌀 Endless","👥 双人合作":"👥 2-Player Co-op","🌳 天赋树":"🌳 Talents","🔬 科技树":"🔬 Tech Tree",
+  // —— 橡皮泥颜色 ——
+  "棕泥":"Brown","白泥":"White","黄泥":"Yellow","绿泥":"Green","蓝泥":"Blue","粉泥":"Pink","紫泥":"Purple","橙泥":"Orange","红泥":"Red","灰泥":"Gray","青泥":"Cyan","银泥":"Silver","金泥":"Gold","黑泥":"Black","彩色泥":"Rainbow",
+  // —— 单位名称 ——
+  "新兵":"Recruit","工程兵":"Engineer","医疗兵":"Medic","重甲步兵":"Heavy Infantry","移动堡垒":"Mobile Fortress","指挥员":"Commander","毒气兵":"Gas Trooper","激光炮":"Laser Cannon","喷火坦克":"Flame Tank","冰冻炮":"Frost Cannon","狂战士":"Berserker","火箭炮":"Rocket Launcher","狙击兵":"Sniper","皇家近卫":"Royal Guard","纸工厂":"Paper Factory","防空炮":"Anti-Air Gun","生物战兽":"War Beast","光谱士兵":"Spectrum Soldier",
+  // —— 单位描述 ——
+  "最基础的近战肉盾":"Basic melee meat-shield",
+  "每5秒产出泥料":"Produces clay every 5s",
+  "治疗同行受伤单位":"Heals wounded units nearby",
+  "高血量装甲前锋":"High-HP armored vanguard",
+  "超硬城墙，专门挡路":"Ultra-tough wall, blocks the lane",
+  "同行友军伤害+40%":"Same-row allies +40% damage",
+  "投毒，持续腐蚀":"Poisons, corrodes over time",
+  "电磁弹，链击2个敌人":"EM bolt, chains 2 enemies",
+  "熔岩弹，范围灼烧":"Lava shell, splash burn",
+  "冰弹，冻缓敌人":"Ice shot, freezes and slows",
+  "极高攻击，暴击连斩":"Huge attack, crit combos",
+  "充能慢·火箭大范围爆炸":"Slow charge · huge rocket blast",
+  "超远精准，高暴击":"Long-range precision, high crit",
+  "精英全能，自带光环":"Elite all-rounder with aura",
+  "产泥建筑·点击可升级(3级)·建在💎矿点产量翻倍":"Clay building · tap to upgrade (3 lv) · double output on a 💎 node",
+  "对飞行敌人3倍伤害":"3× damage to flyers",
+  "高血近战·撕咬带毒":"Tanky melee · poison bite",
+  "终极·彩虹链光束":"Ultimate · rainbow chain beam",
+  // —— 敌人（图标显示，名称备用）——
+  "感染兽":"Infected","感染爬虫":"Infected Crawler","深渊战车":"Abyss Wagon","黑泥巨兽":"Black-Clay Brute","会飞的黑泥":"Flying Black Clay","分裂感染兽":"Splitter","感染孢子":"Spore",
+  // —— 天赋名称 ——
+  "泥料涌流":"Clay Surge","储备扩容":"Reserve Expansion","高效工程":"Efficient Engineering","废料回收":"Scrap Recycling","利刃塑形":"Bladed Shaping","狂热":"Frenzy","精准塑造":"Precise Shaping","重火力":"Heavy Firepower","硬化装甲":"Hardened Armor","城防加固":"Fortified Base","速塑工艺":"Rapid Molding","白泥强化":"White-Clay Boost","元素亲和":"Elemental Affinity","深度冰封":"Deep Freeze","从容备战":"Calm Preparation","黑泥馈赠":"Black-Clay Gift",
+  // —— 天赋描述 ——
+  "被动产泥 +60%":"Passive clay +60%",
+  "开局泥料 +120":"Starting clay +120",
+  "工程兵产量 +60%":"Engineer output +60%",
+  "击杀返还泥料 +120%":"Kill clay refund +120%",
+  "全体伤害 +15%":"All damage +15%",
+  "攻击速度 +25%":"Attack speed +25%",
+  "全体暴击率 +15%":"All crit chance +15%",
+  "全体伤害 额外 +25%":"All damage +25% extra",
+  "全体生命 +25%":"All HP +25%",
+  "基地生命 +3":"Base lives +3",
+  "单位冷却 -25%":"Unit cooldown -25%",
+  "治疗量 +70%":"Healing +70%",
+  "毒/火/冰 效果 +50%":"Poison/fire/ice effects +50%",
+  "冰冻/减速时长 +60%":"Freeze/slow duration +60%",
+  "波次间隔 +50%（更多准备）":"Wave gap +50% (more prep time)",
+  "每局开局免费获得皇家近卫":"Free Royal Guard at the start of each game",
+  // —— 天赋分支 ——
+  "经济·棕黄":"Economy · Brown/Yellow","攻击·红银":"Attack · Red/Silver","防御·蓝灰":"Defense · Blue/Gray","元素·黑科技":"Elements · Hi-Tech",
+  // —— 科技名称 ——
+  "精锐新兵":"Elite Recruit","狂暴之血":"Berserker's Blood","生物工程":"Bioengineering","电磁过载":"EM Overload","寒冰工艺":"Cryo Craft","重炮升级":"Heavy Artillery","防空体系":"Anti-Air System","光谱科技":"Spectrum Tech","全军现代化":"Army Modernization",
+  // —— 科技描述 ——
+  "新兵 生命+60% 伤害+40%":"Recruit HP +60% DMG +40%",
+  "狂战士 攻速+33% 暴击+20%":"Berserker atk-spd +33% crit +20%",
+  "解锁 · 生物战兽（绿泥）":"Unlock · War Beast (Green Clay)",
+  "激光炮 伤害+25% 链击+1":"Laser DMG +25% chain +1",
+  "冰冻炮 攻速+43% 伤害+30%":"Frost atk-spd +43% DMG +30%",
+  "火箭炮 伤害+50% 装填+20%":"Rocket DMG +50% reload +20%",
+  "解锁 · 防空炮（专打飞行）":"Unlock · Anti-Air Gun (vs flyers)",
+  "解锁 · 光谱士兵（终极）":"Unlock · Spectrum Soldier (ultimate)",
+  "全体单位 生命+12% 伤害+12%":"All units HP +12% DMG +12%",
+  // —— 科技分支 ——
+  "步兵强化":"Infantry","载具火力":"Vehicles","尖端科技":"Advanced Tech",
+  // —— 关卡 ——
+  "新兵训练场":"Boot Camp","感染前哨":"Infected Outpost","深渊战线":"Abyss Frontline","黑泥要塞":"Black-Clay Fortress","最终塑形":"Final Shaping",
+  "熟悉塑形，守住6波":"Learn shaping, hold 6 waves",
+  "感染开始成群":"The infection starts to swarm",
+  "分裂感染兽来袭":"Splitters incoming",
+  "会飞的黑泥突袭":"Flying black clay raids",
+  "决战·黑泥狂潮":"Final battle · black-clay tide",
+  // —— 提示 / 交互 ——
+  "先选择一种橡皮泥单位":"Pick a clay unit first",
+  "这里已经有单位了":"A unit is already here",
+  "泥料不足！造工程兵/纸工厂产泥":"Not enough clay! Build engineers / factories",
+  "💎 建在矿点·产量翻倍！":"💎 Built on a node · double output!",
+  "纸工厂已满级 (Lv3)":"Factory maxed (Lv3)",
+  "⚠ 基地被突破！":"⚠ Base breached!",
+  "· 无尽":"· Endless",
+  "P2 按,/.选兵":"P2: press , / . to pick",
+  "最高通关：":"Best clear: ",
+  "👥 双人合作！P1🖱️鼠标 · P2⌨️方向键移动·逗号句号选兵·回车放置":"👥 Co-op! P1 🖱️ mouse · P2 ⌨️ arrows to move · , . to pick · Enter to place",
+  // —— 天赋 / 科技树 UI ——
+  "🌳 塑形天赋树":"🌳 Talent Tree",
+  "🔬 科技树 · 兵种升级":"🔬 Tech Tree · Unit Upgrades",
+  "🗺️ 选择关卡":"🗺️ Select Level",
+  "✨ 塑形点：":"✨ Points: ",
+  "✔ 已解锁":"✔ Owned","✔ 已研发":"✔ Researched",
+  "🔓解锁":"🔓 Unlock","⬆升级":"⬆ Upgrade",
+  "✔ 完成":"✔ Done","↺ 重置返还":"↺ Reset",
+  "退还全部天赋，返还塑形点":"Refund all talents for their points",
+  "← 返回":"← Back",
+  "已经解锁啦":"Already owned",
+  "需要先解锁上一层天赋":"Unlock the tier above first",
+  "塑形点不足——去战场击杀黑泥吧！":"Not enough points — go kill black clay on the field!",
+  "已经研发啦":"Already researched",
+  "需要先研发前置科技":"Research the prerequisite first",
+  // —— 结算按钮 ——
+  "▶ 下一关":"▶ Next Level","🔁 重玩":"🔁 Replay","🏠 模式选择":"🏠 Modes",
+};
+function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
+function applyLang(){
+  document.documentElement.lang = LANG==="en" ? "en" : "zh-CN";
+  document.title = tr("橡皮泥：战争塑形前线");
+  document.querySelectorAll("[data-i18n]").forEach(el=>{ el.textContent = tr(el.getAttribute("data-i18n")); });
+  const lb=document.getElementById("langBtn"); if(lb) lb.textContent = LANG==="en" ? "中" : "EN";
+  const pb=document.getElementById("pauseBtn"); if(pb) pb.textContent = (G&&G.paused) ? tr("▶ 继续") : tr("⏸ 暂停");
+  const wl=document.getElementById("wavelab"); if(wl && !(G&&G.running)) wl.textContent = tr("· 准备中");
+}
+function toggleLang(){
+  LANG = LANG==="en" ? "zh" : "en";
+  try{ localStorage.setItem("clayLang",LANG); }catch(e){}
+  applyLang();
+  // 重建所有已生成的动态 DOM，使其显示新语言
+  buildShop(); buildLore(); updateStartRecords();
+  if(G) refreshShop();
+  const ls=document.getElementById("levelScreen"); if(ls) openLevels();
+  const tt=document.getElementById("talentScreen"); if(tt){ if(tt.dataset.tree==="tech") openTech(); else openTalents(); }
+  const es=document.getElementById("endScreen"); if(es && G && G._end) renderEnd();
+}
 /* ============================ 数据：橡皮泥材料 & 单位 ============================ */
 const CLAY = {
   brown:{name:"棕泥", col:"#8a5a3c", star:1},
@@ -431,10 +561,10 @@ function buildShop(){
     el.innerHTML =
       `<div class="cico" style="background:${c.col}">${u.ico}</div>
        <div class="stars">${"★".repeat(c.star)}</div>
-       <div class="cname">${u.name}</div>
+       <div class="cname">${tr(u.name)}</div>
        <div class="ccost">🟤 ${u.cost}</div>
        <div class="cool" style="display:none"><div class="coolfill"></div></div>`;
-    el.title = `${c.name}·${u.name}\n${u.desc}`;
+    el.title = `${tr(c.name)}·${tr(u.name)}\n${tr(u.desc)}`;
     el.addEventListener("click",()=>selectUnit(u.id));
     shopEl.appendChild(el);
   });
@@ -480,7 +610,7 @@ function cycleSel2(dir){
   let i=list.findIndex(u=>u.id===G.sel2);
   i = (i<0) ? (dir>0?0:list.length-1) : (i+dir+list.length)%list.length;
   G.sel2=list[i].id;
-  const u=list[i]; flash(`P2 选择：${u.ico} ${u.name}（${u.cost}泥）`);
+  const u=list[i]; flash(LANG==="en" ? `P2 selected: ${u.ico} ${tr(u.name)} (${u.cost} clay)` : `P2 选择：${u.ico} ${u.name}（${u.cost}泥）`);
 }
 window.addEventListener("keydown",e=>{
   if(!G||!G.twoP||!G.running||G.over||G.paused) return;
@@ -503,29 +633,29 @@ function placeAt(c,r,who){
   const cd  = who===1 ? G.cd : G.cd2;
   const tag = who===2 ? "P2 " : "";
   const occ=G.grid[r][c];
-  if(!sel){ if(occ&&occ.role==="factory") upgradeFactory(occ); else flash(tag+"先选择一种橡皮泥单位"); return; }
+  if(!sel){ if(occ&&occ.role==="factory") upgradeFactory(occ); else flash(tag+tr("先选择一种橡皮泥单位")); return; }
   const u=UNITS.find(x=>x.id===sel);
-  if(occ){ if(occ.role==="factory"){ upgradeFactory(occ); } else flash(tag+"这里已经有单位了"); return; }
-  if(cd[u.id]>0){ flash(`${tag}${u.name}还在冷却`); return; }
-  if(G.clay<u.cost){ flash(tag+"泥料不足！造工程兵/纸工厂产泥"); return; }
+  if(occ){ if(occ.role==="factory"){ upgradeFactory(occ); } else flash(tag+tr("这里已经有单位了")); return; }
+  if(cd[u.id]>0){ flash(LANG==="en" ? `${tag}${tr(u.name)} on cooldown` : `${tag}${u.name}还在冷却`); return; }
+  if(G.clay<u.cost){ flash(tag+tr("泥料不足！造工程兵/纸工厂产泥")); return; }
   G.clay-=u.cost; cd[u.id]=u.cd*TAL.cdMult;
   const unit=makeUnit(u,c,r); unit.owner=who;
   G.grid[r][c]=unit; G.units.push(unit);
   spawnParts(unit.x,unit.y,CLAY[u.clay].col,10);
-  if(unit.onNode) flash("💎 建在矿点·产量翻倍！");
+  if(unit.onNode) flash(tr("💎 建在矿点·产量翻倍！"));
   refreshShop();
 }
 function upgradeFactory(f){
-  if(f.lvl>=2){ flash("纸工厂已满级 (Lv3)"); return; }
+  if(f.lvl>=2){ flash(tr("纸工厂已满级 (Lv3)")); return; }
   const cost=f.upCost[f.lvl];
-  if(G.clay<cost){ flash(`升级需要 ${cost} 泥料`); return; }
+  if(G.clay<cost){ flash(LANG==="en" ? `Upgrade needs ${cost} clay` : `升级需要 ${cost} 泥料`); return; }
   G.clay-=cost; f.lvl++;
   const spec=f.lvls[f.lvl];
   const newMax=Math.round(spec.hp*TAL.hpMult);
   f.hp += newMax-f.maxhp; f.maxhp=newMax;      // 升级同时补血
   f.gen=spec.gen*TAL.genMult*(f.onNode?2:1);
   spawnParts(f.x,f.y,"#ffcf4a",16); f.sink=8;
-  flash(`纸工厂升级至 Lv${f.lvl+1}！产量↑`);
+  flash(LANG==="en" ? `Factory upgraded to Lv${f.lvl+1}! Output ↑` : `纸工厂升级至 Lv${f.lvl+1}！产量↑`);
   refreshShop();
 }
 
@@ -742,7 +872,7 @@ function waveLogic(dt){
       G.inWave=false;
       if(G.totalWaves>0 && G.wave>=G.totalWaves){ winGame(); return; } // 仅闯关有终点
       G.waveTimer=6*TAL.waveGapMult; G.waveClearWait=1;
-      setWaveLabel(`第 ${G.wave} 波 已清除 · 备战中`);
+      setWaveLabel(LANG==="en" ? `Wave ${G.wave} cleared · preparing` : `第 ${G.wave} 波 已清除 · 备战中`);
     }
   } else if(!G.over){
     G.waveTimer-=dt;
@@ -753,9 +883,9 @@ function startWave(){
   G.wave++;
   G.toSpawn=buildWave(G.wave);
   G.spawnTimer=0.5; G.inWave=true;
-  const of = G.totalWaves>0 ? `/ ${G.totalWaves}` : "· 无尽";
-  setWaveLabel(`⚔ 第 ${G.wave} ${of} 波 来袭！`);
-  flash(`第 ${G.wave} 波 黑泥感染涌来！`);
+  const of = G.totalWaves>0 ? `/ ${G.totalWaves}` : tr("· 无尽");
+  setWaveLabel(LANG==="en" ? `⚔ Wave ${G.wave} ${of} incoming!` : `⚔ 第 ${G.wave} ${of} 波 来袭！`);
+  flash(LANG==="en" ? `Wave ${G.wave} — black clay surges in!` : `第 ${G.wave} 波 黑泥感染涌来！`);
 }
 function spawnEnemy(type){
   const base=ENEMIES[type];
@@ -768,7 +898,7 @@ function spawnEnemy(type){
     timer:0.3, flashT:0, poison:0, slow:0, dead:false });
 }
 function breach(){
-  G.lives--; flash("⚠ 基地被突破！"); spawnParts(20,H/2,"#ff5c72",20);
+  G.lives--; flash(tr("⚠ 基地被突破！")); spawnParts(20,H/2,"#ff5c72",20);
   if(G.lives<=0) loseGame();
 }
 function setWaveLabel(t){ document.getElementById("wavelab").textContent="· "+t; }
@@ -792,32 +922,54 @@ function showEnd(){
     if(G.kills>SAVE.bestKills) SAVE.bestKills=G.kills;
   }
   persist();
-
+  // 保存结算快照，供语言切换时重绘（不重复结算）
+  G._end = { earned, unlockedNext, newRecord, won:G.won, mode:G.mode,
+             wave:G.wave, kills:G.kills, lives:G.lives, level:G.level, totalWaves:G.totalWaves };
+  renderEnd();
+}
+function renderEnd(){
+  const d = G && G._end; if(!d) return;
+  const old=document.getElementById("endScreen"); if(old) old.remove();
+  const en = LANG==="en";
   const ov=document.createElement("div"); ov.className="overlay"; ov.id="endScreen";
   let head, body;
-  if(G.mode==="endless"){
-    head=`<h1>🌀 无尽模式结束<span class="sub">${newRecord?"🎉 刷新最佳记录！":"黑泥无穷无尽…"}</span></h1>`;
-    body=`<p>坚持到第 <b>${G.wave}</b> 波 · 击杀 <b>${G.kills}</b> 个感染体<br>历史最佳：第 <b style="color:#ffcf4a">${SAVE.bestWave}</b> 波 · ${SAVE.bestKills} 击杀</p>`;
-  } else if(G.won){
-    head=`<h1>🏆 「${LEVELS[G.level].name}」通关！<span class="sub">全 ${G.totalWaves} 波黑泥感染被击退</span></h1>`;
-    body=`<p>击杀 <b>${G.kills}</b> · 剩余基地 <b>${G.lives}</b> ❤️${unlockedNext?`<br>🔓 解锁新关卡：<b style="color:#ffcf4a">${LEVELS[G.level+1].name}</b>`:(G.level+1>=LEVELS.length?"<br>🎖️ 你已通关全部关卡！":"")}</p>`;
+  if(d.mode==="endless"){
+    head = en
+      ? `<h1>🌀 Endless Over<span class="sub">${d.newRecord?"🎉 New best record!":"The black clay is endless…"}</span></h1>`
+      : `<h1>🌀 无尽模式结束<span class="sub">${d.newRecord?"🎉 刷新最佳记录！":"黑泥无穷无尽…"}</span></h1>`;
+    body = en
+      ? `<p>Reached wave <b>${d.wave}</b> · killed <b>${d.kills}</b> infected<br>Best: wave <b style="color:#ffcf4a">${SAVE.bestWave}</b> · ${SAVE.bestKills} kills</p>`
+      : `<p>坚持到第 <b>${d.wave}</b> 波 · 击杀 <b>${d.kills}</b> 个感染体<br>历史最佳：第 <b style="color:#ffcf4a">${SAVE.bestWave}</b> 波 · ${SAVE.bestKills} 击杀</p>`;
+  } else if(d.won){
+    head = en
+      ? `<h1>🏆 "${tr(LEVELS[d.level].name)}" cleared!<span class="sub">All ${d.totalWaves} waves of black clay repelled</span></h1>`
+      : `<h1>🏆 「${LEVELS[d.level].name}」通关！<span class="sub">全 ${d.totalWaves} 波黑泥感染被击退</span></h1>`;
+    body = en
+      ? `<p>Kills <b>${d.kills}</b> · base left <b>${d.lives}</b> ❤️${d.unlockedNext?`<br>🔓 New level unlocked: <b style="color:#ffcf4a">${tr(LEVELS[d.level+1].name)}</b>`:(d.level+1>=LEVELS.length?"<br>🎖️ You cleared every level!":"")}</p>`
+      : `<p>击杀 <b>${d.kills}</b> · 剩余基地 <b>${d.lives}</b> ❤️${d.unlockedNext?`<br>🔓 解锁新关卡：<b style="color:#ffcf4a">${LEVELS[d.level+1].name}</b>`:(d.level+1>=LEVELS.length?"<br>🎖️ 你已通关全部关卡！":"")}</p>`;
   } else {
-    head=`<h1>💥 基地失守<span class="sub">「${LEVELS[G.level].name}」黑泥吞噬了前线…</span></h1>`;
-    body=`<p>坚持到第 <b>${G.wave}/${G.totalWaves}</b> 波 · 击杀 <b>${G.kills}</b> 个感染体<br>捏一支更强的军团再战！</p>`;
+    head = en
+      ? `<h1>💥 Base Lost<span class="sub">"${tr(LEVELS[d.level].name)}" — black clay swallowed the frontline…</span></h1>`
+      : `<h1>💥 基地失守<span class="sub">「${LEVELS[d.level].name}」黑泥吞噬了前线…</span></h1>`;
+    body = en
+      ? `<p>Held to wave <b>${d.wave}/${d.totalWaves}</b> · killed <b>${d.kills}</b> infected<br>Mold a stronger legion and fight again!</p>`
+      : `<p>坚持到第 <b>${d.wave}/${d.totalWaves}</b> 波 · 击杀 <b>${d.kills}</b> 个感染体<br>捏一支更强的军团再战！</p>`;
   }
   ov.innerHTML=head+body;
   const gain=document.createElement("p");
-  gain.innerHTML=`✨ 获得 <b style="color:#ffcf4a">${earned}</b> 塑形点 · 当前共 <b style="color:#ffcf4a">${SAVE.points}</b> 点`;
+  gain.innerHTML = en
+    ? `✨ Earned <b style="color:#ffcf4a">${d.earned}</b> points · total <b style="color:#ffcf4a">${SAVE.points}</b>`
+    : `✨ 获得 <b style="color:#ffcf4a">${d.earned}</b> 塑形点 · 当前共 <b style="color:#ffcf4a">${SAVE.points}</b> 点`;
   ov.appendChild(gain);
 
   const wrap=document.createElement("div"); wrap.style.cssText="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;justify-content:center;";
   const mk=(txt,cls,fn)=>{ const b=document.createElement("button"); b.className="btn"+(cls?" "+cls:"");
     b.style.cssText="font-size:15px;padding:10px 20px;"; b.textContent=txt; b.onclick=fn; return b; };
-  if(unlockedNext) wrap.appendChild(mk("▶ 下一关","",()=>{ ov.remove(); startGame("campaign",G.level+1); }));
-  wrap.appendChild(mk("🔁 重玩","ghost",()=>{ ov.remove(); startGame(G.mode,G.level); }));
-  wrap.appendChild(mk("🏠 模式选择","ghost",()=>{ ov.remove(); goHome(); }));
-  wrap.appendChild(mk("🌳 天赋树","ghost",()=>openTalents()));
-  wrap.appendChild(mk("🔬 科技树","ghost",()=>openTech()));
+  if(d.unlockedNext) wrap.appendChild(mk(tr("▶ 下一关"),"",()=>{ ov.remove(); startGame("campaign",d.level+1); }));
+  wrap.appendChild(mk(tr("🔁 重玩"),"ghost",()=>{ ov.remove(); startGame(d.mode,d.level); }));
+  wrap.appendChild(mk(tr("🏠 模式选择"),"ghost",()=>{ ov.remove(); goHome(); }));
+  wrap.appendChild(mk(tr("🌳 天赋树"),"ghost",()=>openTalents()));
+  wrap.appendChild(mk(tr("🔬 科技树"),"ghost",()=>openTech()));
   ov.appendChild(wrap);
   document.getElementById("stage").appendChild(ov);
 }
@@ -829,9 +981,13 @@ function goHome(){
 }
 function updateStartRecords(){
   const el=document.getElementById("startRecords"); if(!el) return;
-  el.innerHTML=`🗺️ 闯关进度 <b style="color:#66e2a0">${SAVE.campaignCleared}/${LEVELS.length}</b>　`+
-    `🌀 无尽最佳 <b style="color:#a45ce0">第 ${SAVE.bestWave} 波</b>　`+
-    `✨ 塑形点 <b style="color:#ffcf4a">${SAVE.points}</b>`;
+  el.innerHTML = LANG==="en"
+    ? `🗺️ Campaign <b style="color:#66e2a0">${SAVE.campaignCleared}/${LEVELS.length}</b>　`+
+      `🌀 Endless best <b style="color:#a45ce0">Wave ${SAVE.bestWave}</b>　`+
+      `✨ Points <b style="color:#ffcf4a">${SAVE.points}</b>`
+    : `🗺️ 闯关进度 <b style="color:#66e2a0">${SAVE.campaignCleared}/${LEVELS.length}</b>　`+
+      `🌀 无尽最佳 <b style="color:#a45ce0">第 ${SAVE.bestWave} 波</b>　`+
+      `✨ 塑形点 <b style="color:#ffcf4a">${SAVE.points}</b>`;
 }
 
 /* ============================ 渲染 ============================ */
@@ -900,13 +1056,13 @@ function render(){
     // P2 当前选择标签
     const su=UNITS.find(x=>x.id===G.sel2);
     if(su){ const rdy=(G.cd2[su.id]||0)<=0 && G.clay>=su.cost;
-      const txt=`P2▸${su.ico}${su.name} ${su.cost}`;
+      const txt=`P2▸${su.ico}${tr(su.name)} ${su.cost}`;
       ctx.font="bold 11px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
       const tw=ctx.measureText(txt).width+10;
       ctx.fillStyle="rgba(8,52,58,.85)"; ctx.fillRect(c*CW+CW/2-tw/2, r*CH+2, tw, 16);
       ctx.fillStyle=rdy?"#7fe9f5":"#ff8fa0"; ctx.fillText(txt, c*CW+CW/2, r*CH+11);
     } else { ctx.fillStyle="#5fd0e0"; ctx.font="bold 11px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="bottom";
-      ctx.fillText("P2 按,/.选兵", c*CW+CW/2, r*CH+CH-3); }
+      ctx.fillText(tr("P2 按,/.选兵"), c*CW+CW/2, r*CH+CH-3); }
   }
 
   // 子弹
@@ -1002,7 +1158,7 @@ function updateTop(){
 document.getElementById("pauseBtn").onclick=()=>{
   if(!G.running||G.over) return;
   G.paused=!G.paused;
-  document.getElementById("pauseBtn").textContent=G.paused?"▶ 继续":"⏸ 暂停";
+  document.getElementById("pauseBtn").textContent=G.paused?tr("▶ 继续"):tr("⏸ 暂停");
 };
 document.getElementById("campaignBtn").onclick=()=>openLevels();
 document.getElementById("endlessBtn").onclick=()=>startGame("endless",0);
@@ -1014,11 +1170,11 @@ function startGame(mode,level,twoP){
   const tp=document.getElementById("talentScreen"); if(tp) tp.remove();
   const lp=document.getElementById("levelScreen"); if(lp) lp.remove();
   newGame(mode,level,twoP); G.running=true;
-  document.getElementById("pauseBtn").textContent="⏸ 暂停";
-  let modeLab = mode==="endless" ? "🌀 无尽模式" : `🗺️ ${LEVELS[level].name}`;
-  if(twoP) modeLab="👥 双人合作 · "+modeLab;
-  setWaveLabel(modeLab+" · 准备中，快放置单位！");
-  if(twoP){ G.sel2="recruit"; flash("👥 双人合作！P1🖱️鼠标 · P2⌨️方向键移动·逗号句号选兵·回车放置"); }
+  document.getElementById("pauseBtn").textContent=tr("⏸ 暂停");
+  let modeLab = mode==="endless" ? tr("🌀 无尽模式") : `🗺️ ${tr(LEVELS[level].name)}`;
+  if(twoP) modeLab=tr("👥 双人合作")+" · "+modeLab;
+  setWaveLabel(modeLab+(LANG==="en"?" · Get ready, place your units!":" · 准备中，快放置单位！"));
+  if(twoP){ G.sel2="recruit"; flash(tr("👥 双人合作！P1🖱️鼠标 · P2⌨️方向键移动·逗号句号选兵·回车放置")); }
   // 黑泥馈赠：开局免费近卫
   if(TAL.freeGuard){
     const gu=UNITS.find(u=>u.id==="guard");
@@ -1033,7 +1189,7 @@ function openLevels(){
   const old=document.getElementById("levelScreen"); if(old) old.remove();
   const ov=document.createElement("div"); ov.className="overlay"; ov.id="levelScreen";
   const head=document.createElement("div"); head.className="tHead";
-  head.innerHTML=`<h1>🗺️ 选择关卡</h1><span class="tPts">最高通关：${SAVE.campaignCleared}/${LEVELS.length}</span>`;
+  head.innerHTML=`<h1>${tr("🗺️ 选择关卡")}</h1><span class="tPts">${tr("最高通关：")}${SAVE.campaignCleared}/${LEVELS.length}</span>`;
   ov.appendChild(head);
 
   const grid=document.createElement("div"); grid.className="lvGrid";
@@ -1042,7 +1198,12 @@ function openLevels(){
     const unlocked = i<=SAVE.campaignCleared;     // 可进入（已通关的下一关）
     const c=document.createElement("div");
     c.className="lvCard "+(cleared?"done":unlocked?"open":"locked");
-    c.innerHTML=`<div class="lvno">第 ${i+1} 关</div>
+    c.innerHTML = LANG==="en"
+      ? `<div class="lvno">Level ${i+1}</div>
+      <div class="lvname">${tr(lv.name)}</div>
+      <div class="lvmeta">${lv.waves} waves · Difficulty ${"🔥".repeat(Math.round(lv.diff*2))}<br>${tr(lv.tip)}</div>
+      <div class="lvbadge">${cleared?"✅":unlocked?"⚔️":"🔒"}</div>`
+      : `<div class="lvno">第 ${i+1} 关</div>
       <div class="lvname">${lv.name}</div>
       <div class="lvmeta">${lv.waves} 波 · 难度 ${"🔥".repeat(Math.round(lv.diff*2))}<br>${lv.tip}</div>
       <div class="lvbadge">${cleared?"✅":unlocked?"⚔️":"🔒"}</div>`;
@@ -1053,7 +1214,7 @@ function openLevels(){
 
   const foot=document.createElement("div"); foot.className="tFoot";
   const back=document.createElement("button"); back.className="btn ghost"; back.style.cssText="font-size:15px;padding:9px 24px;";
-  back.textContent="← 返回"; back.onclick=()=>{ ov.remove();
+  back.textContent=tr("← 返回"); back.onclick=()=>{ ov.remove();
     const ss=document.getElementById("startScreen"); if(ss) ss.style.display="flex"; };
   foot.appendChild(back); ov.appendChild(foot);
   document.getElementById("stage").appendChild(ov);
@@ -1063,16 +1224,16 @@ function openLevels(){
 document.getElementById("talentBtn").onclick=()=>openTalents();
 function openTalents(){
   const old=document.getElementById("talentScreen"); if(old) old.remove();
-  const ov=document.createElement("div"); ov.className="overlay"; ov.id="talentScreen";
+  const ov=document.createElement("div"); ov.className="overlay"; ov.id="talentScreen"; ov.dataset.tree="talent";
 
   const head=document.createElement("div"); head.className="tHead";
-  head.innerHTML=`<h1>🌳 塑形天赋树</h1><span class="tPts">✨ 塑形点：${SAVE.points}</span>`;
+  head.innerHTML=`<h1>${tr("🌳 塑形天赋树")}</h1><span class="tPts">${tr("✨ 塑形点：")}${SAVE.points}</span>`;
   ov.appendChild(head);
 
   const tree=document.createElement("div"); tree.className="tTree";
   for(let b=0;b<4;b++){
     const col=document.createElement("div"); col.className="tCol";
-    const h=document.createElement("div"); h.className="tColH"; h.textContent=BRANCH_NAME[b];
+    const h=document.createElement("div"); h.className="tColH"; h.textContent=tr(BRANCH_NAME[b]);
     col.appendChild(h);
     const nodes=TALENTS.filter(t=>t.branch===b).sort((a,c)=>a.tier-c.tier);
     nodes.forEach((t,i)=>{
@@ -1080,9 +1241,9 @@ function openTalents(){
       const owned=isUnlocked(t.id), avail=canUnlock(t);
       const n=document.createElement("div");
       n.className="tNode "+(owned?"owned":avail?"avail":"locked");
-      n.innerHTML=`<div class="tico">${t.ico}</div><div class="tname">${t.name}</div>
-        <div class="tdesc">${t.desc}</div>
-        <div class="tcost">${owned?"✔ 已解锁":"✨ "+t.cost}</div>`;
+      n.innerHTML=`<div class="tico">${t.ico}</div><div class="tname">${tr(t.name)}</div>
+        <div class="tdesc">${tr(t.desc)}</div>
+        <div class="tcost">${owned?tr("✔ 已解锁"):"✨ "+t.cost}</div>`;
       n.onclick=()=>tryUnlock(t);
       col.appendChild(n);
     });
@@ -1092,11 +1253,11 @@ function openTalents(){
 
   const foot=document.createElement("div"); foot.className="tFoot";
   const back=document.createElement("button"); back.className="btn"; back.style.cssText="font-size:15px;padding:9px 24px;";
-  back.textContent="✔ 完成"; back.onclick=()=>{ ov.remove();
+  back.textContent=tr("✔ 完成"); back.onclick=()=>{ ov.remove();
     if(!G.running||G.over){ const ss=document.getElementById("startScreen"); if(ss) ss.style.display="flex";
       const es=document.getElementById("endScreen"); if(es) es.style.display="flex"; } };
   const reset=document.createElement("button"); reset.className="btn ghost"; reset.style.cssText="font-size:15px;padding:9px 20px;";
-  reset.textContent="↺ 重置返还"; reset.title="退还全部天赋，返还塑形点";
+  reset.textContent=tr("↺ 重置返还"); reset.title=tr("退还全部天赋，返还塑形点");
   reset.onclick=()=>{ SAVE.points += TALENTS.filter(t=>isUnlocked(t.id)).reduce((s,t)=>s+t.cost,0);
     SAVE.unlocked=[]; persist(); openTalents(); };
   foot.appendChild(back); foot.appendChild(reset); ov.appendChild(foot);
@@ -1104,31 +1265,31 @@ function openTalents(){
   document.getElementById("stage").appendChild(ov);
 }
 function tryUnlock(t){
-  if(isUnlocked(t.id)){ flashTree("已经解锁啦"); return; }
-  if(!(t.req.length===0||t.req.some(r=>isUnlocked(r)))){ flashTree("需要先解锁上一层天赋"); return; }
-  if(SAVE.points<t.cost){ flashTree("塑形点不足——去战场击杀黑泥吧！"); return; }
+  if(isUnlocked(t.id)){ flashTree(tr("已经解锁啦")); return; }
+  if(!(t.req.length===0||t.req.some(r=>isUnlocked(r)))){ flashTree(tr("需要先解锁上一层天赋")); return; }
+  if(SAVE.points<t.cost){ flashTree(tr("塑形点不足——去战场击杀黑泥吧！")); return; }
   SAVE.points-=t.cost; SAVE.unlocked.push(t.id); persist();
   computeTAL(); openTalents();
 }
 function flashTree(msg){
   const h=document.querySelector("#talentScreen .tPts");
   if(h){ h.textContent=msg; h.style.color="#ff5c72";
-    setTimeout(()=>{ h.textContent="✨ 塑形点："+SAVE.points; h.style.color=""; },1100); }
+    setTimeout(()=>{ h.textContent=tr("✨ 塑形点：")+SAVE.points; h.style.color=""; },1100); }
 }
 
 /* ============================ 科技树 UI ============================ */
 document.getElementById("techBtn").onclick=()=>openTech();
 function openTech(){
   const old=document.getElementById("talentScreen"); if(old) old.remove();
-  const ov=document.createElement("div"); ov.className="overlay"; ov.id="talentScreen";
+  const ov=document.createElement("div"); ov.className="overlay"; ov.id="talentScreen"; ov.dataset.tree="tech";
   const head=document.createElement("div"); head.className="tHead";
-  head.innerHTML=`<h1>🔬 科技树 · 兵种升级</h1><span class="tPts">✨ 塑形点：${SAVE.points}</span>`;
+  head.innerHTML=`<h1>${tr("🔬 科技树 · 兵种升级")}</h1><span class="tPts">${tr("✨ 塑形点：")}${SAVE.points}</span>`;
   ov.appendChild(head);
 
   const tree=document.createElement("div"); tree.className="tTree"; tree.style.gridTemplateColumns="repeat(3,1fr)";
   for(let b=0;b<3;b++){
     const col=document.createElement("div"); col.className="tCol";
-    const h=document.createElement("div"); h.className="tColH"; h.textContent=TECH_BRANCH[b];
+    const h=document.createElement("div"); h.className="tColH"; h.textContent=tr(TECH_BRANCH[b]);
     col.appendChild(h);
     const nodes=TECH.filter(t=>t.branch===b).sort((a,c)=>a.tier-c.tier);
     nodes.forEach((t,i)=>{
@@ -1136,10 +1297,10 @@ function openTech(){
       const owned=isTech(t.id), avail=canTech(t);
       const n=document.createElement("div");
       n.className="tNode "+(owned?"owned":avail?"avail":"locked");
-      const tag = t.kind==="unlock" ? '<span style="color:#66e2a0">🔓解锁</span> ' : '<span style="color:#ffcf4a">⬆升级</span> ';
-      n.innerHTML=`<div class="tico">${t.ico}</div><div class="tname">${t.name}</div>
-        <div class="tdesc">${tag}${t.desc}</div>
-        <div class="tcost">${owned?"✔ 已研发":"✨ "+t.cost}</div>`;
+      const tag = t.kind==="unlock" ? `<span style="color:#66e2a0">${tr("🔓解锁")}</span> ` : `<span style="color:#ffcf4a">${tr("⬆升级")}</span> `;
+      n.innerHTML=`<div class="tico">${t.ico}</div><div class="tname">${tr(t.name)}</div>
+        <div class="tdesc">${tag}${tr(t.desc)}</div>
+        <div class="tcost">${owned?tr("✔ 已研发"):"✨ "+t.cost}</div>`;
       n.onclick=()=>tryTech(t);
       col.appendChild(n);
     });
@@ -1149,30 +1310,30 @@ function openTech(){
 
   const foot=document.createElement("div"); foot.className="tFoot";
   const back=document.createElement("button"); back.className="btn"; back.style.cssText="font-size:15px;padding:9px 24px;";
-  back.textContent="✔ 完成"; back.onclick=()=>{ ov.remove();
+  back.textContent=tr("✔ 完成"); back.onclick=()=>{ ov.remove();
     if(!G.running||G.over){ const ss=document.getElementById("startScreen"); if(ss) ss.style.display="flex";
       const es=document.getElementById("endScreen"); if(es) es.style.display="flex"; } };
   const reset=document.createElement("button"); reset.className="btn ghost"; reset.style.cssText="font-size:15px;padding:9px 20px;";
-  reset.textContent="↺ 重置返还";
+  reset.textContent=tr("↺ 重置返还");
   reset.onclick=()=>{ SAVE.points += TECH.filter(t=>isTech(t.id)).reduce((s,t)=>s+t.cost,0);
     SAVE.techUnlocked=[]; persist(); computeTAL(); openTech(); };
   foot.appendChild(back); foot.appendChild(reset); ov.appendChild(foot);
   document.getElementById("stage").appendChild(ov);
 }
 function tryTech(t){
-  if(isTech(t.id)){ flashTree("已经研发啦"); return; }
-  if(!(t.req.length===0||t.req.some(r=>isTech(r)))){ flashTree("需要先研发前置科技"); return; }
-  if(SAVE.points<t.cost){ flashTree("塑形点不足——去战场击杀黑泥吧！"); return; }
+  if(isTech(t.id)){ flashTree(tr("已经研发啦")); return; }
+  if(!(t.req.length===0||t.req.some(r=>isTech(r)))){ flashTree(tr("需要先研发前置科技")); return; }
+  if(SAVE.points<t.cost){ flashTree(tr("塑形点不足——去战场击杀黑泥吧！")); return; }
   SAVE.points-=t.cost; SAVE.techUnlocked.push(t.id); persist();
   computeTAL(); openTech();
 }
 
 /* ============================ 材料图例 ============================ */
 function buildLore(){
-  const box=document.getElementById("loreBox");
+  const box=document.getElementById("loreBox"); box.innerHTML="";
   Object.values(CLAY).forEach(c=>{
     const s=document.createElement("div"); s.className="swatch";
-    s.innerHTML=`<span class="dot" style="background:${c.col}"></span>${c.name} ${"★".repeat(c.star)}`;
+    s.innerHTML=`<span class="dot" style="background:${c.col}"></span>${tr(c.name)} ${"★".repeat(c.star)}`;
     box.appendChild(s);
   });
 }

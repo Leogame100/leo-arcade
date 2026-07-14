@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>挥霍巨富 · Spend the Fortune</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;}
+  :root{--bg:#0a1410;--panel:#10201a;--panel2:#162b22;--line:#25453a;--ink:#eafff4;--muted:#8fb8a6;
+    --green:#28c76f;--green-d:#1a9c54;--gold:#ffcf4a;--gold-d:#d9a92e;--red:#ff5b52;--blue:#4fd1e0;}
+  html,body{height:100%;background:#000;color:var(--ink);overflow:hidden;}
+  #app{height:100%;display:flex;align-items:center;justify-content:center;}
+  #wrap{position:relative;width:100%;max-width:480px;height:100%;max-height:940px;overflow:hidden;
+    background:radial-gradient(900px 520px at 50% -8%,#123626,#0a1410 66%);display:flex;flex-direction:column;
+    box-shadow:0 0 44px rgba(0,0,0,.6);}
+  /* 顶栏 */
+  .top{flex:0 0 auto;background:linear-gradient(180deg,#123021,#0d1c15);border-bottom:1px solid var(--line);padding:8px 10px 9px;}
+  .toprow{display:flex;align-items:center;gap:8px;}
+  .title{font-weight:900;font-size:14px;letter-spacing:.3px;flex:1;text-align:center;}
+  .title small{color:var(--muted);font-weight:600;font-size:10px;display:block;margin-top:1px;}
+  .hbtn{flex:0 0 auto;background:rgba(42,58,50,.9);border:1px solid rgba(150,200,175,.5);border-radius:10px;
+    padding:4px 10px;font-size:20px;line-height:1;cursor:pointer;color:#fff;}
+  #langBtn{flex:0 0 auto;background:#1c3a2c;color:#eafff4;border:1px solid rgba(150,200,175,.5);border-radius:14px;
+    padding:6px 12px;font-weight:800;font-size:14px;cursor:pointer;}
+  .disc{font-size:9px;color:var(--muted);text-align:center;margin-top:5px;line-height:1.35;opacity:.85;}
+  /* 余额条 */
+  .balbox{margin-top:8px;background:linear-gradient(180deg,#0e2a1e,#0b1f17);border:1px solid var(--line);
+    border-radius:14px;padding:9px 12px;text-align:center;position:relative;overflow:hidden;}
+  .ballab{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+  .balval{font-size:27px;font-weight:900;color:var(--green);font-variant-numeric:tabular-nums;letter-spacing:.5px;
+    text-shadow:0 0 18px rgba(40,199,111,.35);line-height:1.15;word-break:break-all;}
+  .balshort{font-size:11px;color:var(--gold);font-weight:800;margin-top:1px;}
+  .balbar{height:6px;background:#08160f;border-radius:5px;overflow:hidden;margin-top:7px;}
+  .balbar>i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--gold),var(--green));transition:width .3s;}
+  .substats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px;}
+  .sst{background:#0e1f18;border:1px solid #234036;border-radius:9px;padding:5px 8px;text-align:center;}
+  .sst .l{font-size:9px;color:var(--muted);} .sst .v{font-size:14px;font-weight:900;font-variant-numeric:tabular-nums;margin-top:1px;}
+  /* 数量选择 */
+  .qtyrow{display:flex;gap:5px;margin-top:8px;}
+  .qty{flex:1;background:#12241c;border:1px solid var(--line);border-radius:9px;padding:6px 0;text-align:center;
+    font-weight:800;font-size:13px;cursor:pointer;color:var(--muted);}
+  .qty.on{background:var(--green);color:#04140b;border-color:var(--green);}
+  /* 分类标签 */
+  .tabs{flex:0 0 auto;display:flex;gap:6px;overflow-x:auto;padding:8px 10px 4px;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{flex:0 0 auto;background:#12241c;border:1px solid var(--line);border-radius:16px;padding:6px 12px;
+    font-size:12px;font-weight:800;cursor:pointer;color:var(--muted);white-space:nowrap;}
+  .tab.on{background:var(--gold);color:#3a2a00;border-color:var(--gold);}
+  /* 商品列表 */
+  #items{flex:1;overflow-y:auto;padding:2px 10px 10px;}
+  .catname{font-size:12px;color:var(--muted);font-weight:800;margin:8px 2px 6px;letter-spacing:1px;}
+  .item{display:flex;align-items:center;gap:10px;background:#10201a;border:1px solid #234036;border-radius:12px;
+    padding:9px 11px;margin-bottom:7px;cursor:pointer;transition:transform .05s,border-color .1s;}
+  .item:active{transform:scale(.98);} .item.dis{opacity:.5;}
+  .item.dis .buy{background:#2a3a32;color:var(--muted);}
+  .item .ico{font-size:26px;flex:0 0 auto;width:34px;text-align:center;}
+  .item .mid{flex:1;min-width:0;}
+  .item .nm{font-weight:800;font-size:14px;}
+  .item .own{font-size:10px;color:var(--muted);margin-top:1px;}
+  .item .own b{color:var(--gold);}
+  .item .right{flex:0 0 auto;text-align:right;}
+  .item .pr{font-size:13px;font-weight:900;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .item .pr.sale{color:var(--green);} .item .pr .old{color:var(--muted);text-decoration:line-through;font-size:10px;font-weight:600;margin-right:3px;}
+  .buy{margin-top:4px;background:var(--green);color:#04140b;border:none;border-radius:8px;padding:4px 12px;font-weight:900;font-size:12px;cursor:pointer;}
+  /* 事件横幅 */
+  .eventbar{position:absolute;left:0;right:0;top:0;z-index:14;padding:8px 12px;text-align:center;font-weight:900;font-size:13px;
+    transform:translateY(-120%);transition:transform .35s;background:linear-gradient(90deg,var(--gold-d),var(--gold));color:#3a2400;}
+  .eventbar.show{transform:translateY(0);}
+  /* 底部一键消费 */
+  .dock{flex:0 0 auto;background:#0b1a13;border-top:1px solid var(--line);padding:8px;}
+  .oneclick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+  .oc{background:#162b22;border:1px solid var(--line);border-radius:10px;padding:7px 2px;text-align:center;cursor:pointer;transition:transform .05s;}
+  .oc:active{transform:scale(.95);} .oc.on{background:var(--red);border-color:var(--red);}
+  .oc .oi{font-size:17px;} .oc .on2{font-size:9px;font-weight:800;margin-top:1px;line-height:1.15;}
+  .dockrow2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px;}
+  .db{background:#12241c;border:1px solid var(--line);border-radius:10px;padding:8px 2px;text-align:center;font-weight:800;font-size:12px;cursor:pointer;}
+  /* 浮动扣款 */
+  .float{position:absolute;font-weight:900;font-size:15px;color:var(--red);pointer-events:none;z-index:25;
+    animation:floatUp 1s ease forwards;text-shadow:0 1px 3px rgba(0,0,0,.6);}
+  @keyframes floatUp{from{opacity:1;transform:translateY(0) scale(1);}to{opacity:0;transform:translateY(-46px) scale(1.25);}}
+  .coin{position:absolute;font-size:20px;pointer-events:none;z-index:24;animation:coinF 1.1s ease forwards;}
+  @keyframes coinF{0%{opacity:1;transform:translateY(0) rotate(0);}100%{opacity:0;transform:translateY(60px) rotate(240deg);}}
+  /* 覆盖层 */
+  .overlay{position:absolute;inset:0;background:rgba(5,12,9,.94);display:flex;align-items:center;justify-content:center;z-index:30;padding:16px;}
+  .overlay.hidden{display:none;}
+  .sheet{background:#10201a;border:1px solid var(--line);border-radius:18px;width:100%;max-width:430px;max-height:92%;overflow-y:auto;padding:17px;}
+  .sheet h2{font-size:22px;text-align:center;margin-bottom:4px;}
+  .sheet .sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px;line-height:1.6;}
+  .modeseg{display:flex;flex-direction:column;gap:8px;margin:10px 0;}
+  .mode{background:#12241c;border:2px solid var(--line);border-radius:12px;padding:11px 12px;cursor:pointer;transition:border-color .1s;}
+  .mode.on{border-color:var(--gold);background:#1a2e1f;}
+  .mode .mn{font-weight:900;font-size:15px;} .mode .md{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.5;}
+  .btn{display:block;width:100%;background:var(--green);color:#04140b;border:none;border-radius:13px;padding:13px;font-size:17px;font-weight:900;cursor:pointer;margin-top:8px;}
+  .btn.ghost{background:#1c3327;color:var(--ink);} .btn:active{transform:scale(.98);}
+  .achrow{display:flex;align-items:center;gap:11px;background:#12241c;border:1px solid var(--line);border-radius:11px;padding:9px 11px;margin-bottom:7px;}
+  .achrow.got{border-color:var(--gold);background:#1e2a12;}
+  .achrow .ai{font-size:24px;filter:grayscale(1);opacity:.5;} .achrow.got .ai{filter:none;opacity:1;}
+  .achrow .at{flex:1;} .achrow .an{font-weight:800;font-size:14px;} .achrow .ad{font-size:11px;color:var(--muted);margin-top:1px;}
+  .achrow .ax{font-size:16px;color:var(--gold);font-weight:900;}
+  .rec{display:flex;justify-content:space-between;gap:8px;background:#12241c;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:7px;font-size:13px;}
+  .rec .rl{color:var(--muted);} .rec .rv{font-weight:900;color:var(--gold);font-variant-numeric:tabular-nums;text-align:right;}
+  .toast{position:absolute;top:120px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.9);border:1px solid var(--line);
+    padding:8px 16px;border-radius:22px;font-size:13px;font-weight:800;z-index:40;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:92%;text-align:center;}
+  .toast.show{opacity:1;}
+  .big{font-size:56px;text-align:center;margin:6px 0;}
+</style>
+</head>
+<body>
+<script>function goArcade(){if(window.top!==window.self){try{window.parent.postMessage("leo-arcade-home","*");}catch(e){}}else{location.href="index.html";}}</script>
+<div id="app"><div id="wrap">
+
+  <div class="eventbar" id="eventBar"></div>
+
+  <div class="top">
+    <div class="toprow">
+      <button class="hbtn" onclick="goArcade()" title="返回游戏厅" aria-label="返回游戏厅">🏠</button>
+      <div class="title">💸 <span data-i18n="标题">挥霍巨富</span><small data-i18n="副标题">Spend the Fortune</small></div>
+      <button id="langBtn" onclick="toggleLang()">EN</button>
+    </div>
+    <div class="disc" id="disc" data-i18n="免责">⚠️ 灵感来源于全球超高净值富豪 · 纯属娱乐模拟 · 非官方，未获任何个人或机构授权</div>
+    <div class="balbox">
+      <div class="ballab" data-i18n="余额">余额 BALANCE</div>
+      <div class="balval" id="balVal">$400,000,000,000</div>
+      <div class="balshort" id="balShort"></div>
+      <div class="balbar"><i id="balBar"></i></div>
+      <div class="substats">
+        <div class="sst"><div class="l" data-i18n="已消费">已消费</div><div class="v" id="spentVal">$0</div></div>
+        <div class="sst"><div class="l" data-i18n="购买数量">购买数量</div><div class="v" id="itemsVal">0</div></div>
+      </div>
+      <div class="qtyrow" id="qtyRow"></div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="items"></div>
+
+  <div class="dock">
+    <div class="oneclick" id="oneClick"></div>
+    <div class="dockrow2">
+      <div class="db" onclick="openAch()">🏆 <span data-i18n="成就">成就</span></div>
+      <div class="db" onclick="openRec()">📊 <span data-i18n="排行榜">排行榜</span></div>
+      <div class="db" onclick="openStart()">⚙️ <span data-i18n="模式">模式</span></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- 开始 -->
+  <div class="overlay" id="startScreen">
+    <div class="sheet">
+      <h2>💸 <span data-i18n="标题">挥霍巨富</span></h2>
+      <div class="sub" data-i18n="开场"> 你是一位「财富管理员」，手握一笔天文数字的虚拟预算。疯狂购物，看看你多久能把它全部花光！</div>
+      <div class="disc" data-i18n="免责" style="margin-bottom:10px;">⚠️ 灵感来源于全球超高净值富豪 · 纯属娱乐模拟 · 非官方，未获任何个人或机构授权</div>
+      <div class="ballab" style="text-align:center" data-i18n="选择模式">选择模式</div>
+      <div class="modeseg" id="modeSeg"></div>
+      <button class="btn" id="startBtn" data-i18n="开始挥霍">💰 开始挥霍</button>
+      <button class="btn ghost" onclick="openRec()" data-i18n="查看纪录">📊 查看纪录</button>
+    </div>
+  </div>
+
+  <!-- 成就 -->
+  <div class="overlay hidden" id="achScreen">
+    <div class="sheet">
+      <h2>🏆 <span data-i18n="成就">成就</span></h2>
+      <div class="sub" id="achSub"></div>
+      <div id="achList"></div>
+      <button class="btn" onclick="closeOv('achScreen')" data-i18n="关闭">关闭</button>
+    </div>
+  </div>
+
+  <!-- 排行榜/纪录 -->
+  <div class="overlay hidden" id="recScreen">
+    <div class="sheet">
+      <h2>📊 <span data-i18n="排行榜">排行榜</span></h2>
+      <div class="sub" data-i18n="纪录说明">你的个人纪录（保存在本机）</div>
+      <div id="recList"></div>
+      <button class="btn" onclick="closeOv('recScreen')" data-i18n="关闭">关闭</button>
+    </div>
+  </div>
+
+  <!-- 结算：花光 -->
+  <div class="overlay hidden" id="overScreen">
+    <div class="sheet">
+      <div class="big">🎉</div>
+      <h2 data-i18n="花光了">全部花光！</h2>
+      <div class="sub" id="overSub"></div>
+      <div id="overStats"></div>
+      <button class="btn" id="againBtn" data-i18n="再来一次">🔁 再挥霍一次</button>
+      <button class="btn ghost" onclick="goArcade()" data-i18n="返回游戏厅">← 返回游戏厅</button>
+    </div>
+  </div>
+
+</div></div>
+
+<script>
+"use strict";
+/*==================== 双语 ====================*/
+let LANG=(function(){try{return localStorage.getItem("spendLang")||"zh";}catch(e){return "zh";}})();
+const TR={
+  "挥霍巨富":"Spend the Fortune","Spend the Fortune":"Spend the Fortune",
+  "⚠️ 灵感来源于全球超高净值富豪 · 纯属娱乐模拟 · 非官方，未获任何个人或机构授权":"⚠️ Inspired by the world's ultra-wealthy · Entertainment simulation only · Unofficial, not endorsed by any individual or organization",
+  "余额 BALANCE":"BALANCE","已消费":"Spent","购买数量":"Items Bought","成就":"Achievements","排行榜":"Records","模式":"Mode",
+  " 你是一位「财富管理员」，手握一笔天文数字的虚拟预算。疯狂购物，看看你多久能把它全部花光！":"You're a “wealth manager” holding an astronomical virtual budget. Shop like crazy and see how fast you can spend it ALL!",
+  "选择模式":"Choose a mode","开始挥霍":"💰 Start Spending","查看纪录":"📊 View Records","关闭":"Close",
+  "你的个人纪录（保存在本机）":"Your personal records (saved on this device)",
+  "全部花光！":"All Spent!","再来一次":"🔁 Spend Again","返回游戏厅":"← Back to Arcade","开始":"Start",
+  // 数量
+  "买":"×","最大":"MAX",
+  // 模式
+  "普通模式":"Normal","正常价格购物。":"Shop at normal prices.",
+  "折扣模式":"Discount","商品随机打折，可以买到更多东西。":"Items are randomly discounted — buy even more.",
+  "疯狂贪婪模式":"Greedy Inflation","价格随购买持续上涨，考验消费策略。":"Prices keep rising as you buy — a test of strategy.",
+  "随机事件模式":"Random Events","每隔一段时间触发事件：黑五五折、全球缺货、限时拍卖、神秘宝箱。":"Events fire over time: Black Friday, shortages, flash auctions, mystery boxes.",
+  // 一键
+  "随机100":"Random ×100","随机1000":"Random ×1000","购物狂":"Shopaholic","AI自动":"AI Auto",
+  // 分类
+  "电子产品":"Electronics","汽车":"Cars","飞机":"Aircraft","船舶":"Ships","住宅":"Residential",
+  "商业地产":"Commercial","娱乐":"Entertainment","奢侈品":"Luxury","科技实验":"Tech & Science","城市建设":"City Building","世界奇观":"World Wonders",
+  // 事件
+  "🛍️ 黑色星期五 · 全场5折！":"🛍️ BLACK FRIDAY · Everything 50% OFF!",
+  "📦 全球缺货 · 价格翻倍！":"📦 GLOBAL SHORTAGE · Prices DOUBLED!",
+  "🔨 限时拍卖 · 稀有藏品登场！":"🔨 FLASH AUCTION · Rare collectible!",
+  "🎁 神秘宝箱 · 免费到手！":"🎁 MYSTERY BOX · Free loot!",
+  "返现":"Cashback",
+  // 提示/结算
+  "余额不足":"Not enough balance","已拥有":"Owned","恭喜！你把一切都花光了":"Congrats — you spent it all",
+  "用时":"Time","平均每秒":"Avg/sec","购买总数":"Items bought","最爱商品":"Favorite","挥霍次数":"Shopping clicks",
+  "最快花光":"Fastest to zero","单局最多购买":"Most items (run)","累计消费":"Total spent (all-time)","游玩局数":"Runs played",
+  "无":"None","新纪录！":"NEW RECORD!","秒":"s",
+  // 成就名
+  "第一桶金":"First Million","花费100万美元":"Spend $1M",
+  "买房达人":"Home Buyer","购买100套住宅":"Own 100 homes",
+  "地产大亨":"Property Tycoon","拥有1000栋建筑":"Own 1000 buildings",
+  "汽车收藏家":"Car Collector","拥有500辆汽车":"Own 500 cars",
+  "飞机收藏家":"Plane Collector","拥有100架飞机":"Own 100 aircraft",
+  "挥霍大师":"Big Spender","花费100亿美元":"Spend $10B",
+  "全球首富消费者":"Ultra Consumer","花费1000亿美元":"Spend $100B",
+  "财富清零":"Wealth Zero","把全部资金花光":"Spend every last dollar",
+  "解锁成就":"Achievement unlocked",
+};
+function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
+function nm(o){ return LANG==="en" ? o.en : o.zh; }
+function applyLang(){
+  document.documentElement.lang=LANG==="en"?"en":"zh-CN";
+  document.querySelectorAll("[data-i18n]").forEach(el=>{ el.textContent=tr(el.getAttribute("data-i18n")); });
+  const lb=document.getElementById("langBtn"); if(lb) lb.textContent=LANG==="en"?"中":"EN";
+  buildQty(); buildTabs(); buildOneClick(); buildModes(); renderItems(); renderHud();
+  if(!byId("achScreen").classList.contains("hidden")) openAch();
+  if(!byId("recScreen").classList.contains("hidden")) openRec();
+}
+function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("spendLang",LANG);}catch(e){} applyLang(); }
+
+/*==================== 数据 ====================*/
+const B=1e9, M=1e6, K=1e3;
+const CATS=[
+  {id:"elec", zh:"电子产品", en:"Electronics", ico:"📱", type:"tech", items:[
+    {zh:"手机",en:"Phone",ico:"📱",p:999},{zh:"平板",en:"Tablet",ico:"💻",p:799},{zh:"台式电脑",en:"Computer",ico:"🖥️",p:2500},
+    {zh:"游戏电脑",en:"Gaming PC",ico:"🎮",p:6000},{zh:"电视",en:"TV",ico:"📺",p:8000},{zh:"耳机",en:"Headphones",ico:"🎧",p:399},
+    {zh:"无人机",en:"Drone",ico:"🛸",p:3000},{zh:"机器人",en:"Robot",ico:"🤖",p:20*K}]},
+  {id:"car", zh:"汽车", en:"Cars", ico:"🚗", type:"car", building:false, items:[
+    {zh:"普通轿车",en:"Sedan",ico:"🚗",p:30*K},{zh:"SUV",en:"SUV",ico:"🚙",p:60*K},{zh:"跑车",en:"Sports Car",ico:"🏎️",p:500*K},
+    {zh:"超级跑车",en:"Supercar",ico:"🚘",p:2.5*M},{zh:"豪华房车",en:"Luxury RV",ico:"🚐",p:800*K},
+    {zh:"巴士",en:"Bus",ico:"🚌",p:300*K},{zh:"消防车",en:"Fire Truck",ico:"🚒",p:900*K}]},
+  {id:"plane", zh:"飞机", en:"Aircraft", ico:"✈️", type:"plane", items:[
+    {zh:"直升机",en:"Helicopter",ico:"🚁",p:8*M},{zh:"私人飞机",en:"Private Jet",ico:"🛩️",p:60*M},
+    {zh:"大型公务机",en:"Business Jet",ico:"✈️",p:120*M},{zh:"客机",en:"Airliner",ico:"🛫",p:350*M}]},
+  {id:"ship", zh:"船舶", en:"Ships", ico:"🚢", type:"ship", items:[
+    {zh:"游艇",en:"Yacht",ico:"🛥️",p:2*M},{zh:"超级游艇",en:"Super Yacht",ico:"🚤",p:200*M},{zh:"豪华邮轮",en:"Cruise Liner",ico:"🚢",p:1.5*B}]},
+  {id:"res", zh:"住宅", en:"Residential", ico:"🏠", type:"house", building:true, items:[
+    {zh:"公寓",en:"Apartment",ico:"🏢",p:400*K},{zh:"别墅",en:"Villa",ico:"🏡",p:3*M},{zh:"豪宅",en:"Mansion",ico:"🏘️",p:20*M},
+    {zh:"海边庄园",en:"Seaside Estate",ico:"🏖️",p:120*M},{zh:"私人岛屿",en:"Private Island",ico:"🏝️",p:500*M}]},
+  {id:"com", zh:"商业地产", en:"Commercial", ico:"🏙️", type:"building", building:true, items:[
+    {zh:"办公楼",en:"Office Tower",ico:"🏢",p:200*M},{zh:"五星酒店",en:"5-Star Hotel",ico:"🏨",p:500*M},
+    {zh:"购物中心",en:"Shopping Mall",ico:"🏬",p:800*M},{zh:"摩天大楼",en:"Skyscraper",ico:"🏙️",p:2*B}]},
+  {id:"fun", zh:"娱乐", en:"Entertainment", ico:"🎡", type:"fun", items:[
+    {zh:"打赏主播",en:"Tip a Streamer",ico:"🪙",p:1},{zh:"请喝咖啡",en:"Buy a Coffee",ico:"☕",p:5},
+    {zh:"看场电影",en:"Movie Night",ico:"🎬",p:15},{zh:"游乐园一日",en:"Theme Park Day",ico:"🎢",p:80},
+    {zh:"演唱会VIP",en:"Concert VIP",ico:"🎤",p:1000},{zh:"赌场一晚",en:"Casino Night",ico:"🎰",p:100*K},{zh:"私人音乐会",en:"Private Concert",ico:"🎸",p:5*M}]},
+  {id:"lux", zh:"奢侈品", en:"Luxury", ico:"💎", type:"luxury", items:[
+    {zh:"名表",en:"Luxury Watch",ico:"⌚",p:50*K},{zh:"钻戒",en:"Diamond Ring",ico:"💍",p:300*K},
+    {zh:"黄金雕像",en:"Gold Statue",ico:"🗿",p:8*M},{zh:"钻石皇冠",en:"Diamond Crown",ico:"👑",p:30*M}]},
+  {id:"sci", zh:"科技实验", en:"Tech & Science", ico:"🔬", type:"science", items:[
+    {zh:"超级计算机",en:"Supercomputer",ico:"🖥️",p:100*M},{zh:"AI数据中心",en:"AI Data Center",ico:"🧠",p:2*B},
+    {zh:"机器人实验室",en:"Robotics Lab",ico:"🦾",p:5*B},{zh:"火箭",en:"Rocket",ico:"🚀",p:100*M},{zh:"卫星",en:"Satellite",ico:"🛰️",p:250*M}]},
+  {id:"city", zh:"城市建设", en:"City Building", ico:"🏗️", type:"building", building:true, items:[
+    {zh:"医院",en:"Hospital",ico:"🏥",p:800*M},{zh:"学校",en:"School",ico:"🏫",p:120*M},{zh:"大学",en:"University",ico:"🎓",p:1*B},
+    {zh:"机场",en:"Airport",ico:"🛬",p:6*B},{zh:"高速铁路",en:"High-Speed Rail",ico:"🚄",p:20*B},
+    {zh:"核电站",en:"Nuclear Plant",ico:"☢️",p:12*B},{zh:"大型港口",en:"Seaport",ico:"⚓",p:8*B}]},
+  {id:"won", zh:"世界奇观", en:"World Wonders", ico:"🌍", type:"building", building:true, items:[
+    {zh:"金字塔复制品",en:"Pyramid Replica",ico:"🔺",p:5*B},{zh:"人工岛",en:"Artificial Island",ico:"🏝️",p:30*B},
+    {zh:"超级城市",en:"Mega City",ico:"🌆",p:100*B},{zh:"月球基地",en:"Moon Base",ico:"🌙",p:150*B},{zh:"火星城市",en:"Mars City",ico:"🔴",p:300*B}]},
+];
+CATS.forEach((c,ci)=>c.items.forEach((it,ii)=>{ it.id=c.id+"_"+ii; it.cat=c; }));
+const ALL=CATS.flatMap(c=>c.items);
+
+const MODES=[
+  {id:"normal", zh:"普通模式", en:"Normal", d:"正常价格购物。"},
+  {id:"discount", zh:"折扣模式", en:"Discount", d:"商品随机打折，可以买到更多东西。"},
+  {id:"greedy", zh:"疯狂贪婪模式", en:"Greedy Inflation", d:"价格随购买持续上涨，考验消费策略。"},
+  {id:"events", zh:"随机事件模式", en:"Random Events", d:"每隔一段时间触发事件：黑五五折、全球缺货、限时拍卖、神秘宝箱。"},
+];
+const ACHS=[
+  {id:"m1", ico:"💵", zh:"第一桶金", en:"First Million", d:"花费100万美元", chk:s=>s.spent>=1e6},
+  {id:"house", ico:"🏠", zh:"买房达人", en:"Home Buyer", d:"购买100套住宅", chk:s=>s.houses>=100},
+  {id:"tycoon", ico:"🏙️", zh:"地产大亨", en:"Property Tycoon", d:"拥有1000栋建筑", chk:s=>s.buildings>=1000},
+  {id:"car", ico:"🚗", zh:"汽车收藏家", en:"Car Collector", d:"拥有500辆汽车", chk:s=>s.cars>=500},
+  {id:"plane", ico:"✈️", zh:"飞机收藏家", en:"Plane Collector", d:"拥有100架飞机", chk:s=>s.planes>=100},
+  {id:"b10", ico:"🔥", zh:"挥霍大师", en:"Big Spender", d:"花费100亿美元", chk:s=>s.spent>=1e10},
+  {id:"b100", ico:"👑", zh:"全球首富消费者", en:"Ultra Consumer", d:"花费1000亿美元", chk:s=>s.spent>=1e11},
+  {id:"zero", ico:"🎯", zh:"财富清零", en:"Wealth Zero", d:"把全部资金花光", chk:s=>s.bal<=0},
+];
+const START_BAL=400*B;
+
+/*==================== 状态 ====================*/
+const byId=id=>document.getElementById(id);
+let S=null, MODE="normal", QTY=1, dirty=false, autoTimer=null, eventTimer=null, greedyMul=1;
+function freshState(){
+  return { bal:START_BAL, spent:0, items:0, clicks:0, t0:0,
+    owned:{}, fav:{}, cars:0, planes:0, houses:0, buildings:0,
+    cat:CATS[0].id, over:false, eventMul:1, evName:"", discounts:{} };
+}
+function newGame(){
+  stopAuto(); clearInterval(eventTimer); eventTimer=null; greedyMul=1;
+  S=freshState(); S.t0=nowMs();
+  if(MODE==="discount") rollDiscounts();
+  if(MODE==="events"){ eventTimer=setInterval(tickEvent, 1000); }
+  closeOv("startScreen"); buildTabs(); buildOneClick(); buildQty(); renderItems(); renderHud();
+}
+
+/*==================== 价格 ====================*/
+function nowMs(){ return (typeof performance!=="undefined"&&performance.now)?performance.now():Date.now(); }
+function rollDiscounts(){ S.discounts={}; ALL.forEach(it=>{ if(Math.random()<0.55) S.discounts[it.id]=0.3+Math.random()*0.45; }); }
+function priceOf(it){
+  let p=it.p;
+  if(MODE==="greedy") p*=greedyMul;
+  if(MODE==="discount"&&S.discounts[it.id]) p*=S.discounts[it.id];
+  p*=S.eventMul;
+  return Math.max(1, Math.round(p));
+}
+function onSale(it){ return (MODE==="discount"&&S.discounts[it.id]) || S.eventMul<1; }
+
+/*==================== 购买 ====================*/
+function buy(it, qty){
+  if(!S||S.over) return 0;
+  const price=priceOf(it);
+  let n = qty==="max" ? Math.floor(S.bal/price) : qty;
+  if(n<=0){ if(qty!=="max") toast(tr("余额不足")); return 0; }
+  let cost=price*n;
+  if(cost>S.bal){ n=Math.floor(S.bal/price); cost=price*n; }
+  if(n<=0){ toast(tr("余额不足")); return 0; }
+  S.bal-=cost; S.spent+=cost; S.items+=n; S.clicks++;
+  S.owned[it.id]=(S.owned[it.id]||0)+n; S.fav[it.id]=(S.fav[it.id]||0)+n;
+  countType(it.cat, n);
+  if(MODE==="greedy") greedyMul*=Math.pow(1.0008, Math.min(n,50));
+  markDirty();
+  return n;
+}
+function countType(cat, n){
+  if(cat.type==="car") S.cars+=n;
+  else if(cat.type==="plane") S.planes+=n;
+  if(cat.type==="house") S.houses+=n;
+  if(cat.building) S.buildings+=n;
+}
+function buyFrom(it, ev){
+  const before=S.bal, got=buy(it, QTY);
+  if(got>0 && ev) spawnFloat(ev, before-S.bal);
+  checkAch(); if(S.bal<=0) endRun();
+}
+function buyRandom(count){
+  if(!S||S.over) return;
+  for(let i=0;i<count && S.bal>0;i++){
+    const aff=ALL.filter(it=>priceOf(it)<=S.bal);
+    if(!aff.length) break;
+    buy(aff[Math.floor(Math.random()*aff.length)], 1);
+  }
+  checkAch(); if(S.bal<=0) endRun();
+}
+/* AI：优先买当前买得起的最贵的，快速清空 */
+function aiSpend(){
+  if(!S||S.over){ stopAuto(); return; }
+  const aff=ALL.filter(it=>priceOf(it)<=S.bal).sort((a,b)=>priceOf(b)-priceOf(a));
+  if(!aff.length){ stopAuto(); return; }
+  const top=aff[0], price=priceOf(top);
+  const qty=Math.max(1, Math.min(25, Math.floor(S.bal/price)));
+  buy(top, qty);
+  checkAch(); if(S.bal<=0){ stopAuto(); endRun(); }
+}
+/* 购物狂：每次随机买一批 */
+let shopMode=null;
+function tickAuto(){
+  if(!S||S.over){ stopAuto(); return; }
+  if(shopMode==="ai") aiSpend();
+  else buyRandom(shopMode==="shop"?12:1);
+}
+function stopAuto(){ if(autoTimer){ clearInterval(autoTimer); autoTimer=null; } shopMode=null; buildOneClick(); }
+function startAuto(kind){
+  if(autoTimer && shopMode===kind){ stopAuto(); return; }
+  stopAuto(); shopMode=kind; autoTimer=setInterval(tickAuto, 260); buildOneClick();
+}
+
+/*==================== 事件模式 ====================*/
+let evClock=0;
+function tickEvent(){
+  if(!S||S.over) return;
+  evClock++;
+  if(S.eventMul!==1 && evClock>=S._evEnd){ S.eventMul=1; S.evName=""; hideEvent(); markDirty(); }
+  if(S.eventMul===1 && Math.random()<0.16){
+    const roll=Math.random();
+    if(roll<0.34){ S.eventMul=0.5; setEvent("🛍️ 黑色星期五 · 全场5折！", 8); }
+    else if(roll<0.6){ S.eventMul=2; setEvent("📦 全球缺货 · 价格翻倍！", 7); }
+    else if(roll<0.8){ // 拍卖：直接白送一件稀有 + 记为消费氛围
+      showEventFlash("🔨 限时拍卖 · 稀有藏品登场！");
+    } else { // 神秘宝箱：免费得一件 或 返现
+      if(Math.random()<0.5){ const it=ALL[Math.floor(Math.random()*ALL.length)]; S.owned[it.id]=(S.owned[it.id]||0)+1; S.items++; countType(it.cat,1);
+        showEventFlash("🎁 神秘宝箱 · 免费到手！"); }
+      else { const back=Math.min(S.spent*0.02, 5*B); S.bal+=back; showEventFlash("🎁 神秘宝箱 · "+tr("返现")+" "+shortMoney(back)); }
+      markDirty(); checkAch();
+    }
+  }
+}
+function setEvent(zhKey, dur){ S.evName=zhKey; S._evEnd=evClock+dur; showEvent(tr(zhKey)); markDirty(); }
+function showEvent(txt){ const b=byId("eventBar"); b.textContent=txt; b.classList.add("show"); }
+function hideEvent(){ byId("eventBar").classList.remove("show"); }
+function showEventFlash(zhKey){ showEvent(tr(zhKey)); setTimeout(hideEvent, 2600); }
+
+/*==================== 结算 ====================*/
+function endRun(){
+  if(S.over) return; S.over=true; stopAuto(); clearInterval(eventTimer);
+  checkAch(); // 财富清零
+  const secs=(nowMs()-S.t0)/1000;
+  const rec=loadRec();
+  const isFast = S.bal<=0 && (!rec.fastest || secs<rec.fastest);
+  if(S.bal<=0 && (!rec.fastest||secs<rec.fastest)) rec.fastest=secs;
+  if(S.items>(rec.mostItems||0)) rec.mostItems=S.items;
+  rec.totalSpent=(rec.totalSpent||0)+S.spent;
+  rec.runs=(rec.runs||0)+1;
+  saveRec(rec);
+  const favId=Object.keys(S.fav).sort((a,b)=>S.fav[b]-S.fav[a])[0];
+  const favIt=ALL.find(it=>it.id===favId);
+  byId("overSub").textContent=tr("恭喜！你把一切都花光了");
+  byId("overStats").innerHTML=[
+    row(tr("用时"), fmtTime(secs)+(isFast?"  🥇"+tr("新纪录！"):"")),
+    row(tr("平均每秒"), shortMoney(S.spent/Math.max(0.5,secs))),
+    row(tr("购买总数"), S.items.toLocaleString("en-US")),
+    row(tr("最爱商品"), favIt?(favIt.ico+" "+nm(favIt)+" ×"+S.fav[favId].toLocaleString("en-US")):tr("无")),
+    row(tr("挥霍次数"), S.clicks.toLocaleString("en-US")),
+  ].join("");
+  byId("overScreen").classList.remove("hidden");
+}
+function row(l,v){ return `<div class="rec"><span class="rl">${l}</span><span class="rv">${v}</span></div>`; }
+
+/*==================== 成就 ====================*/
+function gotAch(){ try{return JSON.parse(localStorage.getItem("spendAch")||"[]");}catch(e){return [];} }
+function saveAch(a){ try{localStorage.setItem("spendAch",JSON.stringify(a));}catch(e){} }
+function checkAch(){
+  if(!S) return; const have=gotAch(); let changed=false;
+  ACHS.forEach(a=>{ if(!have.includes(a.id) && a.chk(S)){ have.push(a.id); changed=true; toast("🏆 "+tr("解锁成就")+"："+nm(a)); } });
+  if(changed) saveAch(have);
+}
+
+/*==================== 纪录 ====================*/
+function loadRec(){ try{return JSON.parse(localStorage.getItem("spendRec")||"{}");}catch(e){return {};} }
+function saveRec(r){ try{localStorage.setItem("spendRec",JSON.stringify(r));}catch(e){} }
+
+/*==================== 渲染 ====================*/
+function markDirty(){ if(dirty) return; dirty=true; requestAnimationFrame(flush); }
+function flush(){ dirty=false; renderHud(); renderItems(); }
+function renderHud(){
+  if(!S) return;
+  byId("balVal").textContent=money(S.bal);
+  byId("balShort").textContent=S.bal>0?("≈ "+shortMoney(S.bal)):"—";
+  byId("spentVal").textContent=shortMoney(S.spent);
+  byId("itemsVal").textContent=S.items.toLocaleString("en-US");
+  byId("balBar").style.width=Math.max(0,Math.min(100,S.bal/START_BAL*100))+"%";
+}
+function buildTabs(){
+  const t=byId("tabs"); t.innerHTML="";
+  CATS.forEach(c=>{ const el=document.createElement("div"); el.className="tab"+(S&&S.cat===c.id?" on":"");
+    el.textContent=c.ico+" "+nm(c); el.onclick=()=>{ if(S){S.cat=c.id; buildTabs(); renderItems();} }; t.appendChild(el); });
+}
+function renderItems(){
+  const box=byId("items"); if(!S){ box.innerHTML=""; return; }
+  const cat=CATS.find(c=>c.id===S.cat)||CATS[0];
+  let html=`<div class="catname">${cat.ico} ${nm(cat)}</div>`;
+  cat.items.forEach(it=>{
+    const price=priceOf(it), own=S.owned[it.id]||0, aff=price<=S.bal;
+    const sale=onSale(it);
+    const prHtml = sale ? `<span class="old">${priceFmt(it.p*(MODE==="greedy"?greedyMul:1))}</span>${priceFmt(price)}` : priceFmt(price);
+    html+=`<div class="item${aff?"":" dis"}" data-id="${it.id}">
+      <div class="ico">${it.ico}</div>
+      <div class="mid"><div class="nm">${nm(it)}</div><div class="own">${tr("已拥有")} <b>${own.toLocaleString("en-US")}</b></div></div>
+      <div class="right"><div class="pr${sale?" sale":""}">${prHtml}</div><button class="buy">${tr("买")}${QTY==="max"?tr("最大"):QTY}</button></div>
+    </div>`;
+  });
+  box.innerHTML=html;
+  box.querySelectorAll(".item").forEach(el=>{
+    const it=ALL.find(x=>x.id===el.dataset.id);
+    el.onclick=(e)=>buyFrom(it, e);
+  });
+}
+function buildQty(){
+  const r=byId("qtyRow"); r.innerHTML="";
+  [1,10,100,"max"].forEach(q=>{ const el=document.createElement("div"); el.className="qty"+(QTY===q?" on":"");
+    el.textContent=q==="max"?tr("最大"):"×"+q; el.onclick=()=>{ QTY=q; buildQty(); renderItems(); }; r.appendChild(el); });
+}
+function buildOneClick(){
+  const box=byId("oneClick"); box.innerHTML="";
+  const defs=[
+    {k:"r100", ico:"🛒", zh:"随机100", fn:()=>buyRandom(100)},
+    {k:"r1000", ico:"🛍️", zh:"随机1000", fn:()=>buyRandom(1000)},
+    {k:"shop", ico:"🤑", zh:"购物狂", fn:()=>startAuto("shop"), toggle:true},
+    {k:"ai", ico:"🤖", zh:"AI自动", fn:()=>startAuto("ai"), toggle:true},
+  ];
+  defs.forEach(d=>{ const el=document.createElement("div"); el.className="oc"+(d.toggle&&shopMode===(d.k==="shop"?"shop":"ai")?" on":"");
+    el.innerHTML=`<div class="oi">${d.ico}</div><div class="on2">${tr(d.zh)}</div>`; el.onclick=d.fn; box.appendChild(el); });
+}
+function buildModes(){
+  const seg=byId("modeSeg"); if(!seg) return; seg.innerHTML="";
+  MODES.forEach(m=>{ const el=document.createElement("div"); el.className="mode"+(MODE===m.id?" on":"");
+    el.innerHTML=`<div class="mn">${nm(m)}</div><div class="md">${tr(m.d)}</div>`;
+    el.onclick=()=>{ MODE=m.id; buildModes(); }; seg.appendChild(el); });
+}
+
+/*==================== 覆盖层 ====================*/
+function openStart(){ stopAuto(); buildModes(); byId("startScreen").classList.remove("hidden"); }
+function closeOv(id){ byId(id).classList.add("hidden"); }
+function openAch(){
+  const have=gotAch(); byId("achSub").textContent=have.length+" / "+ACHS.length;
+  byId("achList").innerHTML=ACHS.map(a=>{ const got=have.includes(a.id);
+    return `<div class="achrow${got?" got":""}"><div class="ai">${a.ico}</div><div class="at"><div class="an">${nm(a)}</div><div class="ad">${tr(a.d)}</div></div><div class="ax">${got?"✓":""}</div></div>`;
+  }).join("");
+  byId("achScreen").classList.remove("hidden");
+}
+function openRec(){
+  const r=loadRec();
+  byId("recList").innerHTML=[
+    row(tr("最快花光"), r.fastest?fmtTime(r.fastest):tr("无")),
+    row(tr("单局最多购买"), (r.mostItems||0).toLocaleString("en-US")),
+    row(tr("累计消费"), shortMoney(r.totalSpent||0)),
+    row(tr("游玩局数"), (r.runs||0)),
+  ].join("");
+  byId("recScreen").classList.remove("hidden");
+}
+
+/*==================== 工具 ====================*/
+function money(n){ n=Math.max(0,Math.round(n)); return "$"+n.toLocaleString("en-US"); }
+function shortMoney(n){ n=Math.max(0,n);
+  if(n>=1e12) return "$"+(n/1e12).toFixed(2).replace(/\.?0+$/,"")+"T";
+  if(n>=1e9) return "$"+(n/1e9).toFixed(2).replace(/\.?0+$/,"")+"B";
+  if(n>=1e6) return "$"+(n/1e6).toFixed(2).replace(/\.?0+$/,"")+"M";
+  if(n>=1e3) return "$"+(n/1e3).toFixed(1).replace(/\.0$/,"")+"K";
+  return "$"+Math.round(n);
+}
+function priceFmt(n){ n=Math.round(n); return n<100000 ? "$"+n.toLocaleString("en-US") : shortMoney(n); }
+function fmtTime(s){ s=Math.round(s); const m=Math.floor(s/60); return m>0 ? m+"m "+(s%60)+"s" : s+tr("秒"); }
+function toast(t){ const el=byId("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),1500); }
+function spawnFloat(ev, amt){
+  const wrap=byId("wrap"), r=wrap.getBoundingClientRect();
+  const x=(ev.clientX||r.left+r.width/2)-r.left, y=(ev.clientY||r.top+r.height/2)-r.top;
+  const f=document.createElement("div"); f.className="float"; f.textContent="-"+shortMoney(amt);
+  f.style.left=(x-20)+"px"; f.style.top=(y-10)+"px"; wrap.appendChild(f);
+  const c=document.createElement("div"); c.className="coin"; c.textContent="💸"; c.style.left=x+"px"; c.style.top=(y-6)+"px"; wrap.appendChild(c);
+  setTimeout(()=>{f.remove();c.remove();},1100);
+}
+
+/*==================== 启动 ====================*/
+byId("startBtn").onclick=newGame;
+byId("againBtn").onclick=()=>{ closeOv("overScreen"); newGame(); };
+buildModes(); buildQty(); buildTabs(); buildOneClick();
+applyLang();
+
+if(typeof window!=="undefined") window.__spend={ get S(){return S;}, newGame, buy, buyRandom, aiSpend, endRun, checkAch,
+  setMode:m=>{MODE=m;}, setQty:q=>{QTY=q;}, ALL, CATS, ACHS, priceOf, tickEvent };
+</script>
+</body>
+</html>
