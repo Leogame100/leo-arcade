@@ -143,6 +143,25 @@
   .slot{display:flex;gap:8px;justify-content:center;font-size:40px;background:#0c1712;border:1px solid var(--gold-d);border-radius:12px;padding:12px;margin:8px 0;}
   .wheelbox{text-align:center;font-size:15px;font-weight:900;padding:14px;background:#0c1712;border:1px solid var(--gold-d);border-radius:12px;margin:8px 0;}
   .betrow{display:flex;align-items:center;gap:6px;justify-content:center;margin:6px 0;flex-wrap:wrap;}
+  .bankrow{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px;}
+  .bankbtn.auc{background:linear-gradient(180deg,#8f5a27,#5f3a1a);border-color:#a8722f;box-shadow:0 3px 0 #3f2510;}
+  /* 拍卖 */
+  .lot{background:linear-gradient(180deg,#1a2416,#0e1710);border:1px solid var(--gold-d);border-radius:14px;padding:13px;text-align:center;margin-bottom:10px;}
+  .lot .lico{font-size:44px;} .lot .lname{font-weight:900;font-size:17px;margin-top:3px;} .lot .lcat{font-size:11px;color:var(--muted);margin-top:2px;}
+  .rar{display:inline-block;font-size:11px;font-weight:900;padding:2px 9px;border-radius:20px;margin-top:6px;}
+  .lprice{font-size:26px;font-weight:900;color:var(--gold);font-variant-numeric:tabular-nums;margin-top:8px;}
+  .lbidder{font-size:12px;margin-top:3px;min-height:16px;} .lbidder.you{color:var(--green);} .lbidder.ai{color:var(--red);}
+  .ltimer{font-size:15px;font-weight:900;margin-top:6px;} .ltimer.urgent{color:var(--red);animation:blink .5s steps(2,end) infinite;}
+  @keyframes blink{50%{opacity:.35;}}
+  .aibar{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:8px;}
+  .aichip{font-size:10px;background:#12241c;border:1px solid var(--line);border-radius:12px;padding:3px 8px;color:var(--muted);}
+  .aichip.lead{border-color:var(--red);color:#ffb3ad;}
+  .sesgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .ses{background:#12241c;border:1px solid var(--line);border-radius:12px;padding:11px 9px;text-align:center;cursor:pointer;transition:border-color .1s;}
+  .ses:active{transform:scale(.97);} .ses .si{font-size:24px;} .ses .sn{font-weight:800;font-size:13px;margin-top:3px;} .ses .sd{font-size:10px;color:var(--muted);margin-top:2px;}
+  .ses.world{border-color:var(--gold);} .ses.myst{border-color:#a45ce0;}
+  .colrow{display:flex;align-items:center;gap:8px;background:#12241c;border:1px solid var(--line);border-radius:9px;padding:6px 9px;margin-bottom:5px;font-size:12px;}
+  .colrow .ci{font-size:18px;} .colrow .cn{flex:1;font-weight:700;} .colrow .cp{color:var(--gold);font-weight:800;font-variant-numeric:tabular-nums;}
 </style>
 </head>
 <body>
@@ -179,7 +198,10 @@
 
   <div class="dock">
     <div class="oneclick" id="oneClick"></div>
-    <button class="bankbtn" onclick="openBank()">🏦 <span data-i18n="银河国际银行">银河国际银行</span> · <span data-i18n="投资理财">投资 · 理财 · 娱乐城</span></button>
+    <div class="bankrow">
+      <button class="bankbtn" onclick="openBank()">🏦 <span data-i18n="银河国际银行">银河国际银行</span></button>
+      <button class="bankbtn auc" onclick="openAuction()">🔨 <span data-i18n="世界拍卖中心">世界拍卖中心</span></button>
+    </div>
     <div class="dockrow2">
       <div class="db" onclick="openAch()">🏆 <span data-i18n="成就">成就</span></div>
       <div class="db" onclick="openRec()">📊 <span data-i18n="排行榜">排行榜</span></div>
@@ -236,6 +258,8 @@
 
   <!-- 银行 / 金融 / 娱乐城 -->
   <div class="overlay hidden" id="bankScreen"><div class="sheet" id="bankSheet"></div></div>
+  <!-- 模拟拍卖 -->
+  <div class="overlay hidden" id="aucScreen"><div class="sheet" id="aucSheet"></div></div>
 
 </div></div>
 
@@ -309,6 +333,23 @@ const TR={
   "筹码不足":"Not enough chips","现金不足":"Not enough cash","娱乐城已关闭":"Casino is disabled","破产":"Bankrupt",
   "第":"Day ","天数量":"","💥 灾难！未投保资产受损":"💥 Disaster! Uninsured assets damaged","📉 股市暴跌！":"📉 Market crash!","📈 股市大涨！":"📈 Market rally!",
   "被保险公司赔付":"covered by insurance","一天":"1 day",
+  // 拍卖
+  "世界拍卖中心":"World Auction","🔨 世界模拟拍卖中心":"🔨 World Simulated Auction Center",
+  "本玩法拍卖品均为虚构/模拟交易，仅供游戏娱乐，不代表任何现实交易或流通。":"All lots here are fictional/simulated for in-game fun only — they do not represent any real transaction or ownership.",
+  "拍卖大厅":"Auction Hall","我的收藏":"My Collection","拍卖纪录":"Auction Records",
+  "上午场":"Morning","下午场":"Afternoon","晚间场":"Evening","世界级拍卖":"World-Class","神秘拍卖":"Mystery",
+  "普通":"Normal","高级":"Premium","豪华":"Luxury","每周一次":"Weekly","随机开启":"Random",
+  "起拍价":"Starting bid","当前价格":"Current bid","剩余":"Left","领先":"Leading","无人出价":"No bids yet",
+  "加价":"Bid +","定制加价":"Custom bid","放弃竞拍":"Withdraw","确认出价":"Place bid","返回大厅":"Back to hall",
+  "你出价领先！":"You're leading!","被 AI 超越":"Outbid by AI","流拍":"Passed in (no sale)",
+  "🎉 竞得！":"🎉 Won!","你以":"You won it for","竞得此拍品":"","可惜，被对手拍走":"Lost — a rival won it",
+  "现金不足以出价":"Not enough cash to bid","出价需高于当前价":"Bid must exceed current price",
+  "🔥 竞价大战！":"🔥 Bidding war!","📢 神秘买家加入":"📢 Mystery buyer joins","⏱️ 最后一刻延时":"⏱️ Last-minute extension","📦 神秘拍品揭晓":"📦 Mystery lot revealed",
+  "艺术品":"Art","收藏品":"Collectibles","企业股权":"Companies","地产":"Real Estate","豪华首发":"Luxury Debut",
+  "神秘拍品":"Mystery Lot","收藏家":"Collector","企业家":"Tycoon","艺术爱好者":"Art Lover","博物馆馆长":"Curator","国际基金":"Global Fund","AI投资者":"AI Investor",
+  "优秀":"Fine","稀有":"Rare","史诗":"Epic","传说":"Legendary","神话":"Mythic","唯一":"Unique",
+  "最大成交价":"Biggest sale","竞得数量":"Lots won","日收益":"income/day","还没有藏品":"No collection yet",
+  "神秘宝石":"Mystery Gem","皇家皇冠":"Royal Crown","传奇城堡":"Legendary Castle","太空探索计划":"Space Program","初代AI原型机":"First-Gen AI Prototype",
 };
 function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
 function nm(o){ return LANG==="en" ? o.en : o.zh; }
@@ -320,6 +361,7 @@ function applyLang(){
   if(!byId("achScreen").classList.contains("hidden")) openAch();
   if(!byId("recScreen").classList.contains("hidden")) openRec();
   if(window.financeApplyLang) financeApplyLang();
+  if(window.aucApplyLang) aucApplyLang();
 }
 function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("spendLang",LANG);}catch(e){} applyLang(); }
 
@@ -381,6 +423,9 @@ const ACHS=[
   {id:"b10", ico:"🔥", zh:"挥霍大师", en:"Big Spender", d:"花费100亿美元", chk:s=>s.spent>=1e10},
   {id:"b100", ico:"👑", zh:"全球首富消费者", en:"Ultra Consumer", d:"花费1000亿美元", chk:s=>s.spent>=1e11},
   {id:"zero", ico:"🎯", zh:"财富清零", en:"Wealth Zero", d:"把全部资金花光", chk:s=>s.bal<=0},
+  {id:"auc1", ico:"🔨", zh:"第一次举牌", en:"First Bid", d:"参与一次拍卖竞价", chk:s=>(s.aucBids||0)>=1},
+  {id:"aucCur", ico:"🏛️", zh:"世界收藏馆", en:"World Curator", d:"竞得100件拍品", chk:s=>(s.collection?s.collection.length:0)>=100},
+  {id:"aucLeg", ico:"👑", zh:"拍卖传奇", en:"Auction Legend", d:"单件拍品成交超$100B", chk:s=>(s.aucBiggest||0)>=100e9},
 ];
 const START_BAL=400*B;
 
@@ -394,6 +439,7 @@ function freshState(){
     // 金融
     day:1, dayAcc:0, deposit:0, terms:[], loans:[], credit:5, creditPts:800,
     stocks:{}, px:{}, insured:{}, chips:0, wagered:0, cstats:{plays:0,wins:0,biggest:0,net:0},
+    collection:[], aucBids:0, aucWon:0, aucBiggest:0, aucSpent:0,
     incomePeak:0, netPeak:START_BAL, won:false, ending:"" };
 }
 function newGame(){
@@ -680,9 +726,11 @@ function setCasino(on){ try{localStorage.setItem("spendCasino",on?"1":"0");}catc
 function loansTotal(){ return S?S.loans.reduce((a,l)=>a+l.principal,0):0; }
 function termsTotal(){ return S?S.terms.reduce((a,t)=>a+t.amt,0):0; }
 function stockValue(){ if(!S)return 0; let v=0; for(const st of STOCKS) v+=(S.stocks[st.id]||0)*S.px[st.id]; return v; }
-function assetIncome(){ if(!S)return 0; let s=0; for(const it of ALL){ const y=YIELD[it.cat.type]; if(y) s+=it.p*y*(S.owned[it.id]||0); } return s; }
+function assetIncome(){ if(!S)return 0; let s=0; for(const it of ALL){ const y=YIELD[it.cat.type]; if(y) s+=it.p*y*(S.owned[it.id]||0); }
+  if(S.collection) for(const c of S.collection) s+=c.income||0; return s; }
 function depInterest(){ return S?S.deposit*ACTIVE_RATE/12:0; }
 function netWorth(){ if(!S)return 0; let a=0; for(const it of ALL) a+=it.p*(S.owned[it.id]||0)*0.5;
+  if(S.collection) for(const c of S.collection) a+=c.price*0.5;
   return S.bal+S.deposit+termsTotal()+stockValue()+a-loansTotal(); }
 function creditStars(){ const p=S.creditPts; return p>=800?5:p>=600?4:p>=400?3:p>=200?2:1; }
 function loanRate(){ return 0.10-(creditStars()-1)*0.012; }
@@ -912,6 +960,143 @@ function casAreaHtml(){
   return `<div class="note">${tr("下注")} → ${tr("21点")} / ${tr("老虎机")} / ${tr("幸运转盘")} / ${tr("骰子")}</div>`;
 }
 function cardHtml(c){ return `<div class="pcard${c.red?" red":""}">${c.r}${c.s}</div>`; }
+</script>
+
+<script>
+/*==================== 🔨 世界模拟拍卖中心 ====================*/
+const AUC_CATS=[
+  {id:"art", zh:"艺术品", en:"Art", ico:"🖼️", min:1e5, max:5e9, items:[["油画","Oil Painting","🖼️"],["雕塑","Sculpture","🗿"],["数字艺术","Digital Art","🖥️"],["当代装置","Installation","🎨"],["版画","Fine Print","🖨️"]]},
+  {id:"col", zh:"收藏品", en:"Collectibles", ico:"🏺", min:5e3, max:1e10, items:[["古代金币","Ancient Coin","🪙"],["古代兵器","Antique Weapon","⚔️"],["古董家具","Antique Furniture","🪑"],["邮票收藏","Stamp Set","📮"],["稀有纪念币","Rare Medal","🎖️"],["宝石","Gemstone","💎"],["化石","Fossil","🦴"]]},
+  {id:"biz", zh:"企业股权", en:"Companies", ico:"🏢", min:5e7, max:150e9, income:0.001, items:[["小型企业","Small Business","🏪"],["连锁品牌","Retail Chain","🏬"],["游戏工作室","Game Studio","🎮"],["酒店集团","Hotel Group","🏨"],["科技企业","Tech Firm","🏢"]]},
+  {id:"prop", zh:"地产", en:"Real Estate", ico:"🏠", min:5e6, max:80e9, income:0.0008, items:[["豪宅","Grand Mansion","🏡"],["城堡","Castle","🏰"],["私人岛屿","Private Island","🏝️"],["度假村","Resort","🏖️"],["商业街","Shopping St.","🏬"],["摩天大楼","Skyscraper","🏙️"]]},
+  {id:"lux", zh:"豪华首发", en:"Luxury Debut", ico:"🚗", min:3e5, max:15e9, items:[["超级建筑","Mega Structure","🏗️"],["豪华住宅","Luxury Home","🏠"],["私人飞机","Private Jet","🛩️"],["尖端游艇","Flagship Yacht","🛥️"],["餐车","Food Truck","🚚"]]},
+];
+const RARITIES=[
+  {zh:"普通",en:"Normal",ico:"⚪",col:"#9fb0a4",mul:1,w:44},{zh:"优秀",en:"Fine",ico:"🟢",col:"#4caf50",mul:1.6,w:26},
+  {zh:"稀有",en:"Rare",ico:"🔵",col:"#3a8fe0",mul:2.6,w:16},{zh:"史诗",en:"Epic",ico:"🟣",col:"#a45ce0",mul:5,w:9},
+  {zh:"传说",en:"Legendary",ico:"🟠",col:"#e8912a",mul:11,w:4},{zh:"神话",en:"Mythic",ico:"🔴",col:"#e0463b",mul:26,w:1},
+];
+const UNIQUE={zh:"唯一",en:"Unique",ico:"🌈",col:"#c04cff",mul:60};
+const TREASURES=[["神秘宝石","Mystery Gem","💠"],["皇家皇冠","Royal Crown","👑"],["传奇城堡","Legendary Castle","🏰"],["太空探索计划","Space Program","🌌"],["初代AI原型机","First-Gen AI Prototype","🤖"]];
+const SESSIONS=[
+  {id:"morning",zh:"上午场",en:"Morning",tag:"普通",ico:"🌅",mul:1,boost:0,tre:0.001,cls:""},
+  {id:"afternoon",zh:"下午场",en:"Afternoon",tag:"高级",ico:"🌆",mul:2,boost:1,tre:0.003,cls:""},
+  {id:"evening",zh:"晚间场",en:"Evening",tag:"豪华",ico:"🌙",mul:4,boost:2,tre:0.006,cls:""},
+  {id:"world",zh:"世界级拍卖",en:"World-Class",tag:"每周一次",ico:"⭐",mul:9,boost:3,tre:0.02,cls:"world"},
+  {id:"mystery",zh:"神秘拍卖",en:"Mystery",tag:"随机开启",ico:"💎",mul:6,boost:2,tre:0.03,cls:"myst",myst:true},
+];
+const BIDDERS=[["收藏家","Collector","💰"],["企业家","Tycoon","🏢"],["艺术爱好者","Art Lover","🖼️"],["博物馆馆长","Curator","🏛️"],["国际基金","Global Fund","🌍"],["AI投资者","AI Investor","🤖"]];
+let aucTimer=null, LOT=null, aucView="hall";
+function apick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function incStep(p){ const raw=Math.max(1e5,p*0.05); const mag=Math.pow(10,Math.floor(Math.log10(raw))); return Math.round(raw/mag)*mag; }
+function wRarity(boost){ const tot=RARITIES.reduce((a,r)=>a+r.w,0); let x=Math.random()*tot,i=0; for(;i<RARITIES.length;i++){x-=RARITIES[i].w; if(x<=0)break;}
+  i=Math.min(RARITIES.length-1, i+(boost>0?Math.floor(Math.random()*(boost+1)):0)); return RARITIES[i]; }
+function genBidders(base){ const n=2+Math.floor(Math.random()*2), used=new Set(), arr=[];
+  for(let i=0;i<n;i++){ let b; let g=0; do{b=apick(BIDDERS);}while(used.has(b[0])&&g++<10); used.add(b[0]);
+    arr.push({zh:b[0],en:b[1],ico:b[2],budget:base*(1.3+Math.random()*2.6),aggr:0.35+Math.random()*0.45}); } return arr; }
+function genLot(ses){
+  const cat=apick(AUC_CATS); let rar=wRarity(ses.boost), treasure=null;
+  if(Math.random()<ses.tre){ treasure=apick(TREASURES); rar=UNIQUE; }
+  const it=treasure?[treasure[0],treasure[1],treasure[2]]:apick(cat.items);
+  let base=cat.min*Math.pow(cat.max/cat.min,Math.random())*ses.mul*rar.mul; base=Math.max(1000,Math.round(base));
+  const income=cat.income?Math.round(base*cat.income):0;
+  return { cat, name:{zh:it[0],en:it[1]}, ico:it[2], rar, start:base, cur:base, curBidder:null,
+    time:ses.id==="world"?24:18, income, treasure:!!treasure, mystery: !!ses.myst&&!treasure&&Math.random()<0.45,
+    bidders:genBidders(base), revealed:false, result:"" };
+}
+function openAuction(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} aucView="hall"; byId("aucScreen").classList.remove("hidden"); renderAuction(); }
+function closeAuction(){ if(aucTimer){clearInterval(aucTimer);aucTimer=null;} LOT=null; byId("aucScreen").classList.add("hidden"); }
+function aucApplyLang(){ if(!byId("aucScreen").classList.contains("hidden")) renderAuction(); }
+function startSession(id){ if(aucTimer)return; const ses=SESSIONS.find(s=>s.id===id); LOT=genLot(ses); aucView="lot";
+  aucTimer=setInterval(aucTick,1000); renderAuction(); }
+function bidAdd(inc){ doBid(LOT?LOT.cur+inc:0); }
+function bidCustom(){ doBid(parseAmt(byId("aucBidIn").value)); }
+function doBid(target){ if(!LOT)return; target=Math.round(target);
+  if(target<=LOT.cur){ toast(tr("出价需高于当前价")); return; }
+  if(target>S.bal){ toast(tr("现金不足以出价")); return; }
+  LOT.cur=target; LOT.curBidder={you:true}; S.aucBids++; if(LOT.time<4)LOT.time=4; renderAuction(); }
+function withdraw(){ if(!LOT)return; if(LOT.curBidder&&LOT.curBidder.you) LOT.curBidder=null; resolveLot(); }
+function aucTick(){
+  if(!S||S.over){ if(aucTimer){clearInterval(aucTimer);aucTimer=null;} return; }
+  if(!LOT) return;
+  LOT.time--;
+  if(LOT.time>0){
+    let warred=false;
+    for(const ai of LOT.bidders){
+      if(LOT.curBidder&&LOT.curBidder.ai===ai) continue;
+      if(Math.random()<ai.aggr*0.6){ const step=incStep(LOT.cur); const bid=LOT.cur+step*(1+Math.floor(Math.random()*3));
+        if(bid<=ai.budget){ LOT.cur=Math.round(bid); LOT.curBidder={ai}; if(LOT.time<3)LOT.time=3; warred=warred; break; } }
+    }
+    if(Math.random()<0.05){ toast(tr("🔥 竞价大战！")); const ai=apick(LOT.bidders); const step=incStep(LOT.cur); const bid=LOT.cur+step*3;
+      if(bid<=ai.budget){ LOT.cur=Math.round(bid); LOT.curBidder={ai}; if(LOT.time<3)LOT.time=3; } }
+    else if(Math.random()<0.04){ const b=apick(BIDDERS); LOT.bidders.push({zh:b[0],en:b[1],ico:b[2],budget:LOT.cur*(1.5+Math.random()*3),aggr:0.6}); toast(tr("📢 神秘买家加入")); }
+  }
+  if(LOT.time<=0) resolveLot(); else renderAuction();
+}
+function resolveLot(){
+  if(aucTimer){clearInterval(aucTimer);aucTimer=null;}
+  const won=LOT.curBidder&&LOT.curBidder.you, anyBid=LOT.curBidder!=null;
+  LOT.revealed=true;
+  if(won){ const pay=Math.min(S.bal,LOT.cur); S.bal-=pay; S.aucSpent+=pay; S.aucWon++; S.aucBiggest=Math.max(S.aucBiggest,pay);
+    S.collection.push({name:LOT.name, ico:LOT.ico, price:pay, income:LOT.income, cat:LOT.cat.id, rar:LOT.rar}); LOT.result="won"; checkAch(); markDirty(); }
+  else LOT.result=anyBid?"lost":"passed";
+  aucView="result"; renderAuction();
+}
+/*-------- UI --------*/
+function rarTag(r){ return `<span class="rar" style="background:${r.col}22;color:${r.col};border:1px solid ${r.col}">${r.ico} ${tr(r.zh)}</span>`; }
+function renderAuction(){
+  let h=`<h2>🔨 <span>${tr("🔨 世界模拟拍卖中心")}</span></h2>`;
+  if(aucView==="hall"){
+    h+=`<div class="casnote">${tr("本玩法拍卖品均为虚构/模拟交易，仅供游戏娱乐，不代表任何现实交易或流通。")}</div>
+      <div class="frow" style="margin-bottom:9px"><div class="fl">💵 ${tr("账户余额")}</div><div class="fv">${money(S.bal)}</div></div>
+      <div class="ballab">${tr("拍卖大厅")}</div><div class="sesgrid" style="margin:6px 0 10px">`;
+    SESSIONS.forEach(s=> h+=`<div class="ses ${s.cls}" onclick="startSession('${s.id}')"><div class="si">${s.ico}</div><div class="sn">${tr(s.zh)}</div><div class="sd">${tr(s.tag)}</div></div>`);
+    h+=`</div><div class="fgrid2"><button class="fbtn blue" onclick="aucGo('collection')">🏛️ ${tr("我的收藏")} (${S.collection.length})</button><button class="fbtn gold" onclick="aucGo('records')">🏆 ${tr("拍卖纪录")}</button></div>`;
+  }
+  else if(aucView==="lot"&&LOT){
+    const hideName = LOT.mystery&&!LOT.revealed;
+    const bidderTxt = !LOT.curBidder ? `<span>${tr("无人出价")}</span>` : (LOT.curBidder.you? `<span class="you">✅ ${tr("你出价领先！")}</span>` : `<span class="ai">${LOT.curBidder.ai.ico} ${tr(LANG==="en"?LOT.curBidder.ai.en:LOT.curBidder.ai.zh)} ${tr("领先")}</span>`);
+    const step=incStep(LOT.cur);
+    h+=`<div class="lot">
+      <div class="lico">${hideName?"❓":LOT.ico}</div>
+      <div class="lname">${hideName?tr("神秘拍品"):(LANG==="en"?LOT.name.en:LOT.name.zh)}</div>
+      <div class="lcat">${LOT.cat.ico} ${tr(LOT.cat.zh)}${LOT.income?` · +${shortMoney(LOT.income)}/${LANG==="en"?"d":"天"}`:""}</div>
+      <div>${hideName?"":rarTag(LOT.rar)}</div>
+      <div class="lprice">${money(LOT.cur)}</div>
+      <div class="lbidder ${LOT.curBidder?(LOT.curBidder.you?"you":"ai"):""}">${bidderTxt}</div>
+      <div class="ltimer ${LOT.time<=5?"urgent":""}">⏱ ${LOT.time}s · ${tr("起拍价")} ${shortMoney(LOT.start)}</div>
+      <div class="aibar">`;
+    LOT.bidders.forEach(a=> h+=`<span class="aichip ${LOT.curBidder&&LOT.curBidder.ai===a?"lead":""}">${a.ico}${tr(LANG==="en"?a.en:a.zh)}</span>`);
+    h+=`</div></div>
+      <div class="fgrid2"><button class="fbtn" onclick="bidAdd(${step})">${tr("加价")} ${shortMoney(step)}</button><button class="fbtn" onclick="bidAdd(${step*5})">${tr("加价")} ${shortMoney(step*5)}</button></div>
+      <div class="betrow"><input class="fin" style="margin:0;flex:1" id="aucBidIn" inputmode="decimal" placeholder="${shortMoney(LOT.cur+step*20)}"><button class="fbtn gold" onclick="bidCustom()">${tr("确认出价")}</button></div>
+      <button class="fbtn red" style="width:100%" onclick="withdraw()">🚫 ${tr("放弃竞拍")}</button>`;
+  }
+  else if(aucView==="result"&&LOT){
+    const won=LOT.result==="won";
+    h+=`<div class="lot"><div class="lico">${LOT.ico}</div><div class="lname">${LANG==="en"?LOT.name.en:LOT.name.zh}</div>
+      <div>${rarTag(LOT.rar)}</div><div class="lprice">${money(LOT.cur)}</div>
+      <div class="lbidder ${won?"you":"ai"}">${won?("🎉 "+tr("你以")+" "+shortMoney(LOT.cur)):(LOT.result==="passed"?tr("流拍"):tr("可惜，被对手拍走"))}</div></div>
+      <button class="fbtn" style="width:100%" onclick="aucGo('hall')">← ${tr("返回大厅")}</button>`;
+  }
+  else if(aucView==="collection"){
+    h+=`<div class="ballab" style="margin-bottom:6px">🏛️ ${tr("我的收藏")} · ${S.collection.length}</div>`;
+    if(!S.collection.length) h+=`<div class="note">${tr("还没有藏品")}</div>`;
+    else S.collection.slice().reverse().slice(0,60).forEach(c=> h+=`<div class="colrow"><span class="ci">${c.ico}</span><span class="cn">${(LANG==="en"?c.name.en:c.name.zh)} <small style="color:${c.rar.col}">${c.rar.ico}</small></span><span class="cp">${shortMoney(c.price)}</span></div>`);
+    h+=`<button class="fbtn" style="width:100%;margin-top:8px" onclick="aucGo('hall')">← ${tr("返回大厅")}</button>`;
+  }
+  else if(aucView==="records"){
+    const comp=S.collection.filter(c=>c.cat==="biz").length, prop=S.collection.filter(c=>c.cat==="prop").length, inc=S.collection.reduce((a,c)=>a+(c.income||0),0);
+    h+=`<div class="frow"><div class="fl">${tr("竞得数量")}</div><div class="fv">${S.aucWon}</div></div>
+      <div class="frow"><div class="fl">${tr("最大成交价")}</div><div class="fv">${shortMoney(S.aucBiggest)}</div></div>
+      <div class="frow"><div class="fl">${tr("企业股权")} / ${tr("地产")}</div><div class="fv">${comp} / ${prop}</div></div>
+      <div class="frow"><div class="fl">${tr("藏品")} ${tr("日收益")}</div><div class="fv up">+${shortMoney(inc)}</div></div>
+      <button class="fbtn" style="width:100%;margin-top:8px" onclick="aucGo('hall')">← ${tr("返回大厅")}</button>`;
+  }
+  h+=`<button class="btn ghost" style="padding:9px" onclick="closeAuction()">${tr("关闭")}</button>`;
+  byId("aucSheet").innerHTML=h;
+}
+function aucGo(v){ aucView=v; renderAuction(); }
 </script>
 </body>
 </html>
