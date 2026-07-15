@@ -191,6 +191,17 @@
   .listrow .lh{display:flex;align-items:center;gap:8px;} .listrow .lhn{flex:1;font-weight:800;font-size:13px;} .listrow .lhp{color:var(--gold);font-weight:900;font-size:12px;}
   .steps{display:flex;gap:3px;margin-top:6px;} .steps .st{flex:1;height:5px;border-radius:3px;background:#25453a;} .steps .st.on{background:var(--green);}
   .lstage{font-size:11px;font-weight:800;margin-top:4px;} .lstage.paid{color:var(--green);}
+  .bankbtn.world{background:linear-gradient(180deg,#2c5aa8,#1a3a6e);border-color:#3a6fb0;box-shadow:0 3px 0 #12244a;margin-top:6px;}
+  .citycur{background:linear-gradient(180deg,#123a5a,#0e2740);border:1px solid #3a6fb0;border-radius:12px;padding:11px;margin-bottom:10px;text-align:center;}
+  .citycur .cf{font-size:34px;} .citycur .cn{font-weight:900;font-size:16px;margin-top:2px;} .citycur .cperk{font-size:11px;color:#bcd;margin-top:4px;line-height:1.5;}
+  .contlab{font-size:11px;color:var(--muted);font-weight:800;margin:9px 2px 5px;letter-spacing:1px;}
+  .citygrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .citycard{background:#12241c;border:1px solid var(--line);border-radius:11px;padding:9px;cursor:pointer;transition:border-color .1s;}
+  .citycard:active{transform:scale(.97);} .citycard.here{border-color:var(--gold);background:#1a2e1f;} .citycard.rich{opacity:1;}
+  .citycard .ccf{font-size:20px;} .citycard .ccn{font-weight:800;font-size:12px;margin-top:1px;} .citycard .cci{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.4;}
+  .citycard .cct{font-size:9px;font-weight:800;color:var(--green);margin-top:2px;}
+  .perkchip{display:inline-block;font-size:9px;font-weight:800;padding:1px 6px;border-radius:9px;margin:1px 1px 0;}
+  .perkbuy{background:#1a3a2c;color:#6fe0a0;} .perksell{background:#3a2a10;color:var(--gold);}
 </style>
 </head>
 <body>
@@ -233,6 +244,7 @@
       <button class="bankbtn gift" onclick="openGifts()">🎁 <span data-i18n="礼物">礼物</span><span class="gbadge" id="giftBadge"></span></button>
     </div>
     <button class="bankbtn trade" onclick="openTrade()">🎒 <span data-i18n="仓库">仓库</span> · <span data-i18n="二手市场">二手市场</span> · <span data-i18n="美食">美食</span></button>
+    <button class="bankbtn world" onclick="openWorld()">🌍 <span data-i18n="世界地图">世界地图</span> · ✈️ <span data-i18n="飞机旅行">飞机旅行</span></button>
     <div class="dockrow2">
       <div class="db" onclick="openAch()">🏆 <span data-i18n="成就">成就</span></div>
       <div class="db" onclick="openRec()">📊 <span data-i18n="排行榜">排行榜</span></div>
@@ -295,6 +307,8 @@
   <div class="overlay hidden" id="giftScreen"><div class="sheet" id="giftSheet"></div></div>
   <!-- 仓库 / 二手市场 -->
   <div class="overlay hidden" id="tradeScreen"><div class="sheet" id="tradeSheet"></div></div>
+  <!-- 世界地图 -->
+  <div class="overlay hidden" id="worldScreen"><div class="sheet" id="worldSheet"></div></div>
 
 </div></div>
 
@@ -414,6 +428,16 @@ const TR={
   "撤下":"Delist","槽位已满，请升级店铺":"Slots full — upgrade your shop","找到买家！":"Buyer found!","货款到账":"Payment received",
   "店铺出售价更高，但需等买家+物流，比二手即时出售更划算。":"Your shop sells higher — but needs a buyer + shipping. Worth more than instant resale.","店铺成交":"Shop sales","已是最高等级":"Max level",
   "在「我的仓库」里点 🛍 上架商品":"Tap 🛍 on items in My Warehouse to list them",
+  // 世界地图
+  "世界地图":"World Map","飞机旅行":"Air Travel","🌍 世界地图":"🌍 World Map","当前城市":"Current City","当前":"Here","前往":"Fly to","机票":"Ticket",
+  "买地":"Buy Land","地价":"Land","你的地块":"Your plots","块":"plots","土地日收益":"Land income/day","私人飞机免机票":"Own a jet → free flights",
+  "不同城市经济不同：在便宜的城市买、在高价的城市卖，赚取差价。":"Cities have different economies — buy cheap in one, sell high in another for profit.",
+  "买入优惠":"buy","出售溢价":"sell","已抵达":"Arrived at","土地":"Land",
+  "北美":"North America","南美":"South America","欧洲":"Europe","中东":"Middle East","亚洲":"Asia","非洲":"Africa","大洋洲":"Oceania",
+  "新自由城":"New Liberty","黄金枫叶城":"Maple Gold","雨林port":"Rainforest Port","探戈湾":"Tango Bay",
+  "雾都":"Fog City","浪漫花都":"Romance Capital","阿尔卑斯堡":"Alpine Keep","北境峡湾":"Nordic Fjord",
+  "黄金沙城":"Golden Sands","琉璃穹顶":"Glass Dome","樱花都":"Sakura Metropolis","深港湾":"Shenzhen Bay","狮城港":"Lion Port","孟买之门":"Mumbai Gate",
+  "金字塔城":"Pyramid City","彩虹角":"Cape Rainbow","阳光海岸城":"Sunshine Coast","冰川之心":"Glacier Heart",
 };
 function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
 function nm(o){ return LANG==="en" ? o.en : o.zh; }
@@ -428,6 +452,7 @@ function applyLang(){
   if(window.aucApplyLang) aucApplyLang();
   if(window.giftApplyLang) giftApplyLang();
   if(window.tradeApplyLang) tradeApplyLang();
+  if(window.worldApplyLang) worldApplyLang();
 }
 function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("spendLang",LANG);}catch(e){} applyLang(); }
 
@@ -521,6 +546,7 @@ function freshState(){
     mail:[], checkStreak:0, lastCheckin:0, giftLog:{}, giftsGot:0, birthday:12+Math.floor(Math.random()*28), bdayDone:false,
     mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
     shopLevel:1, listings:[], shopSold:0,
+    city:"", land:{}, traveled:0,
     incomePeak:0, netPeak:START_BAL, won:false, ending:"" };
 }
 function newGame(){
@@ -540,6 +566,7 @@ function priceOf(it){
   if(MODE==="greedy") p*=greedyMul;
   if(MODE==="discount"&&S.discounts[it.id]) p*=S.discounts[it.id];
   p*=S.eventMul;
+  if(window.cityBuyMod) p*=cityBuyMod(it);
   return Math.max(1, Math.round(p));
 }
 function onSale(it){ return (MODE==="discount"&&S.discounts[it.id]) || S.eventMul<1; }
@@ -808,10 +835,12 @@ function loansTotal(){ return S?S.loans.reduce((a,l)=>a+l.principal,0):0; }
 function termsTotal(){ return S?S.terms.reduce((a,t)=>a+t.amt,0):0; }
 function stockValue(){ if(!S)return 0; let v=0; for(const st of STOCKS) v+=(S.stocks[st.id]||0)*S.px[st.id]; return v; }
 function assetIncome(){ if(!S)return 0; let s=0; for(const it of ALL){ const y=YIELD[it.cat.type]; if(y) s+=it.p*y*(S.owned[it.id]||0); }
-  if(S.collection) for(const c of S.collection) s+=c.income||0; return s; }
+  if(S.collection) for(const c of S.collection) s+=c.income||0;
+  if(window.landIncome) s+=landIncome(); return s; }
 function depInterest(){ return S?S.deposit*ACTIVE_RATE/12:0; }
 function netWorth(){ if(!S)return 0; let a=0; for(const it of ALL) a+=it.p*(S.owned[it.id]||0)*0.5;
   if(S.collection) for(const c of S.collection) a+=c.price*0.5;
+  if(window.landValue) a+=landValue();
   return S.bal+S.deposit+termsTotal()+stockValue()+a-loansTotal(); }
 function creditStars(){ const p=S.creditPts; return p>=800?5:p>=600?4:p>=400?3:p>=200?2:1; }
 function loanRate(){ return 0.10-(creditStars()-1)*0.012; }
@@ -820,7 +849,7 @@ function vipTier(){ let t=VIPS[0]; for(const v of VIPS) if(S.wagered>=v.min) t=v
 
 /*-------- 每日结算 --------*/
 function financeReset(){ if(dayTimer) clearInterval(dayTimer); STOCKS.forEach(s=>S.px[s.id]=s.px);
-  if(window.tradeReset) tradeReset();
+  if(window.tradeReset) tradeReset(); if(window.worldReset) worldReset();
   dayTimer=setInterval(()=>{ if(S&&!S.over) dayTick(); }, 7000); }
 function dayTick(){
   if(!S||S.over) return;
@@ -1312,7 +1341,7 @@ function tradeDayTick(){ if(!S)return;
 function clampMkt(v){ return Math.max(0.45, Math.min(1.5, v)); }
 function pickNews(){ return NEWS_POOL[Math.floor(Math.random()*NEWS_POOL.length)]; }
 function mktOf(type){ return S.mkt[type]!=null?S.mkt[type]:0.8; }
-function itemResale(it){ return Math.round(it.p*mktOf(it.cat.type)); }
+function itemResale(it){ return Math.round(it.p*mktOf(it.cat.type)*(window.citySellMod?citySellMod(it.cat.type):1)); }
 function merchant(){ let m=MERCHANT[0]; for(const x of MERCHANT) if(S.sold>=x.min) m=x; return m; }
 function feeRate(){ return merchant().fee; }
 /*-------- 卖出 / 食用 --------*/
@@ -1398,6 +1427,65 @@ function shopHtml(){ const lv=shopLv();
       <div class="steps">${[0,1,2].map(s=>`<div class="st${step>s?" on":""}"></div>`).join("")}</div>
       <div class="lstage ${l.sold&&l.ship>=2?"paid":""}">${stage}${!l.sold?` · <span onclick="delistItem(${i})" style="color:var(--red);cursor:pointer">${tr("撤下")}</span>`:""}</div></div>`; });
   return h;
+}
+</script>
+
+<script>
+/*==================== 🌍 世界地图 + ✈️ 飞机旅行 ====================*/
+const CITIES=[
+  {id:"lib",zh:"新自由城",en:"New Liberty",flag:"🗽",cont:"北美",buyLo:"tech",sellHi:"luxury",land:2e9,tier:2},
+  {id:"map",zh:"黄金枫叶城",en:"Maple Gold",flag:"🍁",cont:"北美",buyLo:"food",sellHi:"house",land:800e6,tier:2},
+  {id:"rain",zh:"雨林港",en:"Rainforest Port",flag:"🌴",cont:"南美",buyLo:"food",sellHi:"science",land:300e6,tier:3},
+  {id:"tango",zh:"探戈湾",en:"Tango Bay",flag:"💃",cont:"南美",buyLo:"car",sellHi:"fun",land:400e6,tier:3},
+  {id:"fog",zh:"雾都",en:"Fog City",flag:"🌫️",cont:"欧洲",buyLo:"building",sellHi:"science",land:3e9,tier:2},
+  {id:"rom",zh:"浪漫花都",en:"Romance Capital",flag:"🗼",cont:"欧洲",buyLo:"food",sellHi:"luxury",land:2.5e9,tier:2},
+  {id:"alp",zh:"阿尔卑斯堡",en:"Alpine Keep",flag:"🏔️",cont:"欧洲",buyLo:"ship",sellHi:"luxury",land:1.5e9,tier:3},
+  {id:"fjord",zh:"北境峡湾",en:"Nordic Fjord",flag:"🛶",cont:"欧洲",buyLo:"ship",sellHi:"food",land:900e6,tier:3},
+  {id:"sand",zh:"黄金沙城",en:"Golden Sands",flag:"🕌",cont:"中东",buyLo:"plane",sellHi:"luxury",land:5e9,tier:3},
+  {id:"dome",zh:"琉璃穹顶",en:"Glass Dome",flag:"🔮",cont:"中东",buyLo:"science",sellHi:"building",land:2e9,tier:3},
+  {id:"saku",zh:"樱花都",en:"Sakura Metropolis",flag:"🗾",cont:"亚洲",buyLo:"tech",sellHi:"fun",land:2e9,tier:1},
+  {id:"shen",zh:"深港湾",en:"Shenzhen Bay",flag:"🏙️",cont:"亚洲",buyLo:"tech",sellHi:"building",land:1.5e9,tier:1},
+  {id:"lion",zh:"狮城港",en:"Lion Port",flag:"🦁",cont:"亚洲",buyLo:"ship",sellHi:"luxury",land:2.5e9,tier:1},
+  {id:"mum",zh:"孟买之门",en:"Mumbai Gate",flag:"🛕",cont:"亚洲",buyLo:"food",sellHi:"car",land:500e6,tier:2},
+  {id:"pyr",zh:"金字塔城",en:"Pyramid City",flag:"🔺",cont:"非洲",buyLo:"building",sellHi:"science",land:400e6,tier:3},
+  {id:"cape",zh:"彩虹角",en:"Cape Rainbow",flag:"🌈",cont:"非洲",buyLo:"science",sellHi:"ship",land:350e6,tier:4},
+  {id:"sun",zh:"阳光海岸城",en:"Sunshine Coast",flag:"🏖️",cont:"大洋洲",buyLo:"house",sellHi:"plane",land:1e9,tier:4},
+  {id:"glac",zh:"冰川之心",en:"Glacier Heart",flag:"🧊",cont:"大洋洲",buyLo:"food",sellHi:"ship",land:600e6,tier:4},
+];
+const CBY=Object.fromEntries(CITIES.map(c=>[c.id,c]));
+const TICKETS=[0,5e6,30e6,150e6,800e6];
+function worldReset(){ if(!S.city) S.city=CITIES[10].id; }
+function curCity(){ return CBY[S&&S.city]||CITIES[10]; }
+function cityBuyMod(it){ if(!S)return 1; return curCity().buyLo===it.cat.type?0.8:1; }
+function citySellMod(type){ if(!S)return 1; const c=curCity(); return c.sellHi===type?1.35:(c.buyLo===type?0.9:1); }
+function hasJet(){ if(!S)return false; for(const it of ALL){ if(it.cat.type==="plane"&&(S.owned[it.id]||0)>0) return true; } return false; }
+function travelCost(c){ return hasJet()?0:(TICKETS[c.tier]||0); }
+function travelTo(id){ const c=CBY[id]; if(!c||id===S.city)return; const cost=travelCost(c); if(cost>S.bal){toast(tr("现金不足"));return;} S.bal-=cost; S.city=id; S.traveled++; toast("✈️ "+tr("已抵达")+" "+c.flag+nm(c)); markDirty(); refreshWorld(); }
+function buyLand(plots){ if(!S)return; const c=curCity(); plots=Math.max(1,plots|0); const cost=c.land*plots; if(cost>S.bal){toast(tr("现金不足"));return;} S.bal-=cost; S.land[c.id]=(S.land[c.id]||0)+plots; toast("🏞️ "+c.flag+" +"+plots+" "+tr("块")); refreshWorld(); }
+function landIncome(){ if(!S)return 0; let s=0; for(const c of CITIES) s+=(S.land[c.id]||0)*c.land*0.0008; return s; }
+function landValue(){ if(!S)return 0; let s=0; for(const c of CITIES) s+=(S.land[c.id]||0)*c.land; return s; }
+/*-------- UI --------*/
+const TLAB={tech:"电子",car:"汽车",plane:"飞机",ship:"船舶",house:"住宅",building:"建筑",fun:"娱乐",luxury:"奢侈品",science:"科技",food:"食品"};
+function perks(c){ return `<span class="perkchip perkbuy">${tr(TLAB[c.buyLo]||c.buyLo)} ${tr("买入优惠")}-20%</span><span class="perkchip perksell">${tr(TLAB[c.sellHi]||c.sellHi)} ${tr("出售溢价")}+35%</span>`; }
+function openWorld(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} byId("worldScreen").classList.remove("hidden"); renderWorld(); }
+function refreshWorld(){ markDirty(); if(!byId("worldScreen").classList.contains("hidden")) renderWorld(); }
+function worldApplyLang(){ if(!byId("worldScreen").classList.contains("hidden")) renderWorld(); }
+function renderWorld(){ const c=curCity();
+  let h=`<h2>🌍 <span>${tr("🌍 世界地图")}</span></h2>
+    <div class="note" style="text-align:left">${tr("不同城市经济不同：在便宜的城市买、在高价的城市卖，赚取差价。")}</div>
+    <div class="citycur"><div class="cf">${c.flag}</div><div class="cn">📍 ${nm(c)}</div><div class="cperk">${perks(c)}</div>
+      <div style="margin-top:7px;font-size:12px">🏞️ ${tr("你的地块")} <b>${S.land[c.id]||0}</b> · ${tr("地价")} ${shortMoney(c.land)}/${tr("块")}</div>
+      <div class="betrow" style="margin-top:6px"><button class="fbtn sm gold" onclick="buyLand(1)">${tr("买地")} +1</button><button class="fbtn sm gold" onclick="buyLand(10)">+10</button></div></div>
+    <div class="frow" style="margin-bottom:8px"><div class="fl">${tr("土地日收益")}<small>${hasJet()?"✈️ "+tr("私人飞机免机票"):""}</small></div><div class="fv up">+${shortMoney(landIncome())}</div></div>`;
+  const conts=[]; CITIES.forEach(x=>{ if(!conts.includes(x.cont)) conts.push(x.cont); });
+  conts.forEach(ct=>{ h+=`<div class="contlab">${tr(ct)}</div><div class="citygrid">`;
+    CITIES.filter(x=>x.cont===ct).forEach(city=>{ const here=city.id===S.city, cost=travelCost(city);
+      h+=`<div class="citycard${here?" here":""}" ${here?"":`onclick="travelTo('${city.id}')"`}>
+        <div class="ccf">${city.flag} <span class="ccn">${nm(city)}</span></div><div class="cct">${perks(city)}</div>
+        <div class="cci">${here?("📍 "+tr("当前")):("✈️ "+tr("机票")+" "+(cost?shortMoney(cost):"Free"))}${(S.land[city.id]||0)?` · 🏞️${S.land[city.id]}`:""}</div></div>`; });
+    h+=`</div>`; });
+  h+=`<button class="btn ghost" style="padding:9px;margin-top:10px" onclick="byId('worldScreen').classList.add('hidden')">${tr("关闭")}</button>`;
+  byId("worldSheet").innerHTML=h;
 }
 </script>
 </body>
