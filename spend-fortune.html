@@ -104,6 +104,45 @@
     padding:8px 16px;border-radius:22px;font-size:13px;font-weight:800;z-index:40;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:92%;text-align:center;}
   .toast.show{opacity:1;}
   .big{font-size:56px;text-align:center;margin:6px 0;}
+  .substats.s4{grid-template-columns:repeat(4,1fr);}
+  .substats.s4 .sst{padding:5px 4px;} .substats.s4 .v{font-size:12px;}
+  .daybadge{margin-top:6px;font-size:11px;color:var(--gold);font-weight:800;text-align:center;}
+  .bankbtn{display:block;width:100%;margin-top:7px;background:linear-gradient(180deg,#274a8f,#1c3564);color:#eaf2ff;border:1px solid #3a5f9e;
+    border-radius:11px;padding:10px;font-size:14px;font-weight:900;cursor:pointer;letter-spacing:.3px;box-shadow:0 3px 0 #12224a;}
+  .bankbtn:active{transform:translateY(2px);box-shadow:0 1px 0 #12224a;}
+  /* 金融面板 */
+  .ftabs{display:flex;gap:5px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none;} .ftabs::-webkit-scrollbar{display:none;}
+  .ftab{flex:0 0 auto;background:#12241c;border:1px solid var(--line);border-radius:14px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;color:var(--muted);white-space:nowrap;}
+  .ftab.on{background:var(--gold);color:#3a2a00;border-color:var(--gold);}
+  .fsec{margin-bottom:10px;}
+  .frow{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#12241c;border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:7px;}
+  .frow .fl{font-size:13px;font-weight:700;} .frow .fl small{color:var(--muted);font-weight:600;font-size:11px;display:block;margin-top:1px;}
+  .frow .fv{font-weight:900;color:var(--gold);font-variant-numeric:tabular-nums;font-size:13px;white-space:nowrap;}
+  .fin{width:100%;background:#0c1712;border:1px solid var(--line);border-radius:9px;padding:9px;color:var(--ink);font-size:14px;font-weight:800;text-align:center;margin:5px 0;}
+  .fbtn{background:var(--green);color:#04140b;border:none;border-radius:9px;padding:8px 13px;font-weight:900;font-size:12px;cursor:pointer;white-space:nowrap;}
+  .fbtn.gold{background:var(--gold);color:#3a2a00;} .fbtn.red{background:var(--red);color:#fff;} .fbtn.blue{background:#3a6fd0;color:#fff;} .fbtn.dis{opacity:.4;pointer-events:none;}
+  .fbtn.sm{padding:5px 9px;font-size:11px;}
+  .fgrid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;} .fgrid4{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+  .fcard{background:#12241c;border:1px solid var(--line);border-radius:10px;padding:9px;text-align:center;cursor:pointer;}
+  .fcard.on{border-color:var(--gold);}
+  .stars{color:var(--gold);letter-spacing:2px;font-size:14px;} .stars .off{color:#3a4a3a;}
+  .up{color:var(--green);} .down{color:var(--red);}
+  .warn{background:#2a1210;border:1px solid var(--red);border-radius:10px;padding:10px;font-size:12px;color:#ffb3ad;margin-bottom:8px;line-height:1.5;}
+  .note{font-size:10px;color:var(--muted);text-align:center;line-height:1.5;margin-top:6px;}
+  .casnote{background:#221c0f;border:1px solid var(--gold-d);border-radius:9px;padding:8px 10px;font-size:11px;color:#f2dca0;line-height:1.5;margin-bottom:9px;}
+  .switch{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:800;}
+  .switch .sw{width:38px;height:22px;border-radius:12px;background:#3a4a3a;position:relative;transition:background .2s;}
+  .switch.on .sw{background:var(--green);} .switch .sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;}
+  .switch.on .sw::after{left:18px;}
+  .chips{display:flex;align-items:center;justify-content:space-between;background:#1a2e1f;border:1px solid var(--gold-d);border-radius:10px;padding:8px 11px;margin-bottom:9px;}
+  .chips .cv{font-weight:900;color:var(--gold);font-size:16px;}
+  .pcards{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin:6px 0;min-height:52px;align-items:center;}
+  .pcard{width:36px;height:50px;border-radius:6px;background:#f5f5f5;color:#111;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;box-shadow:0 2px 4px rgba(0,0,0,.4);}
+  .pcard.red{color:#d81e1e;} .pcard.back{background:linear-gradient(135deg,#2a4a8f,#16264a);color:#8fb0e0;}
+  .bjside{text-align:center;margin-bottom:8px;} .bjside .bl{font-size:11px;color:var(--muted);} .bjside .bt{font-size:13px;font-weight:800;}
+  .slot{display:flex;gap:8px;justify-content:center;font-size:40px;background:#0c1712;border:1px solid var(--gold-d);border-radius:12px;padding:12px;margin:8px 0;}
+  .wheelbox{text-align:center;font-size:15px;font-weight:900;padding:14px;background:#0c1712;border:1px solid var(--gold-d);border-radius:12px;margin:8px 0;}
+  .betrow{display:flex;align-items:center;gap:6px;justify-content:center;margin:6px 0;flex-wrap:wrap;}
 </style>
 </head>
 <body>
@@ -124,9 +163,12 @@
       <div class="balval" id="balVal">$400,000,000,000</div>
       <div class="balshort" id="balShort"></div>
       <div class="balbar"><i id="balBar"></i></div>
-      <div class="substats">
+      <div class="daybadge" id="dayVal">📅 第 1 天</div>
+      <div class="substats s4">
         <div class="sst"><div class="l" data-i18n="已消费">已消费</div><div class="v" id="spentVal">$0</div></div>
         <div class="sst"><div class="l" data-i18n="购买数量">购买数量</div><div class="v" id="itemsVal">0</div></div>
+        <div class="sst"><div class="l" data-i18n="净资产">净资产</div><div class="v" id="netVal">$400B</div></div>
+        <div class="sst"><div class="l" data-i18n="日收入">日收入</div><div class="v" id="incVal" style="color:var(--green)">$0</div></div>
       </div>
       <div class="qtyrow" id="qtyRow"></div>
     </div>
@@ -137,6 +179,7 @@
 
   <div class="dock">
     <div class="oneclick" id="oneClick"></div>
+    <button class="bankbtn" onclick="openBank()">🏦 <span data-i18n="银河国际银行">银河国际银行</span> · <span data-i18n="投资理财">投资 · 理财 · 娱乐城</span></button>
     <div class="dockrow2">
       <div class="db" onclick="openAch()">🏆 <span data-i18n="成就">成就</span></div>
       <div class="db" onclick="openRec()">📊 <span data-i18n="排行榜">排行榜</span></div>
@@ -191,6 +234,9 @@
     </div>
   </div>
 
+  <!-- 银行 / 金融 / 娱乐城 -->
+  <div class="overlay hidden" id="bankScreen"><div class="sheet" id="bankSheet"></div></div>
+
 </div></div>
 
 <script>
@@ -238,6 +284,31 @@ const TR={
   "全球首富消费者":"Ultra Consumer","花费1000亿美元":"Spend $100B",
   "财富清零":"Wealth Zero","把全部资金花光":"Spend every last dollar",
   "解锁成就":"Achievement unlocked",
+  // HUD / 银行
+  "净资产":"Net Worth","日收入":"Income/day","购买数量":"Items","天数":"Day","银河国际银行":"Galaxy Int'l Bank","投资 · 理财 · 娱乐城":"Invest · Save · Casino",
+  "存款":"Savings","贷款":"Loans","股票":"Stocks","保险":"Insurance","娱乐城":"Casino","信用":"Credit","下一天":"Next Day","跳过一天":"Skip a Day",
+  "账户余额":"Cash Balance","存款余额":"Savings","贷款总额":"Total Debt","信用等级":"Credit Rating","净资产合计":"Net Worth",
+  "活期 0.5%/年":"Flexible 0.5%/yr","30天定存 1.5%":"30-day 1.5%","90天定存 2.5%":"90-day 2.5%","一年定存 4%":"1-year 4%",
+  "存入金额":"Deposit amount","存入":"Deposit","取出":"Withdraw","活期存款":"Flexible savings","定期存款":"Term deposits","到期":"matures",
+  "剩余":"left","天":"d","消费贷款":"Personal Loan","企业贷款":"Business Loan","房地产贷款":"Property Loan","超级贷款":"Mega Loan",
+  "贷款金额":"Loan amount","借款":"Borrow","还款":"Repay","当前贷款":"Active loans","本金":"Principal","利率":"Rate","一键还清":"Repay all",
+  "信用额度":"Credit limit","贷款上限":"Loan limit","已用":"used","完美":"Perfect","优秀":"Excellent","普通":"Fair","较差":"Poor","黑名单":"Blacklisted",
+  "信用越高，额度越大、利率越低。按时还款可提升信用。":"Higher credit = bigger limit & lower rates. Repay on time to raise it.",
+  "资不抵债！":"INSOLVENT!","你的债务已超过资产。请还款、出售资产，或宣告破产。":"Your debt exceeds your assets. Repay, sell assets, or declare bankruptcy.",
+  "出售资产回血":"Sell assets for cash","宣告破产":"Declare bankruptcy","出售全部资产（5折回收）":"Sell all assets (50% back)",
+  "科技股":"TechCo","能源股":"EnerCorp","地产股":"RealtyX","艾股 (AI)":"AI Labs","太空股":"SpaceInc","持股":"Shares","市值":"Value","现价":"Price",
+  "买入":"Buy","卖出":"Sell","股数":"shares","股票每天随机涨跌，投资有风险。":"Stocks move randomly each day — invest at your own risk.",
+  "资产保险":"Asset Insurance","房地产保险":"Property Insurance","豪华品保险":"Luxury Insurance","飞机游艇保险":"Vehicle Insurance","企业保险":"Business Insurance",
+  "已投保":"Insured","投保":"Insure","保费":"Premium","投保后，灾难事件不会损毁该类资产。":"Insured asset types are protected from disaster events.",
+  "🎰 仅限虚拟游戏币娱乐 · 不涉及任何真实金钱或兑换 · 请理性游戏":"🎰 Virtual chips for fun only · NO real money or cash-out of any kind · please play responsibly",
+  "启用娱乐城":"Enable Casino","筹码":"Chips","买筹码":"Buy chips","换回现金":"Cash out","VIP等级":"VIP","下注":"Bet",
+  "21点":"Blackjack","老虎机":"Slots","幸运转盘":"Lucky Wheel","骰子":"Dice","发牌":"Deal","要牌":"Hit","停牌":"Stand","加倍":"Double",
+  "你":"You","庄家":"Dealer","点":"","爆牌":"Bust","黑杰克":"Blackjack!","你赢了":"You win","庄家赢":"Dealer wins","平局":"Push",
+  "旋转":"Spin","摇骰":"Roll","押大":"High","押小":"Low","押 7":"Lucky 7","赌场纪录":"Casino Stats","总局数":"Games","胜场":"Wins","最大单赢":"Biggest win","累计下注":"Total wagered",
+  "普通会员":"Member","银卡":"Silver","金卡":"Gold","钻石":"Diamond","黑卡":"Black","黑钻至尊":"Black Diamond",
+  "筹码不足":"Not enough chips","现金不足":"Not enough cash","娱乐城已关闭":"Casino is disabled","破产":"Bankrupt",
+  "第":"Day ","天数量":"","💥 灾难！未投保资产受损":"💥 Disaster! Uninsured assets damaged","📉 股市暴跌！":"📉 Market crash!","📈 股市大涨！":"📈 Market rally!",
+  "被保险公司赔付":"covered by insurance","一天":"1 day",
 };
 function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
 function nm(o){ return LANG==="en" ? o.en : o.zh; }
@@ -248,6 +319,7 @@ function applyLang(){
   buildQty(); buildTabs(); buildOneClick(); buildModes(); renderItems(); renderHud();
   if(!byId("achScreen").classList.contains("hidden")) openAch();
   if(!byId("recScreen").classList.contains("hidden")) openRec();
+  if(window.financeApplyLang) financeApplyLang();
 }
 function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("spendLang",LANG);}catch(e){} applyLang(); }
 
@@ -318,13 +390,18 @@ let S=null, MODE="normal", QTY=1, dirty=false, autoTimer=null, eventTimer=null, 
 function freshState(){
   return { bal:START_BAL, spent:0, items:0, clicks:0, t0:0,
     owned:{}, fav:{}, cars:0, planes:0, houses:0, buildings:0,
-    cat:CATS[0].id, over:false, eventMul:1, evName:"", discounts:{} };
+    cat:CATS[0].id, over:false, eventMul:1, evName:"", discounts:{},
+    // 金融
+    day:1, dayAcc:0, deposit:0, terms:[], loans:[], credit:5, creditPts:800,
+    stocks:{}, px:{}, insured:{}, chips:0, wagered:0, cstats:{plays:0,wins:0,biggest:0,net:0},
+    incomePeak:0, netPeak:START_BAL, won:false, ending:"" };
 }
 function newGame(){
   stopAuto(); clearInterval(eventTimer); eventTimer=null; greedyMul=1;
   S=freshState(); S.t0=nowMs();
   if(MODE==="discount") rollDiscounts();
   if(MODE==="events"){ eventTimer=setInterval(tickEvent, 1000); }
+  if(window.financeReset) financeReset();
   closeOv("startScreen"); buildTabs(); buildOneClick(); buildQty(); renderItems(); renderHud();
 }
 
@@ -365,7 +442,7 @@ function countType(cat, n){
 function buyFrom(it, ev){
   const before=S.bal, got=buy(it, QTY);
   if(got>0 && ev) spawnFloat(ev, before-S.bal);
-  checkAch(); if(S.bal<=0) endRun();
+  checkAch(); finishCheck();
 }
 function buyRandom(count){
   if(!S||S.over) return;
@@ -374,7 +451,7 @@ function buyRandom(count){
     if(!aff.length) break;
     buy(aff[Math.floor(Math.random()*aff.length)], 1);
   }
-  checkAch(); if(S.bal<=0) endRun();
+  checkAch(); finishCheck();
 }
 /* AI：优先买当前买得起的最贵的，快速清空 */
 function aiSpend(){
@@ -384,7 +461,7 @@ function aiSpend(){
   const top=aff[0], price=priceOf(top);
   const qty=Math.max(1, Math.min(25, Math.floor(S.bal/price)));
   buy(top, qty);
-  checkAch(); if(S.bal<=0){ stopAuto(); endRun(); }
+  checkAch(); if(S.bal<=0) stopAuto(); finishCheck();
 }
 /* 购物狂：每次随机买一批 */
 let shopMode=null;
@@ -473,6 +550,7 @@ function renderHud(){
   byId("spentVal").textContent=shortMoney(S.spent);
   byId("itemsVal").textContent=S.items.toLocaleString("en-US");
   byId("balBar").style.width=Math.max(0,Math.min(100,S.bal/START_BAL*100))+"%";
+  if(window.financeHud) financeHud();
 }
 function buildTabs(){
   const t=byId("tabs"); t.innerHTML="";
@@ -572,6 +650,268 @@ applyLang();
 
 if(typeof window!=="undefined") window.__spend={ get S(){return S;}, newGame, buy, buyRandom, aiSpend, endRun, checkAch,
   setMode:m=>{MODE=m;}, setQty:q=>{QTY=q;}, ALL, CATS, ACHS, priceOf, tickEvent };
+</script>
+
+<script>
+/*==================== 🏦 银河国际银行 · 金融 / 投资 / 娱乐城 ====================*/
+const STOCKS=[
+  {id:"tech",zh:"科技股",en:"TechCo",px:320},{id:"ener",zh:"能源股",en:"EnerCorp",px:145},
+  {id:"realty",zh:"地产股",en:"RealtyX",px:88},{id:"ai",zh:"艾股 (AI)",en:"AI Labs",px:540},{id:"space",zh:"太空股",en:"SpaceInc",px:210},
+];
+const LOANS=[
+  {id:"personal",zh:"消费贷款",en:"Personal Loan",max:10e6},{id:"biz",zh:"企业贷款",en:"Business Loan",max:500e6},
+  {id:"prop",zh:"房地产贷款",en:"Property Loan",max:10e9},{id:"mega",zh:"超级贷款",en:"Mega Loan",max:100e9},
+];
+const TERMS=[{d:30,r:0.015,zh:"30天定存 1.5%",en:"30-day 1.5%"},{d:90,r:0.025,zh:"90天定存 2.5%",en:"90-day 2.5%"},{d:365,r:0.04,zh:"一年定存 4%",en:"1-year 4%"}];
+const INSUR=[
+  {id:"asset",zh:"资产保险",en:"Asset Insurance",types:["tech","luxury","fun"],prem:200e6},
+  {id:"prop",zh:"房地产保险",en:"Property Insurance",types:["house","building"],prem:2e9},
+  {id:"vehicle",zh:"飞机游艇保险",en:"Vehicle Insurance",types:["plane","ship","car"],prem:1e9},
+  {id:"biz",zh:"企业保险",en:"Business Insurance",types:["science"],prem:3e9},
+];
+const VIPS=[{zh:"普通会员",en:"Member",min:0},{zh:"银卡",en:"Silver",min:1e6},{zh:"金卡",en:"Gold",min:10e6},{zh:"钻石",en:"Diamond",min:100e6},{zh:"黑卡",en:"Black",min:1e9},{zh:"黑钻至尊",en:"Black Diamond",min:10e9}];
+const YIELD={house:0.0006, building:0.0008, science:0.001};
+const ACTIVE_RATE=0.005;
+let dayTimer=null, bankTab="deposit", casGame="menu", bj=null, bjLastBet=0, slotSpin="🎰 🎰 🎰", wheelTxt="🎡", diceTxt="🎲 🎲";
+function casinoEnabled(){ try{return localStorage.getItem("spendCasino")!=="0";}catch(e){return true;} }
+function setCasino(on){ try{localStorage.setItem("spendCasino",on?"1":"0");}catch(e){} }
+
+/*-------- 计算 --------*/
+function loansTotal(){ return S?S.loans.reduce((a,l)=>a+l.principal,0):0; }
+function termsTotal(){ return S?S.terms.reduce((a,t)=>a+t.amt,0):0; }
+function stockValue(){ if(!S)return 0; let v=0; for(const st of STOCKS) v+=(S.stocks[st.id]||0)*S.px[st.id]; return v; }
+function assetIncome(){ if(!S)return 0; let s=0; for(const it of ALL){ const y=YIELD[it.cat.type]; if(y) s+=it.p*y*(S.owned[it.id]||0); } return s; }
+function depInterest(){ return S?S.deposit*ACTIVE_RATE/12:0; }
+function netWorth(){ if(!S)return 0; let a=0; for(const it of ALL) a+=it.p*(S.owned[it.id]||0)*0.5;
+  return S.bal+S.deposit+termsTotal()+stockValue()+a-loansTotal(); }
+function creditStars(){ const p=S.creditPts; return p>=800?5:p>=600?4:p>=400?3:p>=200?2:1; }
+function loanRate(){ return 0.10-(creditStars()-1)*0.012; }
+function creditLimit(){ return 100e9*(creditStars()/5); }
+function vipTier(){ let t=VIPS[0]; for(const v of VIPS) if(S.wagered>=v.min) t=v; return t; }
+
+/*-------- 每日结算 --------*/
+function financeReset(){ if(dayTimer) clearInterval(dayTimer); STOCKS.forEach(s=>S.px[s.id]=s.px);
+  dayTimer=setInterval(()=>{ if(S&&!S.over) dayTick(); }, 7000); }
+function dayTick(){
+  if(!S||S.over) return;
+  S.day++;
+  S.deposit += depInterest();
+  // 定存到期
+  S.terms=S.terms.filter(t=>{ t.daysLeft--; if(t.daysLeft<=0){ S.bal+=t.payout; toast("🏦 "+(LANG==="en"?"Term deposit matured +":"定存到期 +")+shortMoney(t.payout)); return false;} return true; });
+  // 贷款计息
+  S.loans.forEach(l=>{ l.principal*=(1+l.rate/12); });
+  // 被动收入
+  const inc=assetIncome(); S.bal+=inc; S.incomePeak=Math.max(S.incomePeak,inc);
+  // 股市波动
+  STOCKS.forEach(s=>{ S.px[s.id]=Math.max(1, S.px[s.id]*(1+(Math.random()-0.47)*0.14)); });
+  // 偶发金融事件
+  if(Math.random()<0.09){ const up=Math.random()<0.5; STOCKS.forEach(s=>S.px[s.id]*= up?1.25:0.75);
+    toast(up?tr("📈 股市大涨！"):tr("📉 股市暴跌！")); }
+  if(Math.random()<0.05){ const types=["house","building","plane","ship","car","tech","luxury","science"]; const t=types[Math.floor(Math.random()*types.length)];
+    const covered=INSUR.some(ip=>S.insured[ip.id]&&ip.types.includes(t));
+    if(covered) toast("🛡️ "+tr("💥 灾难！未投保资产受损").replace("未投保资产受损", LANG==="en"?"— "+tr("被保险公司赔付"):"已由保险赔付"));
+    else { let hit=false; for(const it of ALL){ if(it.cat.type===t){ const n=S.owned[it.id]||0; if(n>0){ const lose=Math.ceil(n*0.2); S.owned[it.id]=n-lose; hit=true; countTypeAdj(it.cat,-lose); } } }
+      if(hit) toast(tr("💥 灾难！未投保资产受损")); } }
+  // 信用微调
+  if(loansTotal()===0) S.creditPts=Math.min(1000,S.creditPts+2);
+  else if(loansTotal()>Math.max(1,netWorth())) S.creditPts=Math.max(0,S.creditPts-5);
+  S.netPeak=Math.max(S.netPeak,netWorth());
+  markDirty(); if(bankOpen()) renderBank();
+}
+function countTypeAdj(cat,n){ if(cat.type==="car")S.cars+=n; else if(cat.type==="plane")S.planes+=n; if(cat.type==="house")S.houses+=n; if(cat.building)S.buildings+=n; }
+
+/*-------- 存款 --------*/
+function parseAmt(s){ s=(s||"").toString().trim().toLowerCase().replace(/[$,\s]/g,''); const m=s.match(/^([\d.]+)([kmbt])?$/); if(!m)return 0;
+  const n=parseFloat(m[1]); if(!isFinite(n))return 0; const u={k:1e3,m:1e6,b:1e9,t:1e12}[m[2]]||1; return Math.floor(n*u); }
+function doDeposit(){ const a=parseAmt(byId("depIn").value); if(a<=0)return; if(a>S.bal){toast(tr("现金不足"));return;} S.bal-=a; S.deposit+=a; refreshFin(); }
+function doWithdraw(){ const a=Math.min(parseAmt(byId("depIn").value)||S.deposit, S.deposit); if(a<=0)return; S.deposit-=a; S.bal+=a; refreshFin(); }
+function doTerm(i){ const a=parseAmt(byId("depIn").value); const T=TERMS[i]; if(a<=0)return; if(a>S.bal){toast(tr("现金不足"));return;}
+  S.bal-=a; S.terms.push({amt:a, payout:Math.round(a*(1+T.r*T.d/365)), daysLeft:T.d}); refreshFin(); }
+
+/*-------- 贷款 --------*/
+function doLoan(i){ const L=LOANS[i]; const a=parseAmt(byId("loanIn").value); if(a<=0)return;
+  const room=Math.min(L.max, creditLimit()-loansTotal()); if(a>room){ toast(tr("信用额度")+" "+shortMoney(Math.max(0,room))); return; }
+  S.bal+=a; S.loans.push({principal:a, rate:loanRate(), name:L.zh, nameEn:L.en}); S.creditPts=Math.max(0,S.creditPts-8); refreshFin(); }
+function doRepay(idx){ const l=S.loans[idx]; if(!l)return; const pay=Math.min(l.principal, S.bal); if(pay<=0){toast(tr("现金不足"));return;}
+  S.bal-=pay; l.principal-=pay; if(l.principal<1){ S.loans.splice(idx,1); S.creditPts=Math.min(1000,S.creditPts+40); } refreshFin(); }
+function doRepayAll(){ for(let i=S.loans.length-1;i>=0;i--){ const l=S.loans[i]; const pay=Math.min(l.principal,S.bal); S.bal-=pay; l.principal-=pay; if(l.principal<1){S.loans.splice(i,1); S.creditPts=Math.min(1000,S.creditPts+40);} } refreshFin(); }
+
+/*-------- 股票 --------*/
+function doBuyStock(id){ const n=Math.max(1, Math.floor(parseAmt(byId("stk_"+id).value)||1)); const cost=Math.round(n*S.px[id]);
+  if(cost>S.bal){toast(tr("现金不足"));return;} S.bal-=cost; S.stocks[id]=(S.stocks[id]||0)+n; refreshFin(); }
+function doSellStock(id){ const have=S.stocks[id]||0; if(have<=0)return; const n=Math.min(have, Math.max(1,Math.floor(parseAmt(byId("stk_"+id).value)||have)));
+  S.bal+=Math.round(n*S.px[id]); S.stocks[id]=have-n; refreshFin(); }
+
+/*-------- 保险 --------*/
+function doInsure(i){ const ip=INSUR[i]; if(S.insured[ip.id])return; if(ip.prem>S.bal){toast(tr("现金不足"));return;} S.bal-=ip.prem; S.insured[ip.id]=true; refreshFin(); }
+
+/*-------- 破产 / 资产变现 --------*/
+function doSellAll(){ let got=0; for(const it of ALL){ const n=S.owned[it.id]||0; if(n>0){ got+=it.p*n*0.5; S.owned[it.id]=0; } }
+  S.bal+=Math.round(got); S.cars=S.planes=S.houses=S.buildings=0; toast("💰 +"+shortMoney(got)); refreshFin(); }
+function doBankrupt(){ if(!S||S.over)return; S.over=true; S.ending="bankrupt"; S.won=false; if(dayTimer)clearInterval(dayTimer); stopAuto(); clearInterval(eventTimer);
+  S.creditPts=150; closeOv("bankScreen");
+  const rec=loadRec(); rec.runs=(rec.runs||0)+1; saveRec(rec);
+  document.querySelector("#overScreen .big").textContent="💸";
+  document.querySelector("#overScreen h2").textContent=tr("破产");
+  byId("overSub").textContent=LANG==="en"?"You went bankrupt — debt buried you.":"资不抵债，宣告破产。";
+  byId("overStats").innerHTML=row(tr("天数"), S.day)+row(tr("累计消费"), shortMoney(S.spent))+row(tr("购买总数"), S.items.toLocaleString("en-US"));
+  byId("overScreen").classList.remove("hidden"); }
+
+/*-------- 娱乐城 · 仅虚拟筹码 --------*/
+function buyChips(){ const a=parseAmt(byId("chipIn").value); if(a<=0)return; if(a>S.bal){toast(tr("现金不足"));return;} S.bal-=a; S.chips+=a; refreshFin(); }
+function cashChips(){ const a=Math.min(parseAmt(byId("chipIn").value)||S.chips, S.chips); if(a<=0)return; S.chips-=a; S.bal+=a; refreshFin(); }
+function curBet(){ return Math.max(1, Math.min(S.chips, parseAmt(byId("betIn")?byId("betIn").value:0)||bjLastBet||1e6)); }
+function casWin(amt,net){ S.chips+=amt; S.cstats.plays++; if(net>0){S.cstats.wins++; S.cstats.biggest=Math.max(S.cstats.biggest,net);} S.cstats.net+=net; }
+// 21点
+function newDeck(){ const d=[],su=["♠","♥","♦","♣"],rk=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+  for(const s of su)for(const r of rk)d.push({r,s,red:s==="♥"||s==="♦"});
+  for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];} return d; }
+function cval(c){ return c.r==="A"?11:(c.r==="J"||c.r==="Q"||c.r==="K"||c.r==="10"?10:parseInt(c.r)); }
+function hval(cs){ let v=0,a=0; for(const c of cs){v+=cval(c); if(c.r==="A")a++;} while(v>21&&a>0){v-=10;a--;} return v; }
+function bjDeal(){ const bet=curBet(); if(bet>S.chips){toast(tr("筹码不足"));return;} bjLastBet=bet; S.chips-=bet; S.wagered+=bet;
+  const d=newDeck(); bj={deck:d, ph:[d.pop(),d.pop()], dh:[d.pop(),d.pop()], bet, phase:"player", msg:""};
+  if(hval(bj.ph)===21){ bjSettle(true); } renderCasino(); }
+function bjHit(){ if(!bj||bj.phase!=="player")return; bj.ph.push(bj.deck.pop()); if(hval(bj.ph)>21){ bj.phase="done"; bj.msg=tr("爆牌")+" · "+tr("庄家赢"); casWin(0,-bj.bet); } renderCasino(); }
+function bjDouble(){ if(!bj||bj.phase!=="player"||bj.ph.length>2)return; if(bj.bet>S.chips){toast(tr("筹码不足"));return;} S.chips-=bj.bet; S.wagered+=bj.bet; bj.bet*=2; bj.ph.push(bj.deck.pop());
+  if(hval(bj.ph)>21){ bj.phase="done"; bj.msg=tr("爆牌")+" · "+tr("庄家赢"); casWin(0,-bj.bet); renderCasino(); } else bjStand(); }
+function bjStand(){ if(!bj||bj.phase!=="player")return; while(hval(bj.dh)<17) bj.dh.push(bj.deck.pop()); bjSettle(false); }
+function bjSettle(natural){ const p=hval(bj.ph), dl=hval(bj.dh); bj.phase="done"; let net;
+  if(natural){ const pay=Math.round(bj.bet*2.5); S.chips+=pay; net=pay-bj.bet; bj.msg=tr("黑杰克")+" +"+shortMoney(net); casWin(0,net); }
+  else if(dl>21||p>dl){ S.chips+=bj.bet*2; net=bj.bet; bj.msg=tr("你赢了")+" +"+shortMoney(net); casWin(0,net); }
+  else if(p===dl){ S.chips+=bj.bet; bj.msg=tr("平局"); casWin(0,0); }
+  else { bj.msg=tr("庄家赢"); casWin(0,-bj.bet); }
+  refreshFin(); }
+// 老虎机
+function slots(){ const bet=curBet(); if(bet>S.chips){toast(tr("筹码不足"));return;} S.chips-=bet; S.wagered+=bet;
+  const sym=["🍒","🍋","🔔","💎","7️⃣","⭐"]; const r=[0,0,0].map(()=>sym[Math.floor(Math.random()*sym.length)]); slotSpin=r.join("  ");
+  let mult=0; if(r[0]===r[1]&&r[1]===r[2]) mult=(r[0]==="7️⃣"?30:r[0]==="💎"?15:8); else if(r[0]===r[1]||r[1]===r[2]||r[0]===r[2]) mult=1.5;
+  const win=Math.round(bet*mult); const net=win-bet; if(win>0) S.chips+=win; casWin(0,net);
+  slotMsg=mult>=8?(tr("你赢了")+" ×"+mult+" +"+shortMoney(net)):(mult>0?"+"+shortMoney(net):tr("庄家赢")); refreshFin(); }
+// 幸运转盘
+function wheel(){ const bet=curBet(); if(bet>S.chips){toast(tr("筹码不足"));return;} S.chips-=bet; S.wagered+=bet;
+  const slots2=[0,0,1,1,1.5,2,2,3,5,10]; const mult=slots2[Math.floor(Math.random()*slots2.length)]; const win=Math.round(bet*mult); if(win>0)S.chips+=win;
+  wheelTxt="×"+mult; casWin(0,win-bet); slotMsg=mult>0?"×"+mult+" +"+shortMoney(win-bet):tr("庄家赢"); refreshFin(); }
+// 骰子
+function dice(pick){ const bet=curBet(); if(bet>S.chips){toast(tr("筹码不足"));return;} S.chips-=bet; S.wagered+=bet;
+  const a=1+Math.floor(Math.random()*6), b=1+Math.floor(Math.random()*6), sum=a+b; diceTxt="🎲"+a+" 🎲"+b+" = "+sum;
+  let win=0; if(pick==="high"&&sum>=8) win=bet*2; else if(pick==="low"&&sum<=6) win=bet*2; else if(pick==="seven"&&sum===7) win=bet*5;
+  if(win>0)S.chips+=win; casWin(0,win-bet); slotMsg=win>0?tr("你赢了")+" +"+shortMoney(win-bet):tr("庄家赢"); refreshFin(); }
+let slotMsg="";
+
+/*-------- 结束判定 --------*/
+function finishCheck(){ if(!S||S.over)return; if(S.bal<=0 && S.deposit<=0 && termsTotal()<=0 && stockValue()<=0 && loansTotal()<=0){ if(dayTimer)clearInterval(dayTimer); S.won=true; endRun(); } }
+
+/*-------- HUD --------*/
+function financeHud(){ if(!S)return; const nv=byId("netVal"),iv=byId("incVal"),dv=byId("dayVal");
+  if(nv) nv.textContent=shortMoney(netWorth()); if(iv) iv.textContent="+"+shortMoney(assetIncome()+depInterest());
+  if(dv) dv.textContent="📅 "+(LANG==="en"?"Day "+S.day:"第 "+S.day+" 天"); }
+
+/*==================== 面板 UI ====================*/
+function bankOpen(){ return !byId("bankScreen").classList.contains("hidden"); }
+function openBank(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} bankTab="deposit"; byId("bankScreen").classList.remove("hidden"); renderBank(); }
+function bankTabTo(t){ bankTab=t; if(t!=="casino") casGame="menu"; renderBank(); }
+function refreshFin(){ markDirty(); renderBank(); financeHud(); }
+function financeApplyLang(){ if(bankOpen()) renderBank(); }
+function stars(n){ let s=""; for(let i=0;i<5;i++) s+= i<n?"★":"<span class='off'>★</span>"; return s; }
+function fnum(id,ph){ return `<input class="fin" id="${id}" inputmode="decimal" placeholder="${ph||'0 (支持 k/m/b)'}">`; }
+
+function renderBank(){
+  const T=bankTab; let h=`<h2>🏦 <span>${tr("银河国际银行")}</span></h2>
+   <div class="frow" style="margin-bottom:9px"><div class="fl">💵 ${tr("账户余额")}</div><div class="fv">${money(S.bal)}</div></div>
+   <div class="ftabs">`;
+  const tabs=[["deposit","💰 "+tr("存款")],["loan","💳 "+tr("贷款")],["stock","📈 "+tr("股票")],["insure","💎 "+tr("保险")],["casino","🎰 "+tr("娱乐城")],["credit","⭐ "+tr("信用")]];
+  tabs.forEach(t=> h+=`<div class="ftab${T===t[0]?" on":""}" onclick="bankTabTo('${t[0]}')">${t[1]}</div>`);
+  h+=`</div>`;
+  const insolvent=netWorth()<0;
+  if(insolvent) h+=`<div class="warn"><b>⚠️ ${tr("资不抵债！")}</b><br>${tr("你的债务已超过资产。请还款、出售资产，或宣告破产。")}
+    <div style="display:flex;gap:6px;margin-top:8px"><button class="fbtn blue sm" onclick="doSellAll()">${tr("出售全部资产（5折回收）")}</button><button class="fbtn red sm" onclick="doBankrupt()">${tr("宣告破产")}</button></div></div>`;
+
+  if(T==="deposit"){
+    h+=`<div class="frow"><div class="fl">${tr("活期存款")}<small>${tr("活期 0.5%/年")}</small></div><div class="fv">${shortMoney(S.deposit)}</div></div>
+      ${fnum("depIn")}
+      <div class="fgrid2"><button class="fbtn" onclick="doDeposit()">${tr("存入")}</button><button class="fbtn gold" onclick="doWithdraw()">${tr("取出")}</button></div>
+      <div class="fsec" style="margin-top:10px"><div class="ballab">${tr("定期存款")}</div>`;
+    TERMS.forEach((t,i)=> h+=`<div class="frow"><div class="fl">${tr(t.zh)}</div><button class="fbtn sm" onclick="doTerm(${i})">${tr("存入")}</button></div>`);
+    if(S.terms.length){ h+=`<div class="ballab" style="margin-top:6px">${tr("定期存款")} · ${tr("到期")}</div>`;
+      S.terms.forEach(t=> h+=`<div class="frow"><div class="fl">${shortMoney(t.amt)} → ${shortMoney(t.payout)}</div><div class="fv">${t.daysLeft}${tr("天")} ${tr("剩余")}</div></div>`); }
+    h+=`</div>`;
+  }
+  else if(T==="loan"){
+    h+=`<div class="frow"><div class="fl">${tr("贷款总额")}</div><div class="fv down">${shortMoney(loansTotal())}</div></div>
+      <div class="frow"><div class="fl">${tr("贷款上限")}<small>${tr("信用")} ${stars(creditStars())} · ${tr("利率")} ${(loanRate()*100).toFixed(1)}%/${LANG==="en"?"yr":"年"}</small></div><div class="fv">${shortMoney(Math.max(0,creditLimit()-loansTotal()))}</div></div>
+      ${fnum("loanIn")}<div class="fgrid2">`;
+    LOANS.forEach((l,i)=> h+=`<button class="fbtn blue sm" onclick="doLoan(${i})">${tr(l.zh)}<br>≤${shortMoney(l.max)}</button>`);
+    h+=`</div>`;
+    if(S.loans.length){ h+=`<div class="ballab" style="margin-top:9px">${tr("当前贷款")}</div>`;
+      S.loans.forEach((l,i)=> h+=`<div class="frow"><div class="fl">${tr(LANG==="en"?l.nameEn:l.name)}<small>${tr("利率")} ${(l.rate*100).toFixed(1)}%</small></div><div style="display:flex;align-items:center;gap:7px"><div class="fv down">${shortMoney(l.principal)}</div><button class="fbtn sm" onclick="doRepay(${i})">${tr("还款")}</button></div></div>`);
+      h+=`<button class="fbtn" style="width:100%" onclick="doRepayAll()">${tr("一键还清")}</button>`; }
+  }
+  else if(T==="stock"){
+    h+=`<div class="note" style="text-align:left">${tr("股票每天随机涨跌，投资有风险。")}</div>`;
+    STOCKS.forEach(st=>{ const have=S.stocks[st.id]||0;
+      h+=`<div class="frow"><div class="fl">${tr(st.zh)}<small>${tr("持股")} ${have} · ${tr("市值")} ${shortMoney(have*S.px[st.id])}</small></div>
+        <div style="text-align:right"><div class="fv">$${Math.round(S.px[st.id]).toLocaleString("en-US")}</div></div></div>
+        <div class="betrow"><input class="fin" style="margin:0;flex:1" id="stk_${st.id}" inputmode="decimal" placeholder="${tr("股数")}">
+        <button class="fbtn sm" onclick="doBuyStock('${st.id}')">${tr("买入")}</button><button class="fbtn gold sm" onclick="doSellStock('${st.id}')">${tr("卖出")}</button></div>`; });
+  }
+  else if(T==="insure"){
+    h+=`<div class="note" style="text-align:left">${tr("投保后，灾难事件不会损毁该类资产。")}</div>`;
+    INSUR.forEach((ip,i)=>{ const on=S.insured[ip.id];
+      h+=`<div class="frow"><div class="fl">${tr(ip.zh)}<small>${tr("保费")} ${shortMoney(ip.prem)}</small></div>${on?`<div class="fv up">✓ ${tr("已投保")}</div>`:`<button class="fbtn sm" onclick="doInsure(${i})">${tr("投保")}</button>`}</div>`; });
+  }
+  else if(T==="credit"){
+    h+=`<div style="text-align:center;margin:12px 0"><div class="stars" style="font-size:30px">${stars(creditStars())}</div>
+      <div class="fv" style="margin-top:6px">${[,,tr("黑名单"),tr("较差"),tr("普通"),tr("优秀"),tr("完美")][creditStars()+2]||""} · ${S.creditPts}/1000</div></div>
+      <div class="frow"><div class="fl">${tr("贷款上限")}</div><div class="fv">${shortMoney(creditLimit())}</div></div>
+      <div class="frow"><div class="fl">${tr("利率")}</div><div class="fv">${(loanRate()*100).toFixed(1)}%/${LANG==="en"?"yr":"年"}</div></div>
+      <div class="frow"><div class="fl">${tr("净资产合计")}</div><div class="fv ${netWorth()<0?'down':''}">${shortMoney(netWorth())}</div></div>
+      <div class="note" style="text-align:left">${tr("信用越高，额度越大、利率越低。按时还款可提升信用。")}</div>`;
+  }
+  else if(T==="casino"){ h+=renderCasinoHtml(); }
+
+  h+=`<div class="fgrid2" style="margin-top:10px"><button class="fbtn gold" onclick="dayTick()">⏭ ${tr("下一天")}</button><button class="btn ghost" style="margin:0;padding:9px" onclick="closeOv('bankScreen')">${tr("关闭")}</button></div>`;
+  byId("bankSheet").innerHTML=h;
+}
+function renderCasinoHtml(){
+  if(!casinoEnabled()){
+    return `<div class="casnote">${tr("🎰 仅限虚拟游戏币娱乐 · 不涉及任何真实金钱或兑换 · 请理性游戏")}</div>
+      <div class="switch" onclick="setCasino(true);renderBank()"><span>${tr("启用娱乐城")}</span><span class="sw"></span></div>
+      <div class="note">${tr("娱乐城已关闭")}</div>`;
+  }
+  let h=`<div class="casnote">${tr("🎰 仅限虚拟游戏币娱乐 · 不涉及任何真实金钱或兑换 · 请理性游戏")}
+    <div class="switch on" style="margin-top:6px" onclick="setCasino(false);renderBank()"><span>${tr("启用娱乐城")}</span><span class="sw"></span></div></div>
+    <div class="chips"><div><div class="ballab">${tr("筹码")} · VIP ${tr(vipTier().zh)}</div><div class="cv">🪙 ${shortMoney(S.chips)}</div></div>
+    <div style="display:flex;gap:5px;align-items:center"><input class="fin" style="margin:0;width:96px" id="chipIn" inputmode="decimal" placeholder="0">
+    <button class="fbtn sm" onclick="buyChips()">${tr("买筹码")}</button><button class="fbtn gold sm" onclick="cashChips()">${tr("换回现金")}</button></div></div>`;
+  const games=[["menu","🎲"],["bj","♠ "+tr("21点")],["slots","🎰 "+tr("老虎机")],["wheel","🎡 "+tr("幸运转盘")],["dice","🎲 "+tr("骰子")]];
+  h+=`<div class="ftabs">`; games.slice(1).forEach(g=> h+=`<div class="ftab${casGame===g[0]?" on":""}" onclick="casTo('${g[0]}')">${g[1]}</div>`); h+=`</div>`;
+  h+=`<div class="betrow"><span class="ballab">${tr("下注")}</span><input class="fin" style="margin:0;width:120px" id="betIn" inputmode="decimal" placeholder="${bjLastBet?shortMoney(bjLastBet):'1m'}"></div>`;
+  h+=`<div id="casArea">${casAreaHtml()}</div>`;
+  h+=`<div class="fsec" style="margin-top:8px"><div class="ballab">${tr("赌场纪录")}</div>
+    <div class="frow"><div class="fl">${tr("总局数")} ${S.cstats.plays} · ${tr("胜场")} ${S.cstats.wins}</div><div class="fv ${S.cstats.net>=0?'up':'down'}">${(S.cstats.net>=0?'+':'')+shortMoney(S.cstats.net)}</div></div>
+    <div class="frow"><div class="fl">${tr("最大单赢")}</div><div class="fv">${shortMoney(S.cstats.biggest)}</div></div></div>`;
+  return h;
+}
+function casTo(g){ casGame=g; renderBank(); }
+function renderCasino(){ if(bankOpen()) renderBank(); }
+function casAreaHtml(){
+  if(casGame==="bj"){
+    let h="";
+    if(bj){ const showDealer=bj.phase!=="player";
+      h+=`<div class="bjside"><div class="bl">${tr("庄家")}</div><div class="pcards">`+ bj.dh.map((c,i)=> (i===1&&!showDealer)?`<div class="pcard back">?</div>`:cardHtml(c)).join("") +`</div><div class="bt">${showDealer?hval(bj.dh):"?"}</div></div>`;
+      h+=`<div class="bjside"><div class="bl">${tr("你")}</div><div class="pcards">`+ bj.ph.map(cardHtml).join("") +`</div><div class="bt">${hval(bj.ph)}</div></div>`;
+      if(bj.msg) h+=`<div class="wheelbox">${bj.msg}</div>`;
+      if(bj.phase==="player") h+=`<div class="betrow"><button class="fbtn" onclick="bjHit()">${tr("要牌")}</button><button class="fbtn gold" onclick="bjStand()">${tr("停牌")}</button>${bj.ph.length===2?`<button class="fbtn blue" onclick="bjDouble()">${tr("加倍")}</button>`:""}</div>`;
+      else h+=`<button class="fbtn" style="width:100%" onclick="bjDeal()">${tr("发牌")}</button>`;
+    } else h+=`<button class="fbtn" style="width:100%" onclick="bjDeal()">${tr("发牌")}</button>`;
+    return h;
+  }
+  if(casGame==="slots") return `<div class="slot">${slotSpin}</div>${slotMsg?`<div class="wheelbox">${slotMsg}</div>`:""}<button class="fbtn gold" style="width:100%" onclick="slots()">🎰 ${tr("旋转")}</button>`;
+  if(casGame==="wheel") return `<div class="wheelbox">🎡 ${wheelTxt}</div>${slotMsg?`<div class="note">${slotMsg}</div>`:""}<button class="fbtn gold" style="width:100%" onclick="wheel()">${tr("旋转")}</button>`;
+  if(casGame==="dice") return `<div class="wheelbox">${diceTxt}</div>${slotMsg?`<div class="note">${slotMsg}</div>`:""}<div class="fgrid2"><button class="fbtn" onclick="dice('low')">${tr("押小")} (2-6)</button><button class="fbtn" onclick="dice('high')">${tr("押大")} (8-12)</button></div><button class="fbtn gold" style="width:100%;margin-top:5px" onclick="dice('seven')">${tr("押 7")} ×5</button>`;
+  return `<div class="note">${tr("下注")} → ${tr("21点")} / ${tr("老虎机")} / ${tr("幸运转盘")} / ${tr("骰子")}</div>`;
+}
+function cardHtml(c){ return `<div class="pcard${c.red?" red":""}">${c.r}${c.s}</div>`; }
 </script>
 </body>
 </html>
