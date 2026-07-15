@@ -150,7 +150,8 @@
 <div id="app"><div id="phone">
   <div class="nav">
     <span class="back" id="quitBtn" title="返回游戏厅" aria-label="返回游戏厅">🏠</span>
-    <span class="gname">微信群权力战争 <small id="hdCount">(128)</small></span>
+    <span class="gname"><span data-i18n="微信群权力战争">微信群权力战争</span> <small id="hdCount">(128)</small></span>
+    <span id="langBtn" onclick="toggleLang()" style="background:#2a2f3a;color:#fff;border:1px solid rgba(185,195,215,.6);border-radius:13px;padding:4px 11px;font-weight:800;font-size:13px;cursor:pointer;">EN</span>
     <span class="more" id="shopTop">···</span>
   </div>
   <div class="status">
@@ -160,7 +161,7 @@
     <span class="chip">❤<b id="hpN">5</b></span>
     <span class="chip">🛡<b id="shieldN">0</b></span>
     <span class="chip">🎖<b id="repN">5</b></span>
-    <div class="barwrap"><span class="lab">📊舆论</span><div class="bar"><i id="opBar"></i><span class="txt" id="opTxt">100</span></div></div>
+    <div class="barwrap"><span class="lab" data-i18n="📊舆论">📊舆论</span><div class="bar"><i id="opBar"></i><span class="txt" id="opTxt">100</span></div></div>
     <div class="barwrap" id="meterWrap" style="display:none;"><span class="lab" id="meterLab">进度</span><div class="bar"><i id="meterBar"></i><span class="txt" id="meterTxt">0</span></div></div>
     <div class="goalline" id="goalLine">🎯 目标：保住群主之位</div>
     <div class="evbar" id="evBar"></div>
@@ -169,142 +170,433 @@
   <div id="chat"></div>
   <div class="dock">
     <div class="hintline" id="hint">轮到你了，选择一个行动 ↓</div>
-    <div class="sayrow"><input id="sayText" placeholder="💬 自己打字发言（不占行动）…" maxlength="40"><button id="sayBtn">发</button></div>
+    <div class="sayrow"><input id="sayText" placeholder="💬 自己打字发言（不占行动）…" maxlength="40"><button id="sayBtn" data-i18n="发">发</button></div>
     <div class="acts" id="acts"></div>
   </div>
 
   <div class="overlay" id="startScreen">
     <div class="sheet">
       <div class="startlogo">🎲💬⚔️</div>
-      <h2>微信群权力战争</h2>
-      <div class="sub">128 人大群 · 随机身份权谋对抗</div>
+      <h2 data-i18n="微信群权力战争">微信群权力战争</h2>
+      <div class="sub" data-i18n="128 人大群 · 随机身份权谋对抗">128 人大群 · 随机身份权谋对抗</div>
       <div class="rules">
-        🎭 6 种身份各有<b>不同胜利目标</b>（守位/曝光/潜伏/破解/上位）。<br>
-        🧾 证据 · ⚖ 法庭 · 🗳 选举 · 🎁 空投 · 🧧 红包 · 💣 舆论炸弹。<br>
-        🌐 <b>联机群聊</b>：和真人一起进大群实时聊天！
+        <span data-i18n="🎭 6 种身份各有不同胜利目标（守位/曝光/潜伏/破解/上位）。">🎭 6 种身份各有<b>不同胜利目标</b>（守位/曝光/潜伏/破解/上位）。</span><br>
+        <span data-i18n="🧾 证据 · ⚖ 法庭 · 🗳 选举 · 🎁 空投 · 🧧 红包 · 💣 舆论炸弹。">🧾 证据 · ⚖ 法庭 · 🗳 选举 · 🎁 空投 · 🧧 红包 · 💣 舆论炸弹。</span><br>
+        <span data-i18n="🌐 联机群聊：和真人一起进大群实时聊天！">🌐 <b>联机群聊</b>：和真人一起进大群实时聊天！</span>
       </div>
-      <button class="btn" id="toRoleBtn">🎮 单人游戏</button>
-      <button class="btn ghost" id="toAchBtn">🏆 成就 <span id="achCount">0/0</span></button>
-      <button class="btn ghost" id="toMpBtn">🌐 联机群聊</button>
+      <button class="btn" id="toRoleBtn" data-i18n="🎮 单人游戏">🎮 单人游戏</button>
+      <button class="btn ghost" id="toAchBtn"><span data-i18n="🏆 成就">🏆 成就</span> <span id="achCount">0/0</span></button>
+      <button class="btn ghost" id="toMpBtn" data-i18n="🌐 联机群聊">🌐 联机群聊</button>
     </div>
   </div>
 
   <!-- 身份选择 -->
   <div class="overlay hidden" id="roleScreen">
     <div class="sheet">
-      <h2>选择你的身份</h2>
-      <div class="sub">点一个身份，或随机抽取</div>
+      <h2 data-i18n="选择你的身份">选择你的身份</h2>
+      <div class="sub" data-i18n="点一个身份，或随机抽取">点一个身份，或随机抽取</div>
       <div id="roleGrid"></div>
-      <button class="btn" id="randomRoleBtn">🎲 随机身份</button>
-      <button class="btn ghost" id="roleBack">← 返回</button>
+      <button class="btn" id="randomRoleBtn" data-i18n="🎲 随机身份">🎲 随机身份</button>
+      <button class="btn ghost" id="roleBack" data-i18n="← 返回">← 返回</button>
     </div>
   </div>
 
   <!-- 成就 -->
   <div class="overlay hidden" id="achScreen">
     <div class="sheet">
-      <h2>🏆 成就殿堂</h2>
+      <h2 data-i18n="🏆 成就殿堂">🏆 成就殿堂</h2>
       <div class="sub" id="achSub"></div>
       <div id="achGrid"></div>
-      <button class="btn ghost" id="achBack">← 返回</button>
+      <button class="btn ghost" id="achBack" data-i18n="← 返回">← 返回</button>
     </div>
   </div>
 
   <!-- 联机群聊 -->
   <div class="overlay hidden" id="mpScreen" style="padding:0;align-items:stretch;">
     <div class="mpwrap">
-      <div class="mpnav"><span id="mpLeave">‹ 离开</span><span class="mptitle">🌐 联机大群 <small id="mpOnline"></small></span><span style="width:40px;"></span></div>
+      <div class="mpnav"><span id="mpLeave" data-i18n="‹ 离开">‹ 离开</span><span class="mptitle"><span data-i18n="🌐 联机大群">🌐 联机大群</span> <small id="mpOnline"></small></span><span style="width:40px;"></span></div>
       <div class="mpjoin" id="mpJoin">
         <div style="font-size:40px;">🌐💬</div>
-        <h2>进入联机大群</h2>
-        <div class="sub">和真人一起在同一个群里实时聊天</div>
+        <h2 data-i18n="进入联机大群">进入联机大群</h2>
+        <div class="sub" data-i18n="和真人一起在同一个群里实时聊天">和真人一起在同一个群里实时聊天</div>
         <input id="mpName" placeholder="你的群昵称" maxlength="10">
-        <div class="sub" style="margin:8px 0 4px;">选一个身份标签：</div>
+        <div class="sub" style="margin:8px 0 4px;" data-i18n="选一个身份标签：">选一个身份标签：</div>
         <div id="mpRolePick"></div>
-        <button class="btn" id="mpEnter" style="margin-top:14px;">进群</button>
+        <button class="btn" id="mpEnter" style="margin-top:14px;" data-i18n="进群">进群</button>
       </div>
-      <div class="mpmode" id="mpMode"><span>🔒 私聊 <b id="mpDmName"></b></span><span class="x" id="mpDmBack">← 返回群聊</span></div>
+      <div class="mpmode" id="mpMode"><span><span data-i18n="🔒 私聊">🔒 私聊</span> <b id="mpDmName"></b></span><span class="x" id="mpDmBack" data-i18n="← 返回群聊">← 返回群聊</span></div>
       <div class="mpchat" id="mpChat" style="display:none;"></div>
       <div class="mpinput" id="mpInputBar" style="display:none;">
         <input id="mpText" placeholder="点某人昵称可私聊 · 群里说点什么…" maxlength="60">
-        <button id="mpSend">发送</button>
+        <button id="mpSend" data-i18n="发送">发送</button>
       </div>
     </div>
   </div>
 
   <div class="overlay hidden" id="shopScreen">
     <div class="sheet">
-      <h2>🛒 群道具商店</h2>
-      <div class="sub">💰 金币：<b id="shopCoins">5</b></div>
+      <h2 data-i18n="🛒 群道具商店">🛒 群道具商店</h2>
+      <div class="sub"><span data-i18n="💰 金币：">💰 金币：</span><b id="shopCoins">5</b></div>
       <div class="shopgrid" id="shopGrid"></div>
-      <button class="btn ghost" id="shopClose">关闭</button>
+      <button class="btn ghost" id="shopClose" data-i18n="关闭">关闭</button>
     </div>
   </div>
 
   <div class="overlay hidden" id="overScreen">
     <div class="sheet">
-      <h2 id="overTitle">游戏结束</h2>
+      <h2 id="overTitle" data-i18n="游戏结束">游戏结束</h2>
       <div class="sub" id="overSub"></div>
       <div id="achList"></div>
-      <button class="btn" id="againBtn">🎲 再抽一个身份</button>
-      <button class="btn ghost" id="homeBtn2">← 返回游戏厅</button>
+      <button class="btn" id="againBtn" data-i18n="🎲 再抽一个身份">🎲 再抽一个身份</button>
+      <button class="btn ghost" id="homeBtn2" data-i18n="← 返回游戏厅">← 返回游戏厅</button>
     </div>
   </div>
 
   <!-- 群花名册 -->
   <div class="overlay hidden" id="rosterScreen">
     <div class="sheet">
-      <h2>👥 群花名册 <span id="rosterCount" style="color:#07c160;"></span></h2>
-      <div class="sub">128人大群的全部身份构成（随局势实时变化）</div>
+      <h2><span data-i18n="👥 群花名册">👥 群花名册</span> <span id="rosterCount" style="color:#07c160;"></span></h2>
+      <div class="sub" data-i18n="128人大群的全部身份构成（随局势实时变化）">128人大群的全部身份构成（随局势实时变化）</div>
       <div id="rosterBody"></div>
-      <button class="btn ghost" id="rosterClose">关闭</button>
+      <button class="btn ghost" id="rosterClose" data-i18n="关闭">关闭</button>
     </div>
   </div>
 
   <!-- 黑市商店 -->
   <div class="overlay hidden" id="bmScreen">
     <div class="sheet">
-      <h2>🕶 黑市商店 <span class="bmtag">BLACK MARKET</span></h2>
-      <div class="bmrisk">⚠ 限量2款 · 本次开放限购1件 · 购买后掷骰🎲判定风险<br>
-        1=被查获(金币减半·停手) · 2~4=正常 · 5=返还半价 · 6=再送1件普通道具</div>
+      <h2><span data-i18n="🕶 黑市商店">🕶 黑市商店</span> <span class="bmtag">BLACK MARKET</span></h2>
+      <div class="bmrisk"><span data-i18n="⚠ 限量2款 · 本次开放限购1件 · 购买后掷骰🎲判定风险">⚠ 限量2款 · 本次开放限购1件 · 购买后掷骰🎲判定风险</span><br>
+        <span data-i18n="1=被查获(金币减半·停手) · 2~4=正常 · 5=返还半价 · 6=再送1件普通道具">1=被查获(金币减半·停手) · 2~4=正常 · 5=返还半价 · 6=再送1件普通道具</span></div>
       <div id="bmGrid"></div>
-      <button class="btn ghost" id="bmCancel">离开黑市</button>
+      <button class="btn ghost" id="bmCancel" data-i18n="离开黑市">离开黑市</button>
     </div>
   </div>
 
   <!-- 群主红包·发放对象 -->
   <div class="overlay hidden" id="redGiveScreen">
     <div class="sheet">
-      <h2>🧧 群主红包</h2>
-      <div class="sub">收买人心 · 选一个发放对象（消耗金币，占本轮行动）</div>
+      <h2 data-i18n="🧧 群主红包">🧧 群主红包</h2>
+      <div class="sub" data-i18n="收买人心 · 选一个发放对象（消耗金币，占本轮行动）">收买人心 · 选一个发放对象（消耗金币，占本轮行动）</div>
       <div id="redGiveList"></div>
-      <button class="btn ghost" id="redGiveCancel">取消</button>
+      <button class="btn ghost" id="redGiveCancel" data-i18n="取消">取消</button>
     </div>
   </div>
 
   <!-- 指定踢人 -->
   <div class="overlay hidden" id="kickScreen">
     <div class="sheet">
-      <h2>👢 踢谁出群？</h2>
-      <div class="sub">好感低的踢了群众叫好；踢人缘好的会被同阵营围攻（占本轮行动）</div>
+      <h2 data-i18n="👢 踢谁出群？">👢 踢谁出群？</h2>
+      <div class="sub" data-i18n="好感低的踢了群众叫好；踢人缘好的会被同阵营围攻（占本轮行动）">好感低的踢了群众叫好；踢人缘好的会被同阵营围攻（占本轮行动）</div>
       <div id="kickList"></div>
-      <button class="btn ghost" id="kickCancel">取消</button>
+      <button class="btn ghost" id="kickCancel" data-i18n="取消">取消</button>
     </div>
   </div>
 
   <!-- 单人·私聊群成员 -->
   <div class="overlay hidden" id="whisperScreen">
     <div class="sheet">
-      <h2>💬 私聊 · 结盟拉票</h2>
-      <div class="sub">悄悄私聊一位群成员，套近乎/拉票/结盟/套情报（每轮1次，不占行动）</div>
+      <h2 data-i18n="💬 私聊 · 结盟拉票">💬 私聊 · 结盟拉票</h2>
+      <div class="sub" data-i18n="悄悄私聊一位群成员，套近乎/拉票/结盟/套情报（每轮1次，不占行动）">悄悄私聊一位群成员，套近乎/拉票/结盟/套情报（每轮1次，不占行动）</div>
       <div id="whisperList"></div>
-      <button class="btn ghost" id="whisperCancel">取消</button>
+      <button class="btn ghost" id="whisperCancel" data-i18n="取消">取消</button>
     </div>
   </div>
 </div></div>
 
 <script>
 "use strict";
+/*==================== i18n（中/EN） ====================*/
+let LANG=(function(){try{return localStorage.getItem("wxLang")||"zh";}catch(e){return "zh";}})();
+const TR={
+  // ——— 身份/目标/描述 ———
+  "群主":"Group Owner","副群主":"Deputy Owner","管理员":"Admin","组长":"Group Leader",
+  "媒体记者":"Journalist","卧底":"Mole","黑客":"Hacker","成员":"Member",
+  "守住群主之位到第20轮":"Hold the Owner seat until round 20",
+  "代管全群撑到第20轮，信誉不崩":"Run the group to round 20 with reputation intact",
+  "撑到第20轮，且信誉不崩(>0)":"Survive to round 20 with reputation >0",
+  "管好你的组撑到第20轮，信誉不崩":"Keep your team in line to round 20, reputation intact",
+  "曝光进度满100，扳倒微信总监":"Reach 100 exposure and take down the WeChat Director",
+  "潜伏到第20轮，怀疑度别满100":"Stay hidden to round 20, keep suspicion below 100",
+  "破解6名玩家并活到第20轮":"Crack 6 players and survive to round 20",
+  "在选举中当选新群主":"Get elected as the new Group Owner",
+  "最高权力，但媒体曝光、成员举报、官方踢人都盯着你。撑满20轮且不被弹劾/罢免即胜。":"Supreme power, but the press, member reports and official removals all target you. Win by lasting 20 rounds without being impeached or ousted.",
+  "二把手，群主不在时代管全群。撑满20轮且信誉>0即胜。":"The second-in-command who runs the group when the Owner is away. Win by lasting 20 rounds with reputation >0.",
+  "辅佐群主、踢除刺头。小心被官方开除或信誉归零降职。活到最后即胜。":"Assist the Owner and kick troublemakers. Beware official dismissal or demotion when reputation hits zero. Survive to the end to win.",
+  "能禁言组员压制闹事者。活到最后且信誉>0即胜。":"Mute your members to suppress troublemakers. Win by surviving to the end with reputation >0.",
+  "调查取证→曝光官方。成员会攻击你、官方会公关压你。曝光进度满100即胜。":"Investigate, then expose the officials. Members attack you and officials spin against you. Win by reaching 100 exposure.",
+  "隐藏身份坚持到最后。发言/攻击会升怀疑，潜伏降怀疑。怀疑度满100被识破即败。":"Hide your identity to the end. Talking/attacking raises suspicion, lying low lowers it. Lose if suspicion hits 100 and you're exposed.",
+  "破解身份、删除证据、搅动全场。官方会溯源你。破解满6人且活到最后即胜。":"Crack identities, delete evidence, stir up chaos. Officials trace you. Win by cracking 6 and surviving to the end.",
+  "通过拉票、举报、证据攒上位支持，在每5轮的选举中支持够高即当选新群主获胜。":"Gather support through canvassing, reports and evidence. Win by getting enough support to be elected Owner at a round-5 election.",
+  "曝光进度":"Exposure","怀疑度":"Suspicion","破解数":"Cracks","上位支持":"Support",
+  // ——— 群人口 ———
+  "核心成员":"Core Member","游客":"Guest","禁言成员":"Muted Member","被踢成员":"Kicked Member",
+  "被封禁成员":"Banned Member","微信工作人员":"WeChat Staff","高级工作人员":"Senior Staff",
+  "微信主管":"WeChat Supervisor","微信总监":"WeChat Director","媒体":"Press",
+  "群管理园区":"Group Management","普通成员队伍":"Ordinary Members","特殊状态":"Special Status",
+  "微信官方势力":"WeChat Officialdom","媒体集群":"Press Corps",
+  // ——— 群内动态 DRAMA ———
+  "📣 群内动态：":"📣 Group buzz: ",
+  "🏢 微信工作人员踢掉了一名群主候选，杀鸡儆猴":"🏢 WeChat staff kicked an Owner candidate to make an example",
+  "🏢 高级工作人员开除了一名工作人员":"🏢 A senior staffer fired a staff member",
+  "💼 微信主管清理门户，开除一名工作人员":"💼 The WeChat Supervisor cleaned house and fired a staffer",
+  "👔 微信总监罢免了一名主管":"👔 The WeChat Director dismissed a supervisor",
+  "📰 媒体联合群众，正在酝酿罢免微信总监":"📰 The press and the crowd are plotting to oust the WeChat Director",
+  "👥 成员们串联起来，围攻一名媒体":"👥 Members banded together and ganged up on a reporter",
+  "⭐ 副群主代群主处理了一批违规":"⭐ The Deputy Owner handled a batch of violations for the Owner",
+  // ——— 成就 ———
+  "最强群主":"Top Owner","以群主身份获胜":"Win as the Group Owner",
+  "金牌管理":"Gold Admin","以管理员身份获胜":"Win as an Admin",
+  "金牌记者":"Gold Journalist","以媒体身份获胜":"Win as the Journalist",
+  "最强卧底":"Master Mole","以卧底身份潜伏到底":"Stay hidden to the end as the Mole",
+  "顶级黑客":"Elite Hacker","以黑客身份获胜":"Win as the Hacker",
+  "逆袭上位":"Underdog Rise","以成员身份当选群主":"Get elected Owner as a Member",
+  "稳如副手":"Steady Deputy","以副群主身份获胜":"Win as the Deputy Owner",
+  "金牌组长":"Gold Leader","以组长身份获胜":"Win as the Group Leader",
+  "全能王":"All-Rounder","用全部身份各赢一次":"Win once with every role",
+  "证据大师":"Evidence Master","单局公开3份真证据":"Reveal 3 real pieces of evidence in one game",
+  "翻车现场":"Caught Faking","公开假证据被抓包":"Get caught revealing fake evidence",
+  "挨打王":"Punching Bag","单局硬抗5次攻击":"Take 5 attacks in one game",
+  "财大气粗":"Big Spender","单局攒下15金币":"Stockpile 15 coins in one game",
+  "红包大户":"Red-Packet Baron","单局发3个红包":"Send 3 red packets in one game",
+  "身经百战":"Veteran","累计游玩10局":"Play 10 games total",
+  "完美一局":"Flawless Run","满血通关(❤未掉且获胜)":"Win at full health (no ❤ lost)",
+  // ——— 灌水 CHATTER ———
+  "6666":"6666","哈哈哈哈哈":"hahahaha","？？？":"???","蹲一个瓜":"waiting for the tea",
+  "前排围观":"front-row spectator","有内鬼":"there's a mole","up主加油":"go creator!","坐等大结局":"waiting for the finale",
+  "红包呢红包呢":"where's the red packet?","楼上说得对":"the one above is right","这群好乱啊":"this group is chaos","我啥也没看见":"I saw nothing",
+  "摸鱼中🐟":"slacking off🐟","打卡～":"checking in~","+1":"+1","有点意思":"interesting",
+  "笑死我了🤣":"dying laughing🤣","别吵别吵":"stop fighting","冷静冷静":"calm down","吃瓜吃瓜🍉":"just here for the drama🍉",
+  "牛的":"impressive","蚌埠住了":"can't hold it together","typing…":"typing…","在的在的":"here here",
+  // ——— NPC 自主行动 ———
+  "【发了一个红包】🧧":"[Sent a red packet]🧧","红包拿去～🧧":"Here's a red packet~🧧","手气最佳来抢！🧧":"Best-luck packet, grab it!🧧",
+  "刷屏刷屏":"spam spam","6666666666":"6666666666","啊啊啊啊啊啊":"aaaaaa","🤣🤣🤣🤣🤣":"🤣🤣🤣🤣🤣",
+  "其实群主挺靠谱的":"the Owner's actually reliable","别黑了，我挺TA":"stop hating, I support them","支持一下👍":"showing support👍",
+  "这群主不行":"this Owner is no good","我举报！":"I'm reporting this!","下台吧":"step down","别惯着TA":"don't spoil them",
+  // ——— 证据类型 ———
+  "聊天记录":"Chat Log","截图":"Screenshot","举报记录":"Report Record","收买记录":"Bribe Record","录音":"Audio","系统日志":"System Log",
+  // ——— 事件牌 ———
+  "🟥 腾讯服务器维护":"🟥 Tencent Server Maintenance","本轮所有道具失效！":"All items disabled this round!",
+  "🔥 上了热搜":"🔥 Trending Topic","媒体火力全开，攻击更猛。":"The press goes all-in, attacks hit harder.",
+  "📵 网络异常":"📵 Network Glitch","信息混乱，本轮波动更大。":"Info is scrambled, more volatility this round.",
+  "🧧 红包雨":"🧧 Red-Packet Rain","全群疯狂抢红包，你也抢一个！":"The whole group grabs packets frantically, you grab one too!",
+  "🆙 系统升级":"🆙 System Upgrade","管理员+1，管理更混乱，舆论 -3。":"Admins +1, management gets messier, opinion -3.",
+  "🤖 AI 审核":"🤖 AI Moderation","随机封禁一名闹事者，威胁-1。":"Randomly bans a troublemaker, threat -1.",
+  "🦠 病毒传播":"🦠 Virus Spread","随机2人禁言，群里安静，舆论 +3。":"2 random members muted, group quiets down, opinion +3.",
+  "🔀 微信更新":"🔀 WeChat Update","全员职位洗牌！舆论大幅波动。":"Everyone's roles reshuffled! Big opinion swing.",
+  "📂 数据泄露":"📂 Data Leak","群里流出一批聊天记录，你捡到 1 份证据。":"Chat logs leak in the group, you pick up 1 piece of evidence.",
+  "🎉 群庆典":"🎉 Group Celebration","群里涌入新人，气氛火热，舆论 +5。":"Newcomers flood in, the mood heats up, opinion +5.",
+  "🔗 群二维码刷屏":"🔗 QR-Code Spam","扫码进来 5 名游客。":"5 guests scan in.",
+  "🐛 系统Bug":"🐛 System Bug","一名被踢成员被恢复了！":"A kicked member got reinstated!",
+  "🎴 事件牌：":"🎴 Event: ",
+  // ——— 空投 ———
+  "护盾":"Shield","金币空投":"Coin Drop","医疗包":"Medkit","机密证据":"Secret Evidence","来信举报":"Report Letter",
+  "禁言卡":"Mute Card","解封卡":"Unban Card","身份卡":"Identity Card","特殊技能":"Special Skill",
+  "获得 1 层护盾":"Gained 1 shield","医疗包 +1（背包）":"Medkit +1 (bag)","举报卡 +1（背包）":"Report Card +1 (bag)",
+  "禁言一个刺头：威胁-1，护盾+1":"Muted a troublemaker: threat -1, shield +1","怀疑度 -15":"Suspicion -15",
+  "信誉 +1":"Reputation +1","舆论 +8":"Opinion +8","身份伪装 +1（背包）":"Disguise +1 (bag)","(存疑)":"(dubious)",
+  "🎁 —— 空投来了！ —— ":"🎁 —— Airdrop incoming! —— ","空投·系统":"Airdrop·System",
+  // ——— 商店 ———
+  "护盾卡":"Shield Card","抵挡一次攻击或技能":"Block one attack or skill",
+  "举报卡":"Report Card","反举报对手，舆论+6":"Counter-report a rival, opinion +6",
+  "调查卡":"Probe Card","查探情报，获得1份真证据":"Dig for intel, get 1 real piece of evidence",
+  "恢复 1 点生命值":"Restore 1 HP",
+  "身份伪装卡":"Disguise Card","下一轮不被针对（降怀疑）":"Not targeted next round (lowers suspicion)",
+  "禁言闹事者：下一轮敌方攻击-1":"Mute a troublemaker: enemy attacks -1 next round",
+  "解除自身禁言/封锁，舆论+4":"Lift your own mute/ban, opinion +4",
+  "刷屏卡":"Spam Card","刷屏搅局，舆论+3 消一次曝光":"Spam to disrupt, opinion +3 and clear one exposure",
+  "舆论炸弹":"Opinion Bomb","立刻轰炸对手(每局1次)：清威胁+大幅助攻":"Bomb rivals instantly (once/game): clears threat + big boost",
+  "神秘红包":"Mystery Packet","开出随机大奖（也可能空/陷阱）":"Opens a random prize (may be empty/a trap)",
+  "复活券":"Revive Ticket","淘汰时自动复活一次":"Auto-revive once when eliminated",
+  // ——— 行动 ———
+  "发言":"Speak","加护盾":"Add Shield","公开证据":"Reveal Evidence","公关":"PR","踢人":"Kick",
+  "禁言组员":"Mute Member","发红包":"Red Packet","调查取证":"Investigate","曝光官方":"Expose Officials",
+  "潜伏":"Lie Low","破解身份":"Crack Identity","删除证据":"Delete Evidence","举报对手":"Report Rival",
+  "各位群友信我！":"Trust me, everyone!","我清者自清！":"I've got nothing to hide!","跟着我有肉吃！":"Follow me and you'll eat well!","理性讨论，别带节奏。":"Let's discuss calmly, no stirring up.",
+  "先给自己加个防护。":"Let me shield up first.","获得1层护盾":"Gained 1 shield",
+  "我有实锤！（其实是假的…）":"I've got hard proof! (actually it's fake…)","❌ 假证据被识破！信誉-3 舆论-4":"❌ Fake evidence exposed! Reputation -3, opinion -4",
+  "曝光进度 +22":"Exposure +22","上位支持 +20，舆论+4":"Support +20, opinion +4","信誉+1，💰+3":"Reputation +1, 💰+3",
+  "舆论+8 信誉+1，扳倒一个对手":"Opinion +8, reputation +1, took down a rival","你没有证据可公开，先去调查/购买":"You have no evidence to reveal, go investigate/buy first",
+  "这事我处理好了，官方打好招呼了。":"I've handled this, squared it with the officials.","公关 舆论+8，曝光压下":"PR: opinion +8, exposure suppressed",
+  "这位组员太闹，禁言10分钟。":"This member's too rowdy, muted for 10 minutes.","禁言一个组员：下一轮敌方攻击-1":"Muted a member: enemy attacks -1 next round",
+  "无实锤曝光，进度+8（舆论-2）":"Exposure without hard proof, +8 (opinion -2)","我曝光官方黑幕！（暂无实锤）":"I'm exposing the officials' cover-up! (no hard proof yet)","曝光进度 +26":"Exposure +26",
+  "随便看看…":"Just browsing…","我就是个普通群友。":"I'm just a regular member.","不太懂，围观。":"Not sure, just watching.","潜伏，怀疑度 -18":"Lie low, suspicion -18",
+  "已入侵，拖出一份数据。":"Breached, pulled some data.","顺手薅了点羊毛。":"Skimmed a little off the top.","破解 +1，💰+2":"Crack +1, 💰+2",
+  "把痕迹清理干净。":"Wiped the traces clean.","删除对手证据，威胁-1":"Deleted rival evidence, threat -1",
+  "我举报他！（好像诬告了）":"I'm reporting him! (looks like a false accusation)","😬 诬告！信誉-1 舆论-2":"😬 False accusation! Reputation -1, opinion -2",
+  "实名举报竞争对手！":"Officially reporting my rival!","上位支持+10 舆论+3":"Support +10, opinion +3",
+  "商店":"Shop","领红包":"Grab Packet","私聊":"Whisper","群主红包":"Owner Packet","逛黑市":"Black Market","黑市(已购)":"Market (bought)",
+  "本轮已行动，结算中…":"Already acted this round, resolving…","结算中…":"Resolving…",
+  // ——— 回合流程 ———
+  "轮到你了，选一个行动（每轮1次）":"Your turn, pick one action (once per round)",
+  "🕶 黑市开张了！（本轮可去黑市抢购1件强力道具）":"🕶 The black market is open! (grab 1 powerful item this round)",
+  "💵 贿赂生效，无人敢动你":"💵 Bribe in effect, no one dares touch you","🎭 你伪装成普通成员":"🎭 You're disguised as a regular member",
+  "，本轮无人针对你。":", no one targets you this round.",
+  "定时炸弹":"Time Bomb","【嘀…嘀…💥 定时炸弹引爆！】":"[Beep… beep… 💥 the time bomb goes off!]","💥 定时炸弹引爆，重创对手阵营！":"💥 The time bomb detonates, crippling the rival camp!",
+  "📢 你的禁言卡奏效，本轮无人敢闹事！":"📢 Your mute card works, no one dares act up this round!",
+  // ——— AI 标签 & 台词 ———
+  "曝光":"Expose","举报":"Report","内乱":"Infighting","官方":"Officials","刷屏":"Spam",
+  "围攻媒体":"Gang on Press","官方压制":"Official Censor","总监警告":"Director Warning","吃瓜":"Spectating",
+  "调查":"Investigation","起疑":"Suspicion","日常":"Chit-chat","安全溯源":"Security Trace","警觉":"Alert","围观":"Onlookers",
+  "打压":"Suppression","竞争":"Rivalry","路人":"Bystander",
+  "曝光群主私聊记录！":"Leaking the Owner's private chats!","独家：管理层暗箱操作实锤？":"Exclusive: proof of backroom deals by management?","爆料收黑钱！":"Scoop: taking dirty money!",
+  "我举报滥用职权！":"I'm reporting abuse of power!","@所有人 又踢错人了！":"@everyone kicked the wrong person again!","实名举报！":"Filing an official report!",
+  "管理员误踢了核心成员…":"An admin kicked a core member by mistake…","权限出事了":"Permissions went wrong","踢错人引发不满":"Kicking the wrong person stirred anger",
+  "微信官方介入调查":"WeChat officials are investigating","官方：涉嫌违规":"Officials: suspected violation","工作人员盯上你了":"Staff have their eye on you",
+  "官方帮忙澄清了":"Officials helped clear it up","主管替你说了好话":"The supervisor put in a good word",
+  "6666666":"6666666","哈哈哈哈":"hahaha","......":"......",
+  "这记者造谣，一起举报！":"This reporter spreads lies, let's all report them!","别信媒体，攻击他！":"Don't trust the press, attack them!","媒体黑我们！":"The press is smearing us!",
+  "官方否认了你的报道":"Officials denied your report","公关删了你的稿子":"PR deleted your article","这是假新闻！":"This is fake news!",
+  "微信总监警告你别乱来":"The WeChat Director warns you to behave","再曝光就封你号":"Expose again and we ban your account",
+  "记者加油！":"Go, reporter!","蹲一个大瓜":"waiting for a juicy scoop","666":"666",
+  "这个人有点可疑…":"This person seems suspicious…","查一下他的身份":"Check their identity","感觉他是卧底":"Feels like they're a mole",
+  "他发言好奇怪":"Their messages are so weird","为什么总躲着":"Why always hiding","有内鬼吧？":"There's a mole, right?",
+  "群里真热闹":"The group's so lively","红包呢":"Where's the red packet","哈哈哈":"haha",
+  "检测到异常登录，正在溯源！":"Abnormal login detected, tracing!","官方在追踪黑客":"Officials are tracking the hacker","IP暴露了？":"IP exposed?",
+  "有人在搞事…":"Someone's up to something…","系统被入侵了？":"System got hacked?","注意安全":"Stay safe",
+  "黑客好酷":"The hacker's so cool","救救孩子":"somebody help",
+  "这人也想上位？做梦":"This one wants power too? Dream on","别投他":"Don't vote for him","他没资格":"He's not qualified",
+  "我也要竞选群主！":"I'm running for Owner too!","支持我才对":"You should support me","别被他忽悠":"Don't be fooled by him",
+  "这位说得有道理":"This one makes sense","考虑一下他":"Give him some thought",
+  "其实群主没那么差":"the Owner's not that bad actually","别一起黑TA":"don't all pile on them","我信群主":"I trust the Owner",
+  // ——— 法庭 ———
+  "⚖ —— 法庭开庭 —— ":"⚖ —— Court is in session —— ","法官·公正":"Judge·Fair",
+  "✅ 你在法庭上扳倒对手，信誉 +1":"✅ You took down your rival in court, reputation +1",
+  "📰 曝光进度 +25":"📰 Exposure +25","👥 上位支持 +20":"👥 Support +20","💰 顺手捞了 3 金币":"💰 Snagged 3 coins on the side","📊 舆论 +8，扳倒一个对手":"📊 Opinion +8, took down a rival",
+  "有人指控你，现在开始质证。":"Someone accuses you, cross-examination begins.",
+  "📣 你打出举报卡自辩，舆论+8 信誉+1，无罪释放！":"📣 You play a report card in defense: opinion +8, reputation +1, acquitted!",
+  "😮‍💨 证据不足，你被无罪释放。":"😮‍💨 Insufficient evidence, you're acquitted.",
+  "禁言":"Mute","降职":"Demote","舆论重创":"Opinion Blow",
+  "🔇 判决：禁言！你本轮无法行动（可用🔓解封卡解除）。":"🔇 Verdict: Muted! You can't act this round (use a 🔓 Unban Card to lift it).",
+  "⬇ 判决：信誉-1，舆论-6。":"⬇ Verdict: reputation -1, opinion -6.","📉 判决：舆论-10。":"📉 Verdict: opinion -10.",
+  "本轮无人提交有效证据，退庭。":"No valid evidence submitted this round, court adjourned.",
+  // ——— 结算/选举/弹劾 ———
+  "🛡 舆论≥80，群管理获得护盾！":"🛡 Opinion ≥80, management gains a shield!",
+  "🗳 —— 全民选举 —— ":"🗳 —— General Election —— ","你当选为新群主！权力更替成功！":"You're elected the new Owner! Power successfully changes hands!",
+  "竞选失败，你被投下台了":"You lost the election and were voted out","选举与你无关，静观其变。":"The election doesn't concern you, wait and see.",
+  "选举进行中，你冷眼旁观，暗中行事。":"Election underway; you watch coldly and work in the shadows.","⬇ 官方考核，你差点被开除…信誉-1":"⬇ Official review, you nearly got fired… reputation -1",
+  "🗳 —— 弹劾大会 —— ":"🗳 —— Impeachment Assembly —— ","舆论过低，全群发起弹劾！":"Opinion too low, the whole group launches an impeachment!",
+  "📣 举报卡自辩，舆论+10！":"📣 Report card in defense, opinion +10!","😮‍💨 你惊险保住了位置。":"😮‍💨 You narrowly kept your seat.","弹劾通过，你被赶下群主之位":"Impeachment passes, you're ousted as Owner",
+  "🎟 复活券生效！满血归来（❤3）":"🎟 Revive ticket used! Back at full health (❤3)","你被攻击淘汰了（❤ 归零）":"You were attacked and eliminated (❤ zeroed)",
+  "怀疑度拉满，你的卧底身份被识破！":"Suspicion maxed out, your mole cover is blown!","曝光进度拉满，微信总监被扳倒，你赢了！":"Exposure maxed out, the WeChat Director falls, you win!",
+  "你守住群主之位，撑过全部20轮！":"You held the Owner seat through all 20 rounds!",
+  "你代管全群到最后，副群主稳如泰山！":"You ran the group to the end, the Deputy stands rock-solid!","信誉崩塌，你被撤了副群主":"Reputation collapsed, you were removed as Deputy Owner",
+  "你把小组管到最后，金牌组长！":"You led your team to the end, gold-medal Leader!","信誉崩塌，你被撤了组长":"Reputation collapsed, you were removed as Leader",
+  "你稳坐管理员到最后，功成身退！":"You held Admin to the end and retired in glory!","信誉崩塌，你被降为普通成员":"Reputation collapsed, you were demoted to a regular member",
+  "你潜伏到最后从未暴露，卧底大成功！":"You stayed hidden to the very end, a total mole success!",
+  "到最后也没能扳倒总监，曝光失败":"You never took down the Director, exposure failed","20轮内始终没能当选群主":"You never got elected Owner within 20 rounds",
+  "任务达成":"Mission Accomplished","再接再厉":"Keep It Up","换个身份再战！":"Try another role and fight again!",
+  // ——— 商店/道具使用 ———
+  "已用":"Used","💣 舆论炸弹每局限购1次":"💣 Opinion Bomb: one purchase per game","金币不足":"Not enough coins",
+  "⚠ 腾讯维护中，本轮道具失效":"⚠ Tencent maintenance, items disabled this round",
+  "❤️ 医疗包，❤+1":"❤️ Medkit, ❤+1","📄 举报卡，舆论+6":"📄 Report card, opinion +6",
+  "🎭 身份伪装，下一轮不被针对":"🎭 Disguise on, not targeted next round",
+  "📢 禁言卡：封住一个刺头，下一轮敌方攻击-1":"📢 Mute card: silences a troublemaker, enemy attacks -1 next round",
+  "🔓 解封卡：解除禁言，你可以行动了！":"🔓 Unban card: mute lifted, you can act now!","🔓 解封卡：解除封锁，信誉+1 舆论+4":"🔓 Unban card: ban lifted, reputation +1, opinion +4",
+  "📱 刷屏搅局，舆论+3":"📱 Spam disruption, opinion +3","已购":"Bought",
+  // ——— 红包/炸弹 ———
+  "拼手气红包":"Lucky-Draw Packet","幸运红包 🌧":"Lucky Packet 🌧","幸运红包":"Lucky Packet",
+  "至尊红包 👑":"Supreme Packet 👑","至尊红包":"Supreme Packet","神秘红包 🎰":"Mystery Packet 🎰",
+  "🧧 点击拆红包":"🧧 Tap to open","🧧 本轮红包已领，下轮再来":"🧧 Already grabbed this round, come back next round",
+  "红包·群主":"Packet·Owner","【发了一个拼手气红包】":"[Sent a lucky-draw red packet]","🧧 你抢到红包：":"🧧 You grabbed: ",
+  "💰 +1金币":"💰 +1 coin","💰 +2金币":"💰 +2 coins","💰 +3金币":"💰 +3 coins","🛡 护盾×1":"🛡 Shield ×1",
+  "💰 幸运红包：":"💰 Lucky packet: ","❤ 恢复1点生命":"❤ Restore 1 HP",
+  "发给全体群友":"Give to Everyone","全群感激，舆论 +15":"The whole group is grateful, opinion +15",
+  "发给普通成员":"Give to Members","拉拢群众，舆论 +10":"Win over the crowd, opinion +10",
+  "发给管理层":"Give to Management","稳固管理，舆论 +8 · 护盾 +1":"Secure management, opinion +8 · shield +1",
+  "塞给媒体":"Slip to the Press","收买媒体，压下曝光 · 舆论 +4":"Buy off the press, suppress exposure · opinion +4",
+  "塞给刺头闹事者":"Slip to Troublemakers","收买刺头，威胁 -1 · 舆论 +5":"Buy off troublemakers, threat -1 · opinion +5",
+  "本轮已行动":"Already acted this round","🧧 群主红包：":"🧧 Owner packet: ",
+  // ——— 踢人 ———
+  "好感 ":"Affinity ","👢踢":"👢 Kick",
+  "凭什么踢TA！":"Why kick them?!","群主太过分了！":"The Owner's gone too far!","我们要讨个说法":"We demand an explanation","一起举报群主！":"Let's all report the Owner!",
+  // ——— 私聊 ———
+  "💬 本轮私聊已用，下轮再来":"💬 Whisper used this round, come back next round",
+  "结盟！我帮你盯着那帮闹事的。":"Alliance! I'll watch those troublemakers for you.","🤝 结盟成功：威胁 -1":"🤝 Alliance formed: threat -1",
+  "给你个独家料，别说是我给的。":"Here's an exclusive tip, don't say it came from me.",
+  "官方那边的关系，我帮你打点。":"I'll smooth things over with the officials for you.","🏢 打点官方：压下曝光，舆论 +3":"🏢 Greased the officials: exposure suppressed, opinion +3",
+  "嘿嘿，红包拿来我就帮你摇旗！":"Heh, send a packet and I'll cheer you on!","👀 打赏游客：💰 +1":"👀 Tipped a guest: 💰 +1",
+  "…你什么都没看见。":"…You saw nothing.","🕵️ 试探一番：舆论 +2":"🕵️ Probed a bit: opinion +2",
+  "你说得对，选举我投你！":"You're right, I'll vote for you!","👥 拉票成功：上位支持 +8，舆论 +2":"👥 Canvassing worked: support +8, opinion +2",
+  "群主威武，我挺你！":"Owner's the best, I've got your back!","👥 拉拢群众：舆论 +5":"👥 Won over the crowd: opinion +5",
+  "在吗？帮个忙呗~":"You there? Do me a favor~","咱俩联手怎么样？":"How about we team up?","悄悄说个事…":"Just a quiet word…","给你发个红包，帮我说句话呗":"I'll send you a packet, put in a word for me",
+  // ——— 黑市 ———
+  "2回合后重创对手阵营(清威胁+助攻)":"Cripples the rival camp in 2 rounds (clears threat + boost)",
+  "隐身披风":"Invisibility Cloak","2回合内不被攻击/调查":"Not attacked/investigated for 2 rounds",
+  "身份交换卡":"Identity Swap Card","随机换成另一个身份(赌一把翻盘)":"Randomly swap to another role (gamble for a comeback)",
+  "绝密档案":"Top-Secret File","获得2份真证据+情报(舆论+信誉)":"Gain 2 real evidence + intel (opinion + reputation)",
+  "贿赂卡":"Bribe Card","下一回合无人攻击你，舆论+5":"No one attacks you next round, opinion +5",
+  "技能重置卡":"Skill Reset Card","刷新一次性技能(舆论炸弹/红包)":"Refresh one-time skills (Opinion Bomb/packet)",
+  "金库钥匙":"Vault Key","立即+10金币，并抽1件普通道具":"Instantly +10 coins and draw 1 common item",
+  "开出2件高级道具或15金币(小概率空)":"Opens 2 premium items or 15 coins (small chance empty)",
+  "💣 定时炸弹已布下，2回合后引爆…":"💣 Time bomb planted, detonates in 2 rounds…",
+  "🎁 至尊红包：竟是空红包，血亏…":"🎁 Supreme packet: it's empty, brutal loss…","❌ 空红包":"❌ Empty packet",
+  "🎁 至尊红包：+15金币！":"🎁 Supreme packet: +15 coins!","💰 +15金币":"💰 +15 coins","🎁 至尊红包：":"🎁 Supreme packet: ",
+  "请先完成本轮行动前来黑市":"Finish your action before visiting the black market","黑市本轮未开张（奇数轮开放）":"Black market closed this round (opens on odd rounds)",
+  "黑市·商人":"Black Market·Dealer","【一手交钱一手交货…掷骰判定风险】":"[Cash for goods… roll the dice for risk]","被查获，本回合结束…":"Busted, round over…",
+  // ——— 神秘红包 ———
+  "神秘·红包":"Mystery·Packet","【神秘红包，点击试试手气…】":"[Mystery packet, tap to test your luck…]",
+  "💰 +10金币！大奖！":"💰 +10 coins! Jackpot!","🛡 护盾×2":"🛡 Shield ×2","❤️ 恢复满血":"❤️ Fully healed",
+  "🎭 身份伪装×1":"🎭 Disguise ×1","📢 禁言卡×2":"📢 Mute Card ×2","🎰 开出舆论炸弹！":"🎰 Rolled an Opinion Bomb!",
+  "💰 +5金币（炸弹已用过）":"💰 +5 coins (bomb already used)","❌ 空红包，什么都没有…":"❌ Empty packet, nothing…","💥 陷阱！信誉 -1":"💥 Trap! Reputation -1","🎰 神秘红包：":"🎰 Mystery packet: ",
+  "你":"You","【引爆一颗舆论炸弹💣，对手阵营炸开了锅！】":"[Set off an Opinion Bomb💣, the rival camp erupts!]",
+  "💣 舆论炸弹：曝光进度+18，压制对手":"💣 Opinion Bomb: exposure +18, suppresses rivals",
+  "💣 舆论炸弹：上位支持+15 舆论+5":"💣 Opinion Bomb: support +15, opinion +5",
+  "💣 舆论炸弹：破解+1 💰+3":"💣 Opinion Bomb: crack +1, 💰+3",
+  "💣 舆论炸弹：转移视线，怀疑度-15 舆论+4":"💣 Opinion Bomb: draws attention away, suspicion -15, opinion +4",
+  "💣 舆论炸弹：舆论+10 信誉+1，轰倒一片对手":"💣 Opinion Bomb: opinion +10, reputation +1, blasts a wave of rivals",
+  // ——— 渲染/花名册/HUD ———
+  "🧾 暂无证据（调查/购买/事件获取）":"🧾 No evidence yet (get via investigate/buy/events)",
+  "🎒背包(点击使用)：":"🎒 Bag (tap to use): ","空（去🛒商店买）":"Empty (buy at 🛒 shop)"," ▸用":" ▸use",
+  "❤ 群里对你的好感度":"❤ Group's affinity toward you","人)":" ppl)",
+  "金币不足，去商店或发言攒钱":"Not enough coins, earn some at the shop or by speaking",
+  // ——— 联机 ———
+  "正在进群…":"Entering the group…","连不上服务器（离线/沙盒环境）":"Can't reach the server (offline/sandbox)","在线 ":"Online ",
+  // ——— 静态界面 HTML ———
+  "微信群权力战争":"WeChat Group Power War","128 人大群 · 随机身份权谋对抗":"128-member group · random-role scheming showdown",
+  "🎭 6 种身份各有不同胜利目标（守位/曝光/潜伏/破解/上位）。":"🎭 Each of the 6+ roles has its own victory goal (hold power / expose / hide / crack / rise up).",
+  "🧾 证据 · ⚖ 法庭 · 🗳 选举 · 🎁 空投 · 🧧 红包 · 💣 舆论炸弹。":"🧾 Evidence · ⚖ Court · 🗳 Elections · 🎁 Airdrops · 🧧 Red Packets · 💣 Opinion Bombs.",
+  "🌐 联机群聊：和真人一起进大群实时聊天！":"🌐 Online Group Chat: join a big group and chat with real people live!",
+  "🎮 单人游戏":"🎮 Single Player","🏆 成就":"🏆 Achievements","🌐 联机群聊":"🌐 Online Group Chat",
+  "选择你的身份":"Choose Your Role","点一个身份，或随机抽取":"Pick a role, or draw at random","🎲 随机身份":"🎲 Random Role","← 返回":"← Back",
+  "🏆 成就殿堂":"🏆 Hall of Achievements","🌐 联机大群":"🌐 Online Group","‹ 离开":"‹ Leave",
+  "进入联机大群":"Enter the Online Group","和真人一起在同一个群里实时聊天":"Chat live with real people in the same group",
+  "选一个身份标签：":"Pick an identity tag:","进群":"Enter","🔒 私聊":"🔒 Whisper","← 返回群聊":"← Back to group","发送":"Send",
+  "🛒 群道具商店":"🛒 Group Item Shop","💰 金币：":"💰 Coins: ","关闭":"Close","游戏结束":"Game Over","发":"Send",
+  "🎲 再抽一个身份":"🎲 Draw Another Role","← 返回游戏厅":"← Back to Arcade",
+  "👥 群花名册":"👥 Group Roster","128人大群的全部身份构成（随局势实时变化）":"Full role breakdown of the 128-member group (updates live)",
+  "🕶 黑市商店":"🕶 Black Market","⚠ 限量2款 · 本次开放限购1件 · 购买后掷骰🎲判定风险":"⚠ 2 items only · buy 1 per visit · roll 🎲 after buying to judge risk",
+  "1=被查获(金币减半·停手) · 2~4=正常 · 5=返还半价 · 6=再送1件普通道具":"1=busted (coins halved, stop) · 2–4=normal · 5=half refund · 6=free common item",
+  "离开黑市":"Leave Market","🧧 群主红包":"🧧 Owner Packet","收买人心 · 选一个发放对象（消耗金币，占本轮行动）":"Win hearts · pick a recipient (costs coins, uses this round's action)","取消":"Cancel",
+  "👢 踢谁出群？":"👢 Who to kick?","好感低的踢了群众叫好；踢人缘好的会被同阵营围攻（占本轮行动）":"Kick a disliked one and the crowd cheers; kick a popular one and their camp turns on you (uses this round's action)",
+  "💬 私聊 · 结盟拉票":"💬 Whisper · Ally & Canvass","悄悄私聊一位群成员，套近乎/拉票/结盟/套情报（每轮1次，不占行动）":"Quietly whisper a member to schmooze/canvass/ally/extract intel (once per round, free action)",
+  "📊舆论":"📊 Opinion",
+  // ——— 占位符（placeholder，applyLang 特殊处理） ———
+  "💬 自己打字发言（不占行动）…":"💬 Type your own message (free action)…","你的群昵称":"Your group nickname",
+  "点某人昵称可私聊 · 群里说点什么…":"Tap a name to whisper · say something to the group…",
+};
+function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
+function L(zh,en){ return LANG==="en" ? en : zh; }
+function applyLang(){ document.documentElement.lang=LANG==="en"?"en":"zh-CN";
+  document.querySelectorAll("[data-i18n]").forEach(el=>{ el.textContent=tr(el.getAttribute("data-i18n")); });
+  const lb=document.getElementById("langBtn"); if(lb) lb.textContent=LANG==="en"?"中":"EN";
+  const st=document.getElementById("sayText"); if(st) st.placeholder=tr("💬 自己打字发言（不占行动）…");
+  const mn=document.getElementById("mpName"); if(mn) mn.placeholder=tr("你的群昵称");
+  const mt=document.getElementById("mpText"); if(mt && !MP.dmWith) mt.placeholder=tr("点某人昵称可私聊 · 群里说点什么…");
+}
+function relangUI(){
+  if(typeof g==="object" && g){ const rt=document.getElementById("roleTag"); if(rt) rt.textContent=`${g.roleDef.ico} ${tr(g.roleDef.nm)}`; sync(); if(!g.over) renderActs(); }
+  const vis=id=>{ const e=document.getElementById(id); return e && !e.classList.contains("hidden"); };
+  if(vis("roleScreen")) buildRoleGrid();
+  if(vis("achScreen")) buildAch();
+  if(vis("shopScreen")) openShop();
+  if(vis("rosterScreen")) openRoster();
+  if(vis("redGiveScreen")) openRedGive();
+  if(vis("bmScreen")) openBM();
+  if(vis("overScreen") && typeof g==="object" && g && g._overShown) renderOver();
+}
+function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("wxLang",LANG);}catch(e){}
+  applyLang(); relangUI(); }
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const rand=(a,b)=>a+Math.random()*(b-a);
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -371,7 +663,7 @@ const DRAMA=[
   {t:"👥 成员们串联起来，围攻一名媒体",f:()=>{ if(Math.random()<.4)popChange("media",-1); }},
   {t:"⭐ 副群主代群主处理了一批违规",f:()=>{ popChange("member",-1); popChange("kicked",1); }},
 ];
-function groupDrama(){ const d=pick(DRAMA); sys("📣 群内动态："+d.t); d.f(); }
+function groupDrama(){ const d=pick(DRAMA); sys(tr("📣 群内动态：")+tr(d.t)); d.f(); }
 
 /*==================== 存档 + 成就 ====================*/
 const WSKEY="wechatWarSave_v1";
@@ -442,19 +734,19 @@ function npcAction(npc){
   const r=Math.random(), faff=factionAff(npc.a);
   if(r<0.14){ // 发红包（人机刷红包）→ 你抢到金币
     const c=1+Math.floor(Math.random()*3); g.coins+=c;
-    msg(npc.n,npc.a,pick(["【发了一个红包】🧧","红包拿去～🧧","手气最佳来抢！🧧"]));
-    sys(`🧧 你抢到 ${npc.n} 的红包：💰+${c}`,"good"); return; }
+    msg(npc.n,npc.a,tr(pick(["【发了一个红包】🧧","红包拿去～🧧","手气最佳来抢！🧧"])));
+    sys(L(`🧧 你抢到 ${npc.n} 的红包：💰+${c}`,`🧧 You grabbed ${npc.n}'s red packet: 💰+${c}`),"good"); return; }
   if(r<0.24 && (npc.a==="🛡"||npc.a==="🏢"||npc.a==="📢")){ // 人机踢人
     const victim=npcBy(pick(["👥","👀"])); popChange("member",-1); popChange("kicked",1);
-    msg(npc.n,npc.a,`把 ${victim.n} 踢了！👢`); sys(`👢 ${npc.n} 踢掉了一名成员`,""); return; }
+    msg(npc.n,npc.a,L(`把 ${victim.n} 踢了！👢`,`Kicked ${victim.n}! 👢`)); sys(L(`👢 ${npc.n} 踢掉了一名成员`,`👢 ${npc.n} kicked a member`),""); return; }
   if(r<0.30){ // 刷屏
-    msg(npc.n,npc.a,pick(["刷屏刷屏","6666666666","啊啊啊啊啊啊","🤣🤣🤣🤣🤣"])); return; }
+    msg(npc.n,npc.a,tr(pick(["刷屏刷屏","6666666666","啊啊啊啊啊啊","🤣🤣🤣🤣🤣"]))); return; }
   if(r<0.40){ // 举报/攻击/或（好感高则）挺你
-    if(faff>=62){ addFactionAff(npc.a,1); op(1); msg(npc.n,npc.a,pick(["其实群主挺靠谱的","别黑了，我挺TA","支持一下👍"])); }
-    else if(faff<=32){ op(-1); msg(npc.n,npc.a,pick(["这群主不行","我举报！","下台吧","别惯着TA"])); }
-    else msg(npc.n,npc.a,pick(CHATTER));
+    if(faff>=62){ addFactionAff(npc.a,1); op(1); msg(npc.n,npc.a,tr(pick(["其实群主挺靠谱的","别黑了，我挺TA","支持一下👍"]))); }
+    else if(faff<=32){ op(-1); msg(npc.n,npc.a,tr(pick(["这群主不行","我举报！","下台吧","别惯着TA"]))); }
+    else msg(npc.n,npc.a,tr(pick(CHATTER)));
     return; }
-  msg(npc.n,npc.a,pick(CHATTER)); // 纯灌水
+  msg(npc.n,npc.a,tr(pick(CHATTER))); // 纯灌水
 }
 function groupChatter(){
   const n=8+Math.floor(Math.random()*4);   // 一回合约 8~11 条
@@ -486,24 +778,24 @@ const EVENTS=[
 
 /*==================== 空投（每2轮） ====================*/
 const AIRDROP=[
-  {ico:"🛡",nm:"护盾",do:()=>{ g.shield++; return "获得 1 层护盾"; }},
+  {ico:"🛡",nm:"护盾",do:()=>{ g.shield++; return tr("获得 1 层护盾"); }},
   {ico:"💰",nm:"金币空投",do:()=>{ const c=Math.floor(rand(2,5)); g.coins+=c; return "💰 +"+c; }},
-  {ico:"💊",nm:"医疗包",do:()=>{ g.inv.medkit++; return "医疗包 +1（背包）"; }},
-  {ico:"🧾",nm:"机密证据",do:()=>{ const e=makeEvidence(0.15); g.evidence.push(e); return `证据「${e.ico}${e.nm}」${e.fake?"(存疑)":""}`; }},
-  {ico:"📣",nm:"来信举报",do:()=>{ g.inv.report++; return "举报卡 +1（背包）"; }},
-  {ico:"🔇",nm:"禁言卡",do:()=>{ g.threats=Math.max(0,g.threats-1); g.shield++; return "禁言一个刺头：威胁-1，护盾+1"; }},
+  {ico:"💊",nm:"医疗包",do:()=>{ g.inv.medkit++; return tr("医疗包 +1（背包）"); }},
+  {ico:"🧾",nm:"机密证据",do:()=>{ const e=makeEvidence(0.15); g.evidence.push(e); return L(`证据「${e.ico}${tr(e.nm)}」${e.fake?"(存疑)":""}`,`Evidence "${e.ico}${tr(e.nm)}"${e.fake?" (dubious)":""}`); }},
+  {ico:"📣",nm:"来信举报",do:()=>{ g.inv.report++; return tr("举报卡 +1（背包）"); }},
+  {ico:"🔇",nm:"禁言卡",do:()=>{ g.threats=Math.max(0,g.threats-1); g.shield++; return tr("禁言一个刺头：威胁-1，护盾+1"); }},
   {ico:"🎟",nm:"解封卡",do:()=>{ g.hp=Math.min(g.maxhp,g.hp+1); return "❤ +1"; }},
-  {ico:"🎭",nm:"身份卡",do:()=>{ if(g.roleDef.meter&&g.roleDef.meter.bad){ addMeter(-15); return "怀疑度 -15"; } rep(1); return "信誉 +1"; }},
+  {ico:"🎭",nm:"身份卡",do:()=>{ if(g.roleDef.meter&&g.roleDef.meter.bad){ addMeter(-15); return tr("怀疑度 -15"); } rep(1); return tr("信誉 +1"); }},
   {ico:"⚡",nm:"特殊技能",do:()=>{ const r=Math.random();
-    if(r<0.4){ op(8); return "舆论 +8"; }
-    if(r<0.7 && g.roleDef.meter && !g.roleDef.meter.bad){ addMeter(15); return g.roleDef.meter.lab+" +15"; }
-    g.inv.disguise++; return "身份伪装 +1（背包）"; }},
+    if(r<0.4){ op(8); return tr("舆论 +8"); }
+    if(r<0.7 && g.roleDef.meter && !g.roleDef.meter.bad){ addMeter(15); return tr(g.roleDef.meter.lab)+" +15"; }
+    g.inv.disguise++; return tr("身份伪装 +1（背包）"); }},
 ];
 function airdrop(){
   const d=pick(AIRDROP);
-  sys("🎁 —— 空投来了！ —— ","event");
+  sys(tr("🎁 —— 空投来了！ —— "),"event");
   const r=d.do();
-  msg("空投·系统","🎁",`一架无人机丢下补给，你抢到了 ${d.ico}${d.nm}！`);
+  msg(tr("空投·系统"),"🎁",L(`一架无人机丢下补给，你抢到了 ${d.ico}${tr(d.nm)}！`,`A drone drops supplies, you grabbed ${d.ico}${tr(d.nm)}!`));
   sys("✅ "+r,"good");
   renderEv(); renderInv();
   checkEnd();
@@ -547,10 +839,10 @@ function newGame(forceRole){
   const en=Math.floor(rand(0,2.99));
   for(let i=0;i<en;i++) g.evidence.push(makeEvidence());
   document.getElementById("chat").innerHTML="";
-  sys(`🎲 身份揭晓：你是 ${rd.ico} ${rd.nm}！`,"event");
-  sys(`🎯 目标：${rd.goal}`,"court");
-  sys(rd.desc);
-  document.getElementById("roleTag").textContent=`${rd.ico} ${rd.nm}`;
+  sys(L(`🎲 身份揭晓：你是 ${rd.ico} ${rd.nm}！`,`🎲 Role revealed: you're the ${rd.ico} ${tr(rd.nm)}!`),"event");
+  sys(L(`🎯 目标：${rd.goal}`,`🎯 Goal: ${tr(rd.goal)}`),"court");
+  sys(tr(rd.desc));
+  document.getElementById("roleTag").textContent=`${rd.ico} ${tr(rd.nm)}`;
   startRound(); sync();
 }
 
@@ -567,14 +859,14 @@ function meSay(text){ const w=document.createElement("div"); w.className="msg me
 function startRound(){
   g.acted=false; g.itemsLocked=false; g.heat=false; g.chaos=false; g.exposeQueued=0;
   g.muted=false; g.redpacketClaimed=false; g.dmUsed=false;
-  sys(`—— 第 ${g.round} 轮 ——`);
+  sys(L(`—— 第 ${g.round} 轮 ——`,`—— Round ${g.round} ——`));
   // 定时炸弹到期引爆
   if(g.timedBomb && g.round>=g.timedBomb){ g.timedBomb=0; detonateTimed(); }
-  const ev=pick(EVENTS); sys(`🎴 事件牌：${ev.t}｜${ev.d}`,"event"); ev.f();
+  const ev=pick(EVENTS); sys(tr("🎴 事件牌：")+tr(ev.t)+"｜"+tr(ev.d),"event"); ev.f();
   // AI 行动：被伪装/隐身/贿赂保护时无人针对你
   const safe = g.disguised || g.bribeNext || g.cloak>0;
-  if(safe){ let why = g.cloak>0?`🕶 隐身披风生效(剩${g.cloak}轮)`:(g.bribeNext?"💵 贿赂生效，无人敢动你":"🎭 你伪装成普通成员");
-    sys(why+"，本轮无人针对你。","good"); g.disguised=false; g.bribeNext=false; if(g.cloak>0) g.cloak--; }
+  if(safe){ let why = g.cloak>0?L(`🕶 隐身披风生效(剩${g.cloak}轮)`,`🕶 Invisibility cloak active (${g.cloak} rounds left)`):(g.bribeNext?tr("💵 贿赂生效，无人敢动你"):tr("🎭 你伪装成普通成员"));
+    sys(why+tr("，本轮无人针对你。"),"good"); g.disguised=false; g.bribeNext=false; if(g.cloak>0) g.cloak--; }
   else aiRound();
   // 群里其他人的喧闹（发言/发红包/踢人/刷屏）
   if(!g.over) groupChatter();
@@ -582,28 +874,28 @@ function startRound(){
   if(g.round%2===0 && !g.over) airdrop();
   // 黑市（奇数轮开张，与空投错开）
   if(g.round%2===1){ g.bmOpen=true; g.bmBought=false; g.bmStock=BM_ITEMS.slice().sort(()=>Math.random()-0.5).slice(0,2);
-    sys("🕶 黑市开张了！（本轮可去黑市抢购1件强力道具）","event"); } else g.bmOpen=false;
+    sys(tr("🕶 黑市开张了！（本轮可去黑市抢购1件强力道具）"),"event"); } else g.bmOpen=false;
   // 法庭（每3轮）
   if(g.round%3===0 && !g.over) court();
   if(Math.random()<0.32 && !g.over) groupDrama();   // 群内官场倾轧/循环克制
   if(g.over) return;
-  setHint("轮到你了，选一个行动（每轮1次）"); renderActs(); sync();
+  setHint(tr("轮到你了，选一个行动（每轮1次）")); renderActs(); sync();
 }
 function detonateTimed(){
   boomAnim();
-  msg("定时炸弹","💣","【嘀…嘀…💥 定时炸弹引爆！】");
+  msg(tr("定时炸弹"),"💣",tr("【嘀…嘀…💥 定时炸弹引爆！】"));
   g.threats=Math.max(0,g.threats-2); g.silenceNext=(g.silenceNext||0)+1;
   if(g.roleDef.meter && !g.roleDef.meter.bad) addMeter(15); else op(10);
-  sys("💥 定时炸弹引爆，重创对手阵营！","good");
+  sys(tr("💥 定时炸弹引爆，重创对手阵营！"),"good");
 }
 
 function aiRound(){
   const low = (g.roleDef.side==="power" && g.op<35) || (g.roleDef.meter&&g.roleDef.meter.bad&&g.meter>60) || Math.random()<0.25;
   let n = 1 + (Math.random()<0.5?1:0) + (low?1:0) + (g.round>13?1:0);
-  if(g.silenceNext){ n=Math.max(0,n-g.silenceNext); g.silenceNext=0; if(n<=0) sys("📢 你的禁言卡奏效，本轮无人敢闹事！","good"); }
+  if(g.silenceNext){ n=Math.max(0,n-g.silenceNext); g.silenceNext=0; if(n<=0) sys(tr("📢 你的禁言卡奏效，本轮无人敢闹事！"),"good"); }
   for(let i=0;i<n && !g.over;i++) aiOne();
 }
-function shieldBlock(tag){ if(g.shield>0){ g.shield--; sys(`🛡 护盾抵挡了「${tag}」！`,"good"); renderInv(); return true; } return false; }
+function shieldBlock(tag){ if(g.shield>0){ g.shield--; sys(L(`🛡 护盾抵挡了「${tag}」！`,`🛡 Shield blocked "${tr(tag)}"!`),"good"); renderInv(); return true; } return false; }
 
 function aiOne(){
   const s=g.roleDef.side;
@@ -649,18 +941,18 @@ function aiOne(){
   }
 }
 function resolveAI(act){
-  const npc=npcBy(act.who); msg(npc.n,npc.a,pick(act.txt));
+  const npc=npcBy(act.who); msg(npc.n,npc.a,tr(pick(act.txt)));
   // 同阵营互助：好感高的阵营会转为声援你，好感低的攻击更狠
   if(!act.good && !act.noise){ const fa=factionAff(act.who);
     if(fa>=64 && Math.random()<0.55){ op(4); addFactionAff(act.who,1);
-      sys(`🤝 ${npc.n}（好感高）反过来替你说话：舆论 +4`,"good");
-      msg(npcBy(act.who).n,act.who,pick(["其实群主没那么差","别一起黑TA","我信群主"])); return; }
+      sys(L(`🤝 ${npc.n}（好感高）反过来替你说话：舆论 +4`,`🤝 ${npc.n} (high affinity) speaks up for you instead: opinion +4`),"good");
+      msg(npcBy(act.who).n,act.who,tr(pick(["其实群主没那么差","别一起黑TA","我信群主"]))); return; }
     if(fa<=30){ act={...act, op:Math.round((act.op||-3)*1.4)}; }
   }
   if(act.noise){ if(g.chaos) op(Math.random()<.5?-1:1); return; }
-  if(act.good){ if(act.op) op(act.op); if(act.meter) addMeter(act.meter); if(act.op) sys(`👍 ${act.tag}：舆论 ${act.op>0?"+":""}${act.op||0}`,"good"); return; }
+  if(act.good){ if(act.op) op(act.op); if(act.meter) addMeter(act.meter); if(act.op) sys(L(`👍 ${act.tag}：舆论 ${act.op>0?"+":""}${act.op||0}`,`👍 ${tr(act.tag)}: opinion ${act.op>0?"+":""}${act.op||0}`),"good"); return; }
   // 卧底怀疑
-  if(act.susp!=null){ addMeter(act.susp); if(act.susp>0) sys(`🔎 ${act.tag}：怀疑度 +${act.susp}`,"bad"); checkEnd(); return; }
+  if(act.susp!=null){ addMeter(act.susp); if(act.susp>0) sys(L(`🔎 ${act.tag}：怀疑度 +${act.susp}`,`🔎 ${tr(act.tag)}: suspicion +${act.susp}`),"bad"); checkEnd(); return; }
   // 攻击
   let dop=act.op||0, dhp=act.hp?(Math.random()<0.55?1:0):0, dm=act.meter||0;
   if(g.heat && act.who==="📰"){ dop=Math.round(dop*1.5); dhp=1; }
@@ -668,72 +960,72 @@ function resolveAI(act){
   if((dhp>0||dop<=-5) && shieldBlock(act.tag)) return;
   if(dop) op(dop); if(dm) addMeter(dm); if(dhp>0){ g.hp-=dhp; g.stats.attacksTaken++; }
   if(act.tag==="曝光") g.exposeQueued++;
-  sys(`💥 ${act.tag}：${dop?`舆论 ${dop}`:""}${dhp?`，❤-${dhp}`:""}${dm?`，${g.roleDef.meter.lab} ${dm}`:""}`,"bad");
+  sys(L(`💥 ${act.tag}：${dop?`舆论 ${dop}`:""}${dhp?`，❤-${dhp}`:""}${dm?`，${g.roleDef.meter.lab} ${dm}`:""}`,`💥 ${tr(act.tag)}:${dop?` opinion ${dop}`:""}${dhp?`, ❤-${dhp}`:""}${dm?`, ${tr(g.roleDef.meter.lab)} ${dm}`:""}`),"bad");
   checkEnd();
 }
 
 /*==================== 法庭 ====================*/
 function court(){
-  sys("⚖ —— 法庭开庭 —— ","court");
+  sys(tr("⚖ —— 法庭开庭 —— "),"court");
   const real=g.evidence.filter(e=>!e.fake);
   if(real.length>0){
     const e=real[0]; g.evidence.splice(g.evidence.indexOf(e),1);
-    msg("法官·公正","⚖",`原告出示了「${e.ico}${e.nm}」，证据确凿！`);
-    rep(1); sys("✅ 你在法庭上扳倒对手，信誉 +1","good");
-    if(g.role==="media"){ addMeter(25); sys("📰 曝光进度 +25","good"); }
-    else if(g.role==="member"){ addMeter(20); sys("👥 上位支持 +20","good"); }
-    else if(g.role==="hacker"){ g.coins+=3; sys("💰 顺手捞了 3 金币","good"); }
-    else { op(8); g.threats=Math.max(0,g.threats-1); sys("📊 舆论 +8，扳倒一个对手","good"); }
+    msg(tr("法官·公正"),"⚖",L(`原告出示了「${e.ico}${e.nm}」，证据确凿！`,`The plaintiff presents "${e.ico}${tr(e.nm)}" — the evidence is solid!`));
+    rep(1); sys(tr("✅ 你在法庭上扳倒对手，信誉 +1"),"good");
+    if(g.role==="media"){ addMeter(25); sys(tr("📰 曝光进度 +25"),"good"); }
+    else if(g.role==="member"){ addMeter(20); sys(tr("👥 上位支持 +20"),"good"); }
+    else if(g.role==="hacker"){ g.coins+=3; sys(tr("💰 顺手捞了 3 金币"),"good"); }
+    else { op(8); g.threats=Math.max(0,g.threats-1); sys(tr("📊 舆论 +8，扳倒一个对手"),"good"); }
     renderEv();
   } else if(g.op<45 || g.rep<3){
-    msg("法官·公正","⚖","有人指控你，现在开始质证。");
-    if(g.inv.report>0){ g.inv.report--; op(8); rep(1); sys("📣 你打出举报卡自辩，舆论+8 信誉+1，无罪释放！","good"); renderInv(); }
-    else if(g.op>=40||g.rep>=3){ sys("😮‍💨 证据不足，你被无罪释放。","good"); }
+    msg(tr("法官·公正"),"⚖",tr("有人指控你，现在开始质证。"));
+    if(g.inv.report>0){ g.inv.report--; op(8); rep(1); sys(tr("📣 你打出举报卡自辩，舆论+8 信誉+1，无罪释放！"),"good"); renderInv(); }
+    else if(g.op>=40||g.rep>=3){ sys(tr("😮‍💨 证据不足，你被无罪释放。"),"good"); }
     else { const pun=pick(["禁言","降职","舆论重创"]);
-      if(pun==="禁言"){ sys("🔇 判决：禁言！你本轮无法行动（可用🔓解封卡解除）。","bad"); g.acted=true; g.muted=true; }
-      else if(pun==="降职"){ rep(-1); op(-6); sys("⬇ 判决：信誉-1，舆论-6。","bad"); }
-      else { op(-10); sys("📉 判决：舆论-10。","bad"); }
+      if(pun==="禁言"){ sys(tr("🔇 判决：禁言！你本轮无法行动（可用🔓解封卡解除）。"),"bad"); g.acted=true; g.muted=true; }
+      else if(pun==="降职"){ rep(-1); op(-6); sys(tr("⬇ 判决：信誉-1，舆论-6。"),"bad"); }
+      else { op(-10); sys(tr("📉 判决：舆论-10。"),"bad"); }
       checkEnd();
     }
-  } else { sys("本轮无人提交有效证据，退庭。"); }
+  } else { sys(tr("本轮无人提交有效证据，退庭。")); }
 }
 
 /*==================== 玩家行动 ====================*/
 const ACT_DEF={
   speak:{ico:"📢",nm:"发言",do:()=>{ op(4); g.coins+=1; if(g.role==="wodi") addMeter(6);
-    meSay(pick(["各位群友信我！","我清者自清！","跟着我有肉吃！","理性讨论，别带节奏。"]));
-    good(`发言 舆论+4 💰+1${g.role==="wodi"?"（但怀疑+6）":""}`); }},
-  buyshield:{ico:"🛡",nm:"加护盾",cost:2,do:()=>{ if(!spend(2))return false; g.shield++; meSay("先给自己加个防护。"); good("获得1层护盾"); renderInv(); }},
+    meSay(tr(pick(["各位群友信我！","我清者自清！","跟着我有肉吃！","理性讨论，别带节奏。"])));
+    good(L(`发言 舆论+4 💰+1${g.role==="wodi"?"（但怀疑+6）":""}`,`Speak: opinion +4, 💰+1${g.role==="wodi"?" (but suspicion +6)":""}`)); }},
+  buyshield:{ico:"🛡",nm:"加护盾",cost:2,do:()=>{ if(!spend(2))return false; g.shield++; meSay(tr("先给自己加个防护。")); good(tr("获得1层护盾")); renderInv(); }},
   reveal:{ico:"🧾",nm:"公开证据",do:()=>{ const real=g.evidence.find(e=>!e.fake);
-    if(!real){ if(g.evidence.length){ const f=g.evidence.shift(); g.stats.fakes++; rep(-3); op(-4); meSay("我有实锤！（其实是假的…）"); sys("❌ 假证据被识破！信誉-3 舆论-4","bad"); renderEv(); checkEnd(); return; }
-      setHint("你没有证据可公开，先去调查/购买"); return false; }
+    if(!real){ if(g.evidence.length){ const f=g.evidence.shift(); g.stats.fakes++; rep(-3); op(-4); meSay(tr("我有实锤！（其实是假的…）")); sys(tr("❌ 假证据被识破！信誉-3 舆论-4"),"bad"); renderEv(); checkEnd(); return; }
+      setHint(tr("你没有证据可公开，先去调查/购买")); return false; }
     g.evidence.splice(g.evidence.indexOf(real),1); g.stats.reveals++;
-    meSay(`我公开「${real.ico}${real.nm}」，实锤了！`);
-    if(g.role==="media"){ addMeter(22); good("曝光进度 +22"); }
-    else if(g.role==="member"){ addMeter(20); op(4); good("上位支持 +20，舆论+4"); }
-    else if(g.role==="hacker"){ g.coins+=3; rep(1); good("信誉+1，💰+3"); }
-    else { op(8); rep(1); g.threats=Math.max(0,g.threats-1); good("舆论+8 信誉+1，扳倒一个对手"); }
+    meSay(L(`我公开「${real.ico}${real.nm}」，实锤了！`,`I'm revealing "${real.ico}${tr(real.nm)}" — hard proof!`));
+    if(g.role==="media"){ addMeter(22); good(tr("曝光进度 +22")); }
+    else if(g.role==="member"){ addMeter(20); op(4); good(tr("上位支持 +20，舆论+4")); }
+    else if(g.role==="hacker"){ g.coins+=3; rep(1); good(tr("信誉+1，💰+3")); }
+    else { op(8); rep(1); g.threats=Math.max(0,g.threats-1); good(tr("舆论+8 信誉+1，扳倒一个对手")); }
     renderEv(); }},
   // 群主/管理员
-  pr:{ico:"🤝",nm:"公关",cost:2,do:()=>{ if(!spend(2))return false; op(8); g.exposeQueued=0; g.stats.gongguan++; meSay("这事我处理好了，官方打好招呼了。"); good("公关 舆论+8，曝光压下"); }},
+  pr:{ico:"🤝",nm:"公关",cost:2,do:()=>{ if(!spend(2))return false; op(8); g.exposeQueued=0; g.stats.gongguan++; meSay(tr("这事我处理好了，官方打好招呼了。")); good(tr("公关 舆论+8，曝光压下")); }},
   kick:{ico:"👢",nm:"踢人",do:()=>{ openKickTarget(); return false; }},   // 指定踢谁
-  muteact:{ico:"🔇",nm:"禁言组员",do:()=>{ g.silenceNext=(g.silenceNext||0)+1; g.threats=Math.max(0,g.threats-1); popChange("member",-1); popChange("muted",1); meSay("这位组员太闹，禁言10分钟。"); good("禁言一个组员：下一轮敌方攻击-1"); }},
-  redpacket:{ico:"🧧",nm:"发红包",cost:3,do:()=>{ if(!spend(3))return false; op(10); if(g.role==="member") addMeter(12); g.stats.redpackets++; meSay("【发了一个88元红包】🧧"); good(`发红包 舆论+10${g.role==="member"?"，上位支持+12":""}`); }},
+  muteact:{ico:"🔇",nm:"禁言组员",do:()=>{ g.silenceNext=(g.silenceNext||0)+1; g.threats=Math.max(0,g.threats-1); popChange("member",-1); popChange("muted",1); meSay(tr("这位组员太闹，禁言10分钟。")); good(tr("禁言一个组员：下一轮敌方攻击-1")); }},
+  redpacket:{ico:"🧧",nm:"发红包",cost:3,do:()=>{ if(!spend(3))return false; op(10); if(g.role==="member") addMeter(12); g.stats.redpackets++; meSay(L("【发了一个88元红包】🧧","[Sent an ¥88 red packet]🧧")); good(L(`发红包 舆论+10${g.role==="member"?"，上位支持+12":""}`,`Red packet: opinion +10${g.role==="member"?", support +12":""}`)); }},
   // 媒体
-  investigate:{ico:"🔍",nm:"调查取证",do:()=>{ const e=makeEvidence(0.2); g.evidence.push(e); op(2); meSay("我去挖点料…"); good(`调查获得证据「${e.ico}${e.nm}」${e.fake?"(存疑)":""}`); renderEv(); }},
+  investigate:{ico:"🔍",nm:"调查取证",do:()=>{ const e=makeEvidence(0.2); g.evidence.push(e); op(2); meSay(tr("我去挖点料…")); good(L(`调查获得证据「${e.ico}${e.nm}」${e.fake?"(存疑)":""}`,`Investigation found evidence "${e.ico}${tr(e.nm)}"${e.fake?" (dubious)":""}`)); renderEv(); }},
   expose:{ico:"📸",nm:"曝光官方",do:()=>{ const real=g.evidence.find(e=>!e.fake); g.stats.exposes++;
-    if(real){ g.evidence.splice(g.evidence.indexOf(real),1); addMeter(26); meSay(`重磅曝光！附证据「${real.ico}${real.nm}」`); good("曝光进度 +26"); renderEv(); }
-    else { addMeter(8); op(-2); meSay("我曝光官方黑幕！（暂无实锤）"); good("无实锤曝光，进度+8（舆论-2）"); } }},
+    if(real){ g.evidence.splice(g.evidence.indexOf(real),1); addMeter(26); meSay(L(`重磅曝光！附证据「${real.ico}${real.nm}」`,`Major exposé! With evidence "${real.ico}${tr(real.nm)}"`)); good(tr("曝光进度 +26")); renderEv(); }
+    else { addMeter(8); op(-2); meSay(tr("我曝光官方黑幕！（暂无实锤）")); good(tr("无实锤曝光，进度+8（舆论-2）")); } }},
   // 卧底
-  laylow:{ico:"🎭",nm:"潜伏",do:()=>{ addMeter(-18); op(1); meSay(pick(["随便看看…","我就是个普通群友。","不太懂，围观。"])); good("潜伏，怀疑度 -18"); }},
+  laylow:{ico:"🎭",nm:"潜伏",do:()=>{ addMeter(-18); op(1); meSay(tr(pick(["随便看看…","我就是个普通群友。","不太懂，围观。"]))); good(tr("潜伏，怀疑度 -18")); }},
   // 黑客
   hack:{ico:"💻",nm:"破解身份",do:()=>{ g.meter=Math.min(g.roleDef.meter.max,g.meter+1); g.stats.hacks++;
-    const r=Math.random(); if(r<0.5){ const e=makeEvidence(0.25); g.evidence.push(e); meSay("已入侵，拖出一份数据。"); good(`破解 +1，获得证据「${e.ico}${e.nm}」`); renderEv(); }
-    else { g.coins+=2; meSay("顺手薅了点羊毛。"); good("破解 +1，💰+2"); } }},
-  delete:{ico:"🗑",nm:"删除证据",do:()=>{ g.threats=Math.max(0,g.threats-1); g.exposeQueued=0; op(2); meSay("把痕迹清理干净。"); good("删除对手证据，威胁-1"); }},
+    const r=Math.random(); if(r<0.5){ const e=makeEvidence(0.25); g.evidence.push(e); meSay(tr("已入侵，拖出一份数据。")); good(L(`破解 +1，获得证据「${e.ico}${e.nm}」`,`Crack +1, got evidence "${e.ico}${tr(e.nm)}"`)); renderEv(); }
+    else { g.coins+=2; meSay(tr("顺手薅了点羊毛。")); good(tr("破解 +1，💰+2")); } }},
+  delete:{ico:"🗑",nm:"删除证据",do:()=>{ g.threats=Math.max(0,g.threats-1); g.exposeQueued=0; op(2); meSay(tr("把痕迹清理干净。")); good(tr("删除对手证据，威胁-1")); }},
   // 成员
-  report:{ico:"📣",nm:"举报对手",do:()=>{ if(Math.random()<0.25){ rep(-1); op(-2); meSay("我举报他！（好像诬告了）"); sys("😬 诬告！信誉-1 舆论-2","bad"); checkEnd(); }
-    else { addMeter(10); op(3); meSay("实名举报竞争对手！"); good("上位支持+10 舆论+3"); } }},
+  report:{ico:"📣",nm:"举报对手",do:()=>{ if(Math.random()<0.25){ rep(-1); op(-2); meSay(tr("我举报他！（好像诬告了）")); sys(tr("😬 诬告！信誉-1 舆论-2"),"bad"); checkEnd(); }
+    else { addMeter(10); op(3); meSay(tr("实名举报竞争对手！")); good(tr("上位支持+10 舆论+3")); } }},
 };
 
 function actsForRole(){ return g.roleDef.acts.concat("whisper","redpack", g.bmOpen?"blackmarket":null, "shop").filter(Boolean); }
@@ -741,28 +1033,28 @@ function renderActs(){
   const box=document.getElementById("acts"); box.innerHTML="";
   actsForRole().forEach(id=>{
     if(id==="shop"){ const el=document.createElement("div"); el.className="act";
-      el.innerHTML=`<div class="ico">🛒</div><div class="nm">商店</div>`; el.onclick=openShop; box.appendChild(el); return; }
+      el.innerHTML=`<div class="ico">🛒</div><div class="nm">${tr("商店")}</div>`; el.onclick=openShop; box.appendChild(el); return; }
     if(id==="redpack"){ const el=document.createElement("div"); el.className="act"+(g.redpacketClaimed?" dis":"");
-      el.innerHTML=`<div class="ico">🧧</div><div class="nm">领红包</div>`; el.onclick=claimRed; box.appendChild(el); return; }
+      el.innerHTML=`<div class="ico">🧧</div><div class="nm">${tr("领红包")}</div>`; el.onclick=claimRed; box.appendChild(el); return; }
     if(id==="whisper"){ const el=document.createElement("div"); el.className="act"+(g.dmUsed?" dis":"");
-      el.innerHTML=`<div class="ico">💬</div><div class="nm">私聊</div>`; el.onclick=openWhisper; box.appendChild(el); return; }
+      el.innerHTML=`<div class="ico">💬</div><div class="nm">${tr("私聊")}</div>`; el.onclick=openWhisper; box.appendChild(el); return; }
     if(id==="qzred"){ const el=document.createElement("div"); el.className="act"+(g.acted?" dis":"");
-      el.innerHTML=`<div class="ico">🧧</div><div class="nm">群主红包</div>`; el.onclick=openRedGive; box.appendChild(el); return; }
+      el.innerHTML=`<div class="ico">🧧</div><div class="nm">${tr("群主红包")}</div>`; el.onclick=openRedGive; box.appendChild(el); return; }
     if(id==="blackmarket"){ const el=document.createElement("div"); el.className="act"+((g.acted||g.bmBought)?" dis":"");
-      el.innerHTML=`<div class="ico">🕶</div><div class="nm">${g.bmBought?"黑市(已购)":"逛黑市"}</div>`; el.onclick=openBM; box.appendChild(el); return; }
+      el.innerHTML=`<div class="ico">🕶</div><div class="nm">${g.bmBought?tr("黑市(已购)"):tr("逛黑市")}</div>`; el.onclick=openBM; box.appendChild(el); return; }
     const a=ACT_DEF[id]; if(!a) return;
     const dis=(a.cost&&g.coins<a.cost)||g.acted;
     const el=document.createElement("div"); el.className="act"+(dis?" dis":"");
-    el.innerHTML=`<div class="ico">${a.ico}</div><div class="nm">${a.nm}</div>${a.cost?`<div class="cost">💰${a.cost}</div>`:""}`;
+    el.innerHTML=`<div class="ico">${a.ico}</div><div class="nm">${tr(a.nm)}</div>${a.cost?`<div class="cost">💰${a.cost}</div>`:""}`;
     el.onclick=()=>doAction(id); box.appendChild(el);
   });
 }
 function doAction(id){
   if(g.over) return; const a=ACT_DEF[id]; if(!a) return;
-  if(g.acted){ setHint("本轮已行动，结算中…"); return; }
+  if(g.acted){ setHint(tr("本轮已行动，结算中…")); return; }
   const r=a.do(); if(r===false) return;
   g.acted=true; g.stats.acts++; renderActs(); sync();
-  setHint("结算中…"); setTimeout(endRound,500);
+  setHint(tr("结算中…")); setTimeout(endRound,500);
 }
 
 function endRound(){
@@ -770,7 +1062,7 @@ function endRound(){
   g.stats.maxop=Math.max(g.stats.maxop,g.op);
   // 舆论≥80 护盾（管理阵营）
   if(g.roleDef.side==="power"){
-    if(g.op>=80 && !g.shieldGiven80){ g.shield++; g.shieldGiven80=true; sys("🛡 舆论≥80，群管理获得护盾！","good"); }
+    if(g.op>=80 && !g.shieldGiven80){ g.shield++; g.shieldGiven80=true; sys(tr("🛡 舆论≥80，群管理获得护盾！"),"good"); }
     if(g.op<80) g.shieldGiven80=false;
   }
   if(g.round%5===0 && !g.over) election();
@@ -781,28 +1073,28 @@ function endRound(){
 }
 
 function election(){
-  sys("🗳 —— 全民选举 —— ","court");
+  sys(tr("🗳 —— 全民选举 —— "),"court");
   if(g.role==="member"){ const v=g.meter+rand(-8,10);
     if(v>=60){ winGame("你当选为新群主！权力更替成功！"); }
-    else sys(`落选（支持 ${Math.round(v)}%<60），继续努力！`,"bad"); }
+    else sys(L(`落选（支持 ${Math.round(v)}%<60），继续努力！`,`Not elected (support ${Math.round(v)}%<60), keep trying!`),"bad"); }
   else if(g.role==="qunzhu"){ const s=g.op+rand(-12,12);
-    if(s>=45){ op(3); sys(`✅ 连任成功（支持 ${Math.round(s)}%），舆论+3`,"good"); }
+    if(s>=45){ op(3); sys(L(`✅ 连任成功（支持 ${Math.round(s)}%），舆论+3`,`✅ Re-elected (support ${Math.round(s)}%), opinion +3`),"good"); }
     else loseGame("竞选失败，你被投下台了"); }
-  else if(g.role==="admin"){ if(g.rep<2 && Math.random()<0.4){ rep(-1); sys("⬇ 官方考核，你差点被开除…信誉-1","bad"); } else sys("选举与你无关，静观其变。"); }
-  else sys("选举进行中，你冷眼旁观，暗中行事。");
+  else if(g.role==="admin"){ if(g.rep<2 && Math.random()<0.4){ rep(-1); sys(tr("⬇ 官方考核，你差点被开除…信誉-1"),"bad"); } else sys(tr("选举与你无关，静观其变。")); }
+  else sys(tr("选举进行中，你冷眼旁观，暗中行事。"));
 }
 
 function impeach(){
-  sys("🗳 —— 弹劾大会 —— ","court"); sys("舆论过低，全群发起弹劾！","bad");
-  if(g.inv.report>0){ g.inv.report--; op(10); sys("📣 举报卡自辩，舆论+10！","good"); renderInv(); }
+  sys(tr("🗳 —— 弹劾大会 —— "),"court"); sys(tr("舆论过低，全群发起弹劾！"),"bad");
+  if(g.inv.report>0){ g.inv.report--; op(10); sys(tr("📣 举报卡自辩，舆论+10！"),"good"); renderInv(); }
   const fire=Math.random()<(0.35+(20-g.op)*0.03);
-  if(g.op>=20 || !fire) sys("😮‍💨 你惊险保住了位置。","good");
+  if(g.op>=20 || !fire) sys(tr("😮‍💨 你惊险保住了位置。"),"good");
   else loseGame("弹劾通过，你被赶下群主之位");
 }
 
 function checkEnd(){
   if(g.over) return;
-  if(g.hp<=0){ if(g.inv.revive>0){ g.inv.revive--; g.hp=3; sys("🎟 复活券生效！满血归来（❤3）","good"); renderInv(); }
+  if(g.hp<=0){ if(g.inv.revive>0){ g.inv.revive--; g.hp=3; sys(tr("🎟 复活券生效！满血归来（❤3）"),"good"); renderInv(); }
     else { loseGame("你被攻击淘汰了（❤ 归零）"); return; } }
   if(g.roleDef.meter && g.roleDef.meter.bad && g.meter>=g.roleDef.meter.max){ loseGame("怀疑度拉满，你的卧底身份被识破！"); return; }
   if(g.role==="media" && g.meter>=100){ winGame("曝光进度拉满，微信总监被扳倒，你赢了！"); return; }
@@ -814,7 +1106,7 @@ function finalJudge(){   // 撑到第20轮的最终裁定
   else if(g.role==="leader"){ g.rep>0?winGame("你把小组管到最后，金牌组长！"):loseGame("信誉崩塌，你被撤了组长"); }
   else if(g.role==="admin"){ g.rep>0?winGame("你稳坐管理员到最后，功成身退！"):loseGame("信誉崩塌，你被降为普通成员"); }
   else if(g.role==="wodi"){ winGame("你潜伏到最后从未暴露，卧底大成功！"); }
-  else if(g.role==="hacker"){ g.meter>=6?winGame(`你破解了 ${g.meter} 人并全身而退！`):loseGame(`只破解了 ${g.meter}/6 人，任务失败`); }
+  else if(g.role==="hacker"){ g.meter>=6?winGame(L(`你破解了 ${g.meter} 人并全身而退！`,`You cracked ${g.meter} people and got away clean!`)):loseGame(L(`只破解了 ${g.meter}/6 人，任务失败`,`Only cracked ${g.meter}/6, mission failed`)); }
   else if(g.role==="media"){ loseGame("到最后也没能扳倒总监，曝光失败"); }
   else if(g.role==="member"){ loseGame("20轮内始终没能当选群主"); }
 }
@@ -825,50 +1117,56 @@ function loseGame(reason){ if(g.over)return; g.over=true; g.won=false; g.endReas
 function showOver(){
   document.getElementById("acts").innerHTML="";
   const power=g.op+g.coins*2+g.hp*5+g.rep*4+g.round*3+g.meter*2;
-  document.getElementById("overTitle").textContent=g.won?`🏆 ${g.roleDef.ico}${g.roleDef.nm} 胜利！`:`💀 ${g.roleDef.ico}${g.roleDef.nm} 失败`;
-  document.getElementById("overSub").innerHTML=`${g.endReason}<br>第 ${g.round} 轮 · 权力值 <b>${power}</b>`;
   // 存档：局数/胜场/各身份通关
   WSAVE.games++; if(g.won){ WSAVE.wins++; WSAVE.winByRole[g.role]=true; } wsave();
   // 结算成就（本局新解锁高亮）
   const fresh=checkAch();
-  let html="";
-  if(fresh.length) html+=`<div class="sub" style="color:#e08a1a;font-weight:800;margin-bottom:6px;">🎉 解锁 ${fresh.length} 个新成就！</div>`;
-  const list = fresh.length ? fresh : (g.won?[{ico:g.roleDef.ico,nm:"任务达成",d:"以「"+g.roleDef.nm+"」身份获胜"}]:[{ico:"🎗",nm:"再接再厉",d:"换个身份再战！"}]);
-  html += list.map(a=>`<div class="ach"><span class="m">${a.ico}</span><div><div class="at">${a.nm}</div><div class="ad">${a.d}</div></div></div>`).join("");
-  html += `<div class="sub" style="margin-top:8px;">🏆 成就进度 ${WSAVE.ach.length}/${ACHIEVEMENTS.length}</div>`;
-  document.getElementById("achList").innerHTML=html;
+  g._power=power; g._freshLen=fresh.length;
+  g._overList = fresh.length ? fresh : (g.won?[{ico:g.roleDef.ico,nm:"任务达成",d:L("以「"+g.roleDef.nm+"」身份获胜","Win as the "+tr(g.roleDef.nm))}]:[{ico:"🎗",nm:"再接再厉",d:"换个身份再战！"}]);
+  g._overShown=true;
+  renderOver();
   document.getElementById("overScreen").classList.remove("hidden");
+}
+function renderOver(){
+  const power=g._power;
+  document.getElementById("overTitle").textContent=g.won?L(`🏆 ${g.roleDef.ico}${g.roleDef.nm} 胜利！`,`🏆 ${g.roleDef.ico}${tr(g.roleDef.nm)} wins!`):L(`💀 ${g.roleDef.ico}${g.roleDef.nm} 失败`,`💀 ${g.roleDef.ico}${tr(g.roleDef.nm)} defeated`);
+  document.getElementById("overSub").innerHTML=L(`${tr(g.endReason)}<br>第 ${g.round} 轮 · 权力值 <b>${power}</b>`,`${tr(g.endReason)}<br>Round ${g.round} · Power <b>${power}</b>`);
+  let html="";
+  if(g._freshLen) html+=`<div class="sub" style="color:#e08a1a;font-weight:800;margin-bottom:6px;">${L(`🎉 解锁 ${g._freshLen} 个新成就！`,`🎉 Unlocked ${g._freshLen} new achievement${g._freshLen>1?"s":""}!`)}</div>`;
+  html += g._overList.map(a=>`<div class="ach"><span class="m">${a.ico}</span><div><div class="at">${tr(a.nm)}</div><div class="ad">${tr(a.d)}</div></div></div>`).join("");
+  html += `<div class="sub" style="margin-top:8px;">${L(`🏆 成就进度 ${WSAVE.ach.length}/${ACHIEVEMENTS.length}`,`🏆 Achievements ${WSAVE.ach.length}/${ACHIEVEMENTS.length}`)}</div>`;
+  document.getElementById("achList").innerHTML=html;
 }
 
 /*==================== 商店 & 道具 ====================*/
 function openShop(){ const grid=document.getElementById("shopGrid"); grid.innerHTML="";
   document.getElementById("shopCoins").textContent=g.coins;
   SHOP.forEach(it=>{ const el=document.createElement("div"); el.className="shopitem";
-    el.innerHTML=`<span class="si">${it.ico}</span><div class="sinfo"><div class="snm">${it.nm}</div><div class="sdesc">${it.d}</div></div>`;
+    el.innerHTML=`<span class="si">${it.ico}</span><div class="sinfo"><div class="snm">${tr(it.nm)}</div><div class="sdesc">${tr(it.d)}</div></div>`;
     const soldout=(it.id==="bomb"&&g.bombUsed);
     const b=document.createElement("button"); b.className="buy"+((g.coins<it.price||soldout)?" own":"");
-    b.textContent=soldout?"已用":"💰"+it.price; b.onclick=()=>{ if(!soldout) buy(it); };
+    b.textContent=soldout?tr("已用"):"💰"+it.price; b.onclick=()=>{ if(!soldout) buy(it); };
     el.appendChild(b); grid.appendChild(el); });
   document.getElementById("shopScreen").classList.remove("hidden"); }
 function buy(it){
-  if(it.id==="bomb" && g.bombUsed){ setHint("💣 舆论炸弹每局限购1次"); return; }
-  if(g.coins<it.price){ setHint("金币不足"); return; }
+  if(it.id==="bomb" && g.bombUsed){ setHint(tr("💣 舆论炸弹每局限购1次")); return; }
+  if(g.coins<it.price){ setHint(tr("金币不足")); return; }
   g.coins-=it.price;
   if(it.id==="shield") g.shield++;
   else if(it.id==="bomb"){ g.bombUsed=true; fireBomb(); }
   else if(it.id==="mystery"){ mysteryBox(); }
-  else { g.inv[it.id]=(g.inv[it.id]||0)+1; sys(`🛒 购买了「${it.nm}」`,"good"); }
+  else { g.inv[it.id]=(g.inv[it.id]||0)+1; sys(L(`🛒 购买了「${it.nm}」`,`🛒 Bought "${tr(it.nm)}"`),"good"); }
   openShop(); renderInv(); renderEv(); sync(); checkEnd(); }
 function useItem(id){ if(g.over) return;
-  if(g.itemsLocked){ setHint("⚠ 腾讯维护中，本轮道具失效"); return; }
+  if(g.itemsLocked){ setHint(tr("⚠ 腾讯维护中，本轮道具失效")); return; }
   if(!g.inv[id]||g.inv[id]<=0) return; g.inv[id]--;
-  if(id==="medkit"){ g.hp=Math.min(g.maxhp,g.hp+1); sys("❤️ 医疗包，❤+1","good"); }
-  else if(id==="report"){ op(6); sys("📄 举报卡，舆论+6","good"); }
-  else if(id==="probe"){ const e=makeEvidence(0.1); g.evidence.push(e); op(2); sys(`🔍 调查卡：获得情报「${e.ico}${e.nm}」，舆论+2`,"good"); renderEv(); }
-  else if(id==="disguise"){ g.disguised=true; if(g.roleDef.meter&&g.roleDef.meter.bad) addMeter(-20); sys("🎭 身份伪装，下一轮不被针对","good"); }
-  else if(id==="mute"){ g.silenceNext=(g.silenceNext||0)+1; g.threats=Math.max(0,g.threats-1); sys("📢 禁言卡：封住一个刺头，下一轮敌方攻击-1","good"); }
-  else if(id==="unban"){ if(g.muted){ g.muted=false; g.acted=false; renderActs(); sys("🔓 解封卡：解除禁言，你可以行动了！","good"); } else { rep(1); op(4); sys("🔓 解封卡：解除封锁，信誉+1 舆论+4","good"); } }
-  else if(id==="spam"){ op(3); g.exposeQueued=0; sys("📱 刷屏搅局，舆论+3","good"); }
+  if(id==="medkit"){ g.hp=Math.min(g.maxhp,g.hp+1); sys(tr("❤️ 医疗包，❤+1"),"good"); }
+  else if(id==="report"){ op(6); sys(tr("📄 举报卡，舆论+6"),"good"); }
+  else if(id==="probe"){ const e=makeEvidence(0.1); g.evidence.push(e); op(2); sys(L(`🔍 调查卡：获得情报「${e.ico}${e.nm}」，舆论+2`,`🔍 Probe card: got intel "${e.ico}${tr(e.nm)}", opinion +2`),"good"); renderEv(); }
+  else if(id==="disguise"){ g.disguised=true; if(g.roleDef.meter&&g.roleDef.meter.bad) addMeter(-20); sys(tr("🎭 身份伪装，下一轮不被针对"),"good"); }
+  else if(id==="mute"){ g.silenceNext=(g.silenceNext||0)+1; g.threats=Math.max(0,g.threats-1); sys(tr("📢 禁言卡：封住一个刺头，下一轮敌方攻击-1"),"good"); }
+  else if(id==="unban"){ if(g.muted){ g.muted=false; g.acted=false; renderActs(); sys(tr("🔓 解封卡：解除禁言，你可以行动了！"),"good"); } else { rep(1); op(4); sys(tr("🔓 解封卡：解除封锁，信誉+1 舆论+4"),"good"); } }
+  else if(id==="spam"){ op(3); g.exposeQueued=0; sys(tr("📱 刷屏搅局，舆论+3"),"good"); }
   renderInv(); sync(); }
 
 /*==================== 红包 & 炸弹 ====================*/
@@ -877,7 +1175,7 @@ function randItem(){ return pick(["medkit","report","probe","disguise","mute","s
 function redAnim(text,sub){
   const host=document.getElementById("phone"); if(!host) return;
   const wrap=document.createElement("div"); wrap.className="redanim";
-  wrap.innerHTML=`<div class="redpk closed"><div class="seal">開</div><div class="taphint">🧧 点击拆红包</div></div>`;
+  wrap.innerHTML=`<div class="redpk closed"><div class="seal">開</div><div class="taphint">${tr("🧧 点击拆红包")}</div></div>`;
   let opened=false;
   function openIt(){
     if(opened){ if(wrap.parentNode) wrap.remove(); return; }
@@ -906,24 +1204,24 @@ function boomAnim(){
 }
 function claimRed(){
   if(g.over) return;
-  if(g.redpacketClaimed){ setHint("🧧 本轮红包已领，下轮再来"); return; }
+  if(g.redpacketClaimed){ setHint(tr("🧧 本轮红包已领，下轮再来")); return; }
   g.redpacketClaimed=true;
   const r=Math.random(); let txt;
-  if(r<0.40){ g.coins+=1; txt="💰 +1金币"; }
-  else if(r<0.70){ g.coins+=2; txt="💰 +2金币"; }
-  else if(r<0.85){ g.coins+=3; txt="💰 +3金币"; }
-  else if(r<0.95){ g.shield++; txt="🛡 护盾×1"; }
-  else { const id=randItem(); g.inv[id]=(g.inv[id]||0)+1; txt=ITEM[id].ico+ITEM[id].nm+"×1"; }
-  msg("红包·群主","🧧","【发了一个拼手气红包】"); sys("🧧 你抢到红包："+txt,"good");
-  redAnim("拼手气红包", txt);
+  if(r<0.40){ g.coins+=1; txt=tr("💰 +1金币"); }
+  else if(r<0.70){ g.coins+=2; txt=tr("💰 +2金币"); }
+  else if(r<0.85){ g.coins+=3; txt=tr("💰 +3金币"); }
+  else if(r<0.95){ g.shield++; txt=tr("🛡 护盾×1"); }
+  else { const id=randItem(); g.inv[id]=(g.inv[id]||0)+1; txt=ITEM[id].ico+tr(ITEM[id].nm)+"×1"; }
+  msg(tr("红包·群主"),"🧧",tr("【发了一个拼手气红包】")); sys(tr("🧧 你抢到红包：")+txt,"good");
+  redAnim(tr("拼手气红包"), txt);
   renderInv(); renderActs(); sync();
 }
 function luckyRed(){   // 幸运红包（红包雨事件）
   const r=Math.random(); let txt;
-  if(r<0.60){ const c=Math.floor(rand(1,6)); g.coins+=c; txt="💰 +"+c+"金币"; }
-  else if(r<0.85){ const id=randItem(); g.inv[id]=(g.inv[id]||0)+1; txt=ITEM[id].ico+ITEM[id].nm+"×1"; }
-  else { g.hp=Math.min(g.maxhp,g.hp+1); txt="❤ 恢复1点生命"; }
-  sys("💰 幸运红包："+txt,"good"); redAnim("幸运红包 🌧",txt);
+  if(r<0.60){ const c=Math.floor(rand(1,6)); g.coins+=c; txt=L("💰 +"+c+"金币","💰 +"+c+" coins"); }
+  else if(r<0.85){ const id=randItem(); g.inv[id]=(g.inv[id]||0)+1; txt=ITEM[id].ico+tr(ITEM[id].nm)+"×1"; }
+  else { g.hp=Math.min(g.maxhp,g.hp+1); txt=tr("❤ 恢复1点生命"); }
+  sys(tr("💰 幸运红包：")+txt,"good"); redAnim(tr("幸运红包 🌧"),txt);
 }
 /*==================== 群主红包·指定发放对象 ====================*/
 const RED_GIVE=[
@@ -934,31 +1232,31 @@ const RED_GIVE=[
   {ico:"💣",nm:"塞给刺头闹事者",cost:2,d:"收买刺头，威胁 -1 · 舆论 +5",fn:()=>{g.threats=Math.max(0,g.threats-1);op(5);}},
 ];
 function openRedGive(){
-  if(g.acted){ setHint("本轮已行动"); return; }
+  if(g.acted){ setHint(tr("本轮已行动")); return; }
   const box=document.getElementById("redGiveList"); box.innerHTML="";
   RED_GIVE.forEach(o=>{ const afford=g.coins>=o.cost; const el=document.createElement("div"); el.className="redopt"+(afford?"":" dis");
-    el.innerHTML=`<span class="oi">${o.ico}</span><div class="oinfo"><div class="onm">${o.nm}</div><div class="od">${o.d}</div></div><span class="oc">💰${o.cost}</span>`;
+    el.innerHTML=`<span class="oi">${o.ico}</span><div class="oinfo"><div class="onm">${tr(o.nm)}</div><div class="od">${tr(o.d)}</div></div><span class="oc">💰${o.cost}</span>`;
     el.onclick=()=>pickRed(o); box.appendChild(el); });
   document.getElementById("redGiveScreen").classList.remove("hidden");
 }
 function pickRed(o){
-  if(g.coins<o.cost){ setHint("金币不足"); return; }
+  if(g.coins<o.cost){ setHint(tr("金币不足")); return; }
   g.coins-=o.cost; o.fn(); g.stats.redpackets++;
   document.getElementById("redGiveScreen").classList.add("hidden");
-  meSay(`【群主发红包】🧧 ${o.nm}`); sys("🧧 群主红包："+o.d,"good");
-  redAnim("群主红包", o.nm);
+  meSay(L(`【群主发红包】🧧 ${o.nm}`,`[Owner sends a red packet]🧧 ${tr(o.nm)}`)); sys(tr("🧧 群主红包：")+tr(o.d),"good");
+  redAnim(tr("群主红包"), tr(o.nm));
   g.coins-=0; addFactionAff(o.ico==="👥"?"👥":o.ico==="🛡"?"🛡":o.ico==="📰"?"📰":o.ico, 6);  // 发红包涨好感
   g.acted=true; g.stats.acts++; renderActs(); sync(); checkEnd();
-  if(!g.over){ setHint("结算中…"); setTimeout(endRound,600); }
+  if(!g.over){ setHint(tr("结算中…")); setTimeout(endRound,600); }
 }
 
 /*==================== 👢 指定踢人（含好感/同阵营互助） ====================*/
 function openKickTarget(){
-  if(g.acted){ setHint("本轮已行动"); return; }
+  if(g.acted){ setHint(tr("本轮已行动")); return; }
   const box=document.getElementById("kickList"); box.innerHTML="";
   const cands=NPCS.filter(n=>n.a!=="💼").slice().sort(()=>Math.random()-0.5).slice(0,5);
   cands.forEach(npc=>{ const a=aff(npc.n); const el=document.createElement("div"); el.className="redopt";
-    el.innerHTML=`<span class="oi">${npc.a}</span><div class="oinfo"><div class="onm">${npc.n}</div><div class="od">好感 ${affHearts(a)}</div></div><span class="oc">👢踢</span>`;
+    el.innerHTML=`<span class="oi">${npc.a}</span><div class="oinfo"><div class="onm">${npc.n}</div><div class="od">${tr("好感 ")}${affHearts(a)}</div></div><span class="oc">${tr("👢踢")}</span>`;
     el.onclick=()=>doKick(npc); box.appendChild(el); });
   document.getElementById("kickScreen").classList.remove("hidden");
 }
@@ -966,51 +1264,51 @@ function doKick(npc){
   document.getElementById("kickScreen").classList.add("hidden");
   popChange("member",-1); popChange("kicked",1); g.stats.kicks++;
   const a=aff(npc.n); addFactionAff(npc.a,-12);   // 同阵营都不满
-  meSay(`把 ${npc.n} 踢了！👢`);
-  if(a>=60){ op(-6); rep(-1); sys(`😱 ${npc.n} 人缘极好，你踢错了人！同阵营群起而攻，舆论-6 信誉-1`,"bad");
-    msg(npcBy(npc.a).n,npc.a,pick(["凭什么踢TA！","群主太过分了！","我们要讨个说法","一起举报群主！"])); }
-  else if(a<=40){ g.threats=Math.max(0,g.threats-1); op(3); sys(`👢 ${npc.n} 本就招人烦，踢得好！威胁-1 舆论+3`,"good"); }
-  else { g.threats=Math.max(0,g.threats-1); op(1); sys(`👢 踢掉了 ${npc.n}，威胁-1`,""); }
+  meSay(L(`把 ${npc.n} 踢了！👢`,`Kicked ${npc.n}! 👢`));
+  if(a>=60){ op(-6); rep(-1); sys(L(`😱 ${npc.n} 人缘极好，你踢错了人！同阵营群起而攻，舆论-6 信誉-1`,`😱 ${npc.n} is beloved — wrong person to kick! Their camp swarms you, opinion -6, reputation -1`),"bad");
+    msg(npcBy(npc.a).n,npc.a,tr(pick(["凭什么踢TA！","群主太过分了！","我们要讨个说法","一起举报群主！"]))); }
+  else if(a<=40){ g.threats=Math.max(0,g.threats-1); op(3); sys(L(`👢 ${npc.n} 本就招人烦，踢得好！威胁-1 舆论+3`,`👢 ${npc.n} was a nuisance anyway, good kick! Threat -1, opinion +3`),"good"); }
+  else { g.threats=Math.max(0,g.threats-1); op(1); sys(L(`👢 踢掉了 ${npc.n}，威胁-1`,`👢 Kicked ${npc.n}, threat -1`),""); }
   g.acted=true; g.stats.acts++; renderActs(); sync(); checkEnd();
-  if(!g.over){ setHint("结算中…"); setTimeout(endRound,600); }
+  if(!g.over){ setHint(tr("结算中…")); setTimeout(endRound,600); }
 }
 
 /*==================== 💬 单人·私聊群成员（结盟/拉票/套情报） ====================*/
 // 按头像判定阵营，给不同私聊收益
 function whisperEffect(npc){
   const a=npc.a;
-  if(a==="🛡"||a==="⭐"){ g.threats=Math.max(0,g.threats-1); return {reply:"结盟！我帮你盯着那帮闹事的。", txt:"🤝 结盟成功：威胁 -1"}; }
-  if(a==="📰"){ const e=makeEvidence(0.1); g.evidence.push(e); renderEv(); return {reply:"给你个独家料，别说是我给的。", txt:`📰 套到情报：${e.ico}${e.nm}`}; }
-  if(a==="🏢"||a==="💼"){ g.exposeQueued=0; op(3); return {reply:"官方那边的关系，我帮你打点。", txt:"🏢 打点官方：压下曝光，舆论 +3"}; }
-  if(a==="👀"){ g.coins+=1; return {reply:"嘿嘿，红包拿来我就帮你摇旗！", txt:"👀 打赏游客：💰 +1"}; }
-  if(a==="🕵️"||a==="👻"){ op(2); return {reply:"…你什么都没看见。", txt:"🕵️ 试探一番：舆论 +2"}; }
+  if(a==="🛡"||a==="⭐"){ g.threats=Math.max(0,g.threats-1); return {reply:tr("结盟！我帮你盯着那帮闹事的。"), txt:tr("🤝 结盟成功：威胁 -1")}; }
+  if(a==="📰"){ const e=makeEvidence(0.1); g.evidence.push(e); renderEv(); return {reply:tr("给你个独家料，别说是我给的。"), txt:L(`📰 套到情报：${e.ico}${e.nm}`,`📰 Got intel: ${e.ico}${tr(e.nm)}`)}; }
+  if(a==="🏢"||a==="💼"){ g.exposeQueued=0; op(3); return {reply:tr("官方那边的关系，我帮你打点。"), txt:tr("🏢 打点官方：压下曝光，舆论 +3")}; }
+  if(a==="👀"){ g.coins+=1; return {reply:tr("嘿嘿，红包拿来我就帮你摇旗！"), txt:tr("👀 打赏游客：💰 +1")}; }
+  if(a==="🕵️"||a==="👻"){ op(2); return {reply:tr("…你什么都没看见。"), txt:tr("🕵️ 试探一番：舆论 +2")}; }
   // 成员/组长/核心/普通：拉票
-  if(g.role==="member"){ addMeter(8); op(2); return {reply:"你说得对，选举我投你！", txt:"👥 拉票成功：上位支持 +8，舆论 +2"}; }
-  op(5); return {reply:"群主威武，我挺你！", txt:"👥 拉拢群众：舆论 +5"};
+  if(g.role==="member"){ addMeter(8); op(2); return {reply:tr("你说得对，选举我投你！"), txt:tr("👥 拉票成功：上位支持 +8，舆论 +2")}; }
+  op(5); return {reply:tr("群主威武，我挺你！"), txt:tr("👥 拉拢群众：舆论 +5")};
 }
 function openWhisper(){
-  if(g.dmUsed){ setHint("💬 本轮私聊已用，下轮再来"); return; }
+  if(g.dmUsed){ setHint(tr("💬 本轮私聊已用，下轮再来")); return; }
   const box=document.getElementById("whisperList"); box.innerHTML="";
   const cands=NPCS.slice().sort(()=>Math.random()-0.5).slice(0,4);
   cands.forEach(npc=>{ const el=document.createElement("div"); el.className="redopt";
-    el.innerHTML=`<span class="oi">${npc.a}</span><div class="oinfo"><div class="onm">${npc.n}</div><div class="od">好感 ${affHearts(aff(npc.n))}</div></div><span class="oc">🔒</span>`;
+    el.innerHTML=`<span class="oi">${npc.a}</span><div class="oinfo"><div class="onm">${npc.n}</div><div class="od">${tr("好感 ")}${affHearts(aff(npc.n))}</div></div><span class="oc">🔒</span>`;
     el.onclick=()=>pickWhisper(npc); box.appendChild(el); });
   document.getElementById("whisperScreen").classList.remove("hidden");
 }
 function pickWhisper(npc){
   if(g.dmUsed) return; g.dmUsed=true;
   document.getElementById("whisperScreen").classList.add("hidden");
-  meSay(`🔒 私聊 ${npc.n}：${pick(["在吗？帮个忙呗~","咱俩联手怎么样？","悄悄说个事…","给你发个红包，帮我说句话呗"])}`);
+  meSay(L(`🔒 私聊 ${npc.n}：${pick(["在吗？帮个忙呗~","咱俩联手怎么样？","悄悄说个事…","给你发个红包，帮我说句话呗"])}`,`🔒 Whisper to ${npc.n}: ${tr(pick(["在吗？帮个忙呗~","咱俩联手怎么样？","悄悄说个事…","给你发个红包，帮我说句话呗"]))}`));
   addAff(npc.n,10); addFactionAff(npc.a,3);   // 私聊拉近好感
   const r=whisperEffect(npc);
   msg(npc.n+" 🔒", npc.a, r.reply);
-  sys(`💬 ${r.txt}（与 ${npc.n} 好感 ${affHearts(aff(npc.n))}）`,"good");
+  sys(L(`💬 ${r.txt}（与 ${npc.n} 好感 ${affHearts(aff(npc.n))}）`,`💬 ${r.txt} (affinity with ${npc.n}: ${affHearts(aff(npc.n))})`),"good");
   renderActs(); renderEv(); sync(); checkEnd();
 }
 
 /*==================== 🕶 黑市商店（每2轮·高风险高收益） ====================*/
 const BM_ITEMS=[
-  {id:"timebomb",nm:"定时炸弹",price:8, ico:"💣",d:"2回合后重创对手阵营(清威胁+助攻)",fn:()=>{ g.timedBomb=g.round+2; sys("💣 定时炸弹已布下，2回合后引爆…","good"); }},
+  {id:"timebomb",nm:"定时炸弹",price:8, ico:"💣",d:"2回合后重创对手阵营(清威胁+助攻)",fn:()=>{ g.timedBomb=g.round+2; sys(tr("💣 定时炸弹已布下，2回合后引爆…"),"good"); }},
   {id:"cloak",   nm:"隐身披风",price:6, ico:"🕶",d:"2回合内不被攻击/调查",fn:()=>{ g.cloak=2; if(g.roleDef.meter&&g.roleDef.meter.bad) addMeter(-20); }},
   {id:"swap",    nm:"身份交换卡",price:10,ico:"🧬",d:"随机换成另一个身份(赌一把翻盘)",fn:()=>swapRole()},
   {id:"dossier", nm:"绝密档案",price:7, ico:"📂",d:"获得2份真证据+情报(舆论+信誉)",fn:()=>{ g.evidence.push(makeEvidence(0),makeEvidence(0)); op(4); rep(1); renderEv(); }},
@@ -1023,24 +1321,24 @@ const BMITEM=Object.fromEntries(BM_ITEMS.map(x=>[x.id,x]));
 function swapRole(){
   const nk=pick(ROLE_KEYS.filter(k=>k!==g.role)); const rd=ROLES[nk];
   g.role=nk; g.roleDef=rd; g.meter=0; g.maxhp=rd.hp; g.hp=Math.min(g.hp,rd.hp);
-  document.getElementById("roleTag").textContent=`${rd.ico} ${rd.nm}`;
-  sys(`🧬 身份交换！你现在是 ${rd.ico}${rd.nm} —— 新目标：${rd.goal}`,"event");
+  document.getElementById("roleTag").textContent=`${rd.ico} ${tr(rd.nm)}`;
+  sys(L(`🧬 身份交换！你现在是 ${rd.ico}${rd.nm} —— 新目标：${rd.goal}`,`🧬 Identity swap! You're now the ${rd.ico}${tr(rd.nm)} — new goal: ${tr(rd.goal)}`),"event");
 }
 function supremeRed(){
   const r=Math.random();
-  if(r<0.10){ sys("🎁 至尊红包：竟是空红包，血亏…","bad"); redAnim("至尊红包 👑","❌ 空红包"); }
-  else if(r<0.55){ g.coins+=15; sys("🎁 至尊红包：+15金币！","good"); redAnim("至尊红包 👑","💰 +15金币"); }
-  else { const got=[]; for(let i=0;i<2;i++){ const id=pick(["disguise","mute","probe","medkit"]); g.inv[id]=(g.inv[id]||0)+1; got.push(ITEM[id].ico+ITEM[id].nm); }
-    sys("🎁 至尊红包："+got.join(" + "),"good"); redAnim("至尊红包 👑",got.join(" + ")); }
+  if(r<0.10){ sys(tr("🎁 至尊红包：竟是空红包，血亏…"),"bad"); redAnim(tr("至尊红包 👑"),tr("❌ 空红包")); }
+  else if(r<0.55){ g.coins+=15; sys(tr("🎁 至尊红包：+15金币！"),"good"); redAnim(tr("至尊红包 👑"),tr("💰 +15金币")); }
+  else { const got=[]; for(let i=0;i<2;i++){ const id=pick(["disguise","mute","probe","medkit"]); g.inv[id]=(g.inv[id]||0)+1; got.push(ITEM[id].ico+tr(ITEM[id].nm)); }
+    sys(tr("🎁 至尊红包：")+got.join(" + "),"good"); redAnim(tr("至尊红包 👑"),got.join(" + ")); }
 }
 function openBM(){
-  if(g.acted){ setHint("请先完成本轮行动前来黑市"); return; }
-  if(!g.bmOpen){ setHint("黑市本轮未开张（奇数轮开放）"); return; }
+  if(g.acted){ setHint(tr("请先完成本轮行动前来黑市")); return; }
+  if(!g.bmOpen){ setHint(tr("黑市本轮未开张（奇数轮开放）")); return; }
   const box=document.getElementById("bmGrid"); box.innerHTML="";
   g.bmStock.forEach(it=>{ const el=document.createElement("div"); el.className="shopitem bmitem";
-    el.innerHTML=`<span class="si">${it.ico}</span><div class="sinfo"><div class="snm">${it.nm}</div><div class="sdesc">${it.d}</div></div>`;
+    el.innerHTML=`<span class="si">${it.ico}</span><div class="sinfo"><div class="snm">${tr(it.nm)}</div><div class="sdesc">${tr(it.d)}</div></div>`;
     const afford=g.coins>=it.price && !g.bmBought;
-    const b=document.createElement("button"); b.className="buy"+(afford?"":" own"); b.textContent=g.bmBought?"已购":"💰"+it.price; b.onclick=()=>{ if(afford) buyBM(it); };
+    const b=document.createElement("button"); b.className="buy"+(afford?"":" own"); b.textContent=g.bmBought?tr("已购"):"💰"+it.price; b.onclick=()=>{ if(afford) buyBM(it); };
     el.appendChild(b); box.appendChild(el); });
   document.getElementById("bmScreen").classList.remove("hidden");
 }
@@ -1049,78 +1347,78 @@ function buyBM(it){
   g.coins-=it.price; g.bmBought=true;
   const dice=1+Math.floor(Math.random()*6);
   let txt;
-  if(dice===1){ g.coins=Math.floor(g.coins/2); g.acted=true; txt=`🚔 掷出 🎲1：被查获！金币减半，本回合无法行动（商品没收）`; }
+  if(dice===1){ g.coins=Math.floor(g.coins/2); g.acted=true; txt=L(`🚔 掷出 🎲1：被查获！金币减半，本回合无法行动（商品没收）`,`🚔 Rolled 🎲1: busted! Coins halved, no action this round (goods seized)`); }
   else {
     it.fn();
-    if(dice===5){ const back=Math.floor(it.price/2); g.coins+=back; txt=`🎉 掷出 🎲5：获得「${it.nm}」并返还 ${back} 金币`; }
-    else if(dice===6){ const id=randItem(); g.inv[id]=(g.inv[id]||0)+1; txt=`💎 掷出 🎲6：获得「${it.nm}」，再赠 ${ITEM[id].ico}${ITEM[id].nm}`; }
-    else txt=`✅ 掷出 🎲${dice}：顺利拿下「${it.nm}」`;
+    if(dice===5){ const back=Math.floor(it.price/2); g.coins+=back; txt=L(`🎉 掷出 🎲5：获得「${it.nm}」并返还 ${back} 金币`,`🎉 Rolled 🎲5: got "${tr(it.nm)}" and ${back} coins refunded`); }
+    else if(dice===6){ const id=randItem(); g.inv[id]=(g.inv[id]||0)+1; txt=L(`💎 掷出 🎲6：获得「${it.nm}」，再赠 ${ITEM[id].ico}${ITEM[id].nm}`,`💎 Rolled 🎲6: got "${tr(it.nm)}" plus a free ${ITEM[id].ico}${tr(ITEM[id].nm)}`); }
+    else txt=L(`✅ 掷出 🎲${dice}：顺利拿下「${it.nm}」`,`✅ Rolled 🎲${dice}: secured "${tr(it.nm)}"`);
   }
-  msg("黑市·商人","🕶","【一手交钱一手交货…掷骰判定风险】");
+  msg(tr("黑市·商人"),"🕶",tr("【一手交钱一手交货…掷骰判定风险】"));
   sys(txt, dice===1?"bad":"good");
   document.getElementById("bmScreen").classList.add("hidden");
   renderInv(); renderEv(); sync(); checkEnd();
-  if(g.acted && !g.over){ setHint("被查获，本回合结束…"); setTimeout(endRound,700); }
+  if(g.acted && !g.over){ setHint(tr("被查获，本回合结束…")); setTimeout(endRound,700); }
 }
 function mysteryBox(){   // 神秘红包（3金币购买）
-  msg("神秘·红包","🎰","【神秘红包，点击试试手气…】");
+  msg(tr("神秘·红包"),"🎰",tr("【神秘红包，点击试试手气…】"));
   const r=Math.random(); let txt;
-  if(r<0.05){ g.coins+=10; txt="💰 +10金币！大奖！"; }
-  else if(r<0.15){ g.shield+=2; txt="🛡 护盾×2"; }
-  else if(r<0.25){ g.hp=g.maxhp; txt="❤️ 恢复满血"; }
-  else if(r<0.40){ const e=makeEvidence(0); g.evidence.push(e); txt=`🧾 稀有证据「${e.ico}${e.nm}」`; renderEv(); }
-  else if(r<0.50){ g.inv.disguise++; txt="🎭 身份伪装×1"; }
-  else if(r<0.60){ g.inv.mute=(g.inv.mute||0)+2; txt="📢 禁言卡×2"; }
-  else if(r<0.70){ if(!g.bombUsed){ g.bombUsed=true; sys("🎰 开出舆论炸弹！","good"); fireBomb(); return; } else { g.coins+=5; txt="💰 +5金币（炸弹已用过）"; } }
-  else if(r<0.90){ txt="❌ 空红包，什么都没有…"; }
-  else { rep(-1); txt="💥 陷阱！信誉 -1"; }
-  sys("🎰 神秘红包："+txt, r>=0.90?"bad":"good");
-  redAnim("神秘红包 🎰", txt);
+  if(r<0.05){ g.coins+=10; txt=tr("💰 +10金币！大奖！"); }
+  else if(r<0.15){ g.shield+=2; txt=tr("🛡 护盾×2"); }
+  else if(r<0.25){ g.hp=g.maxhp; txt=tr("❤️ 恢复满血"); }
+  else if(r<0.40){ const e=makeEvidence(0); g.evidence.push(e); txt=L(`🧾 稀有证据「${e.ico}${e.nm}」`,`🧾 Rare evidence "${e.ico}${tr(e.nm)}"`); renderEv(); }
+  else if(r<0.50){ g.inv.disguise++; txt=tr("🎭 身份伪装×1"); }
+  else if(r<0.60){ g.inv.mute=(g.inv.mute||0)+2; txt=tr("📢 禁言卡×2"); }
+  else if(r<0.70){ if(!g.bombUsed){ g.bombUsed=true; sys(tr("🎰 开出舆论炸弹！"),"good"); fireBomb(); return; } else { g.coins+=5; txt=tr("💰 +5金币（炸弹已用过）"); } }
+  else if(r<0.90){ txt=tr("❌ 空红包，什么都没有…"); }
+  else { rep(-1); txt=tr("💥 陷阱！信誉 -1"); }
+  sys(tr("🎰 神秘红包：")+txt, r>=0.90?"bad":"good");
+  redAnim(tr("神秘红包 🎰"), txt);
   checkEnd();
 }
 function fireBomb(){   // 舆论炸弹：轰炸对手阵营
   boomAnim();
-  msg("你","💣","【引爆一颗舆论炸弹💣，对手阵营炸开了锅！】");
+  msg(tr("你"),"💣",tr("【引爆一颗舆论炸弹💣，对手阵营炸开了锅！】"));
   g.threats=Math.max(0,g.threats-2); g.silenceNext=(g.silenceNext||0)+1; g.exposeQueued=0;
-  if(g.role==="media"){ addMeter(18); sys("💣 舆论炸弹：曝光进度+18，压制对手","good"); }
-  else if(g.role==="member"){ addMeter(15); op(5); sys("💣 舆论炸弹：上位支持+15 舆论+5","good"); }
-  else if(g.role==="hacker"){ g.coins+=3; g.meter=Math.min(g.roleDef.meter.max,g.meter+1); sys("💣 舆论炸弹：破解+1 💰+3","good"); }
-  else if(g.role==="wodi"){ addMeter(-15); op(4); sys("💣 舆论炸弹：转移视线，怀疑度-15 舆论+4","good"); }
-  else { op(10); rep(1); sys("💣 舆论炸弹：舆论+10 信誉+1，轰倒一片对手","good"); }
+  if(g.role==="media"){ addMeter(18); sys(tr("💣 舆论炸弹：曝光进度+18，压制对手"),"good"); }
+  else if(g.role==="member"){ addMeter(15); op(5); sys(tr("💣 舆论炸弹：上位支持+15 舆论+5"),"good"); }
+  else if(g.role==="hacker"){ g.coins+=3; g.meter=Math.min(g.roleDef.meter.max,g.meter+1); sys(tr("💣 舆论炸弹：破解+1 💰+3"),"good"); }
+  else if(g.role==="wodi"){ addMeter(-15); op(4); sys(tr("💣 舆论炸弹：转移视线，怀疑度-15 舆论+4"),"good"); }
+  else { op(10); rep(1); sys(tr("💣 舆论炸弹：舆论+10 信誉+1，轰倒一片对手"),"good"); }
 }
 
 /*==================== 渲染 ====================*/
 function renderEv(){ const bar=document.getElementById("evBar"); bar.innerHTML="";
-  if(!g.evidence.length){ bar.innerHTML='<span class="ev" style="border-style:solid;opacity:.5;">🧾 暂无证据（调查/购买/事件获取）</span>'; return; }
+  if(!g.evidence.length){ const s=document.createElement("span"); s.className="ev"; s.style.borderStyle="solid"; s.style.opacity=".5"; s.textContent=tr("🧾 暂无证据（调查/购买/事件获取）"); bar.appendChild(s); return; }
   g.evidence.forEach(e=>{ const el=document.createElement("span"); el.className="ev"+(e.fake?" fake":"");
-    el.textContent=`${e.ico}${e.nm}${e.fake?"?":""}`; bar.appendChild(el); }); }
+    el.textContent=`${e.ico}${tr(e.nm)}${e.fake?"?":""}`; bar.appendChild(el); }); }
 function renderInv(){ const bar=document.getElementById("invBar"); bar.innerHTML="";
-  const lab=document.createElement("span"); lab.className="inv dis"; lab.style.border="none"; lab.style.background="transparent"; lab.textContent="🎒背包(点击使用)："; bar.appendChild(lab);
+  const lab=document.createElement("span"); lab.className="inv dis"; lab.style.border="none"; lab.style.background="transparent"; lab.textContent=tr("🎒背包(点击使用)："); bar.appendChild(lab);
   const order=["shield","medkit","report","probe","mute","unban","disguise","spam","revive"]; let any=false;
   order.forEach(id=>{ const n=(id==="shield"?g.shield:g.inv[id])||0; if(n<=0) return; any=true;
     const it=ITEM[id]; const usable=(id!=="shield"&&id!=="revive"); const el=document.createElement("span");
     el.className="inv"+((g.itemsLocked&&usable)?" dis":"");
-    el.textContent=`${it.ico}${it.nm}×${n}`+(usable?" ▸用":"");
-    if(usable) el.onclick=()=>{ const before=g.inv[id]; useItem(id); if(g.inv[id]<before) setHint(`已使用 ${it.nm}`); };
+    el.textContent=`${it.ico}${tr(it.nm)}×${n}`+(usable?tr(" ▸用"):"");
+    if(usable) el.onclick=()=>{ const before=g.inv[id]; useItem(id); if(g.inv[id]<before) setHint(L(`已使用 ${it.nm}`,`Used ${tr(it.nm)}`)); };
     bar.appendChild(el); });
-  if(!any){ const el=document.createElement("span"); el.className="inv dis"; el.textContent="空（去🛒商店买）"; bar.appendChild(el); } }
+  if(!any){ const el=document.createElement("span"); el.className="inv dis"; el.textContent=tr("空（去🛒商店买）"); bar.appendChild(el); } }
 
 /*==================== 群花名册 ====================*/
 function openRoster(){
   const body=document.getElementById("rosterBody"); body.innerHTML="";
-  document.getElementById("rosterCount").textContent="（在群 "+groupCount()+" 人）";
+  document.getElementById("rosterCount").textContent=L("（在群 "+groupCount()+" 人）","("+groupCount()+" in group)");
   const groups=["群管理园区","普通成员队伍","特殊状态","微信官方势力","媒体集群"];
   const maxN=95;
   groups.forEach(gr=>{ const items=POP_DEF.filter(p=>p.grp===gr); if(!items.length) return;
-    const box=document.createElement("div"); box.className="rgrp"; box.innerHTML=`<h3>${gr}</h3>`;
+    const box=document.createElement("div"); box.className="rgrp"; box.innerHTML=`<h3>${tr(gr)}</h3>`;
     items.forEach(p=>{ const n=g.pop[p.k]||0; const mine=(p.k===g.role)||(g.role==="qunzhu"&&p.k==="qunzhu");
       const row=document.createElement("div"); row.className="rrow"+(mine?" me":"");
-      row.innerHTML=`<span class="ri">${p.ico}</span><span class="rn">${p.nm}${mine?' <span class="metag">你</span>':""}</span>`
+      row.innerHTML=`<span class="ri">${p.ico}</span><span class="rn">${tr(p.nm)}${mine?` <span class="metag">${tr("你")}</span>`:""}</span>`
         +`<div class="rbar"><i style="width:${Math.min(100,n/maxN*100)}%"></i></div><span class="rc">${n}</span>`;
       box.appendChild(row); });
     body.appendChild(box); });
   // 好感度（对你）
-  const ab=document.createElement("div"); ab.className="rgrp"; ab.innerHTML="<h3>❤ 群里对你的好感度</h3>";
+  const ab=document.createElement("div"); ab.className="rgrp"; ab.innerHTML=`<h3>${tr("❤ 群里对你的好感度")}</h3>`;
   NPCS.forEach(npc=>{ const v=aff(npc.n); const row=document.createElement("div"); row.className="rrow";
     row.innerHTML=`<span class="ri">${npc.a}</span><span class="rn">${npc.n}</span><span class="rc" style="font-size:11px;">${affHearts(v)}</span>`;
     ab.appendChild(row); });
@@ -1129,7 +1427,7 @@ function openRoster(){
 }
 
 /*==================== 工具 ====================*/
-function spend(n){ if(g.coins<n){ setHint("金币不足，去商店或发言攒钱"); return false; } g.coins-=n; return true; }
+function spend(n){ if(g.coins<n){ setHint(tr("金币不足，去商店或发言攒钱")); return false; } g.coins-=n; return true; }
 function setHint(t){ document.getElementById("hint").textContent=t; }
 function good(t){ sys("✅ "+t,"good"); }
 function sync(){
@@ -1144,14 +1442,14 @@ function sync(){
   document.getElementById("opTxt").textContent=o;
   const mw=document.getElementById("meterWrap");
   if(g.roleDef.meter){ mw.style.display="flex"; const m=g.roleDef.meter;
-    document.getElementById("meterLab").textContent=(m.bad?"⚠":"🎯")+m.lab;
+    document.getElementById("meterLab").textContent=(m.bad?"⚠":"🎯")+tr(m.lab);
     const mb=document.getElementById("meterBar"); mb.style.width=Math.min(100,g.meter/m.max*100)+"%";
     mb.style.background=m.bad?"linear-gradient(90deg,#fa5151,#ff9a9a)":"linear-gradient(90deg,#10aeff,#6fd0ff)";
     document.getElementById("meterTxt").textContent=m.max<=10?(g.meter+"/"+m.max):g.meter;
   } else mw.style.display="none";
-  document.getElementById("goalLine").textContent="🎯 "+g.roleDef.goal;
+  document.getElementById("goalLine").textContent="🎯 "+tr(g.roleDef.goal);
   renderEv(); renderInv();
-  document.getElementById("hdCount").textContent="("+groupCount()+"人)";
+  document.getElementById("hdCount").textContent="("+groupCount()+tr("人)");
 }
 
 /*==================== 按钮 ====================*/
@@ -1171,16 +1469,16 @@ $("achBack").onclick=()=>{ show("achScreen",false); show("startScreen",true); re
 function buildRoleGrid(){ const box=$("roleGrid"); box.className="rolepick"; box.innerHTML="";
   ROLE_KEYS.forEach(k=>{ const rd=ROLES[k]; const el=document.createElement("div"); el.className="rp";
     const done=WSAVE.winByRole[k]?" ✅":"";
-    el.innerHTML=`<div class="rpi">${rd.ico}</div><div class="rpn">${rd.nm}${done}</div><div class="rpg">${rd.goal}</div>`;
+    el.innerHTML=`<div class="rpi">${rd.ico}</div><div class="rpn">${tr(rd.nm)}${done}</div><div class="rpg">${tr(rd.goal)}</div>`;
     el.onclick=()=>startWith(k); box.appendChild(el); }); }
 function startWith(k){ show("roleScreen",false); show("startScreen",false); newGame(k); }
 $("randomRoleBtn").onclick=()=>startWith(pick(ROLE_KEYS));
 
 /* 成就殿堂 */
-function buildAch(){ $("achSub").textContent=`已解锁 ${WSAVE.ach.length}/${ACHIEVEMENTS.length} · 游玩 ${WSAVE.games} 局 · 胜 ${WSAVE.wins} 局`;
+function buildAch(){ $("achSub").textContent=L(`已解锁 ${WSAVE.ach.length}/${ACHIEVEMENTS.length} · 游玩 ${WSAVE.games} 局 · 胜 ${WSAVE.wins} 局`,`Unlocked ${WSAVE.ach.length}/${ACHIEVEMENTS.length} · ${WSAVE.games} played · ${WSAVE.wins} won`);
   const box=$("achGrid"); box.className="achgrid"; box.innerHTML="";
   ACHIEVEMENTS.forEach(a=>{ const on=WSAVE.ach.includes(a.id); const el=document.createElement("div"); el.className="achcell"+(on?" on":"");
-    el.innerHTML=`<div class="ai">${on?a.ico:"🔒"}</div><div class="an">${a.nm}</div><div class="ad">${a.d}</div>`; box.appendChild(el); }); }
+    el.innerHTML=`<div class="ai">${on?a.ico:"🔒"}</div><div class="an">${tr(a.nm)}</div><div class="ad">${tr(a.d)}</div>`; box.appendChild(el); }); }
 
 /* 自己打字（单人剧情内，纯发言不占行动） */
 function sayCustom(){ const inp=$("sayText"); const t=(inp.value||"").trim(); if(!t||!g||g.over) return; meSay(t); inp.value=""; }
@@ -1196,29 +1494,29 @@ function openMp(){ show("startScreen",false); show("mpScreen",true);
   MP.role="👤";
   tags.forEach(t=>{ const el=document.createElement("span"); el.className="inv"; el.textContent=t; el.style.fontSize="18px";
     el.onclick=()=>{ MP.role=t; [...rp.children].forEach(c=>c.style.background="#fff"); el.style.background="#95ec69"; }; rp.appendChild(el); }); }
-$("mpEnter").onclick=async()=>{ const nm=($("mpName").value||"").trim()||("群友"+Math.floor(Math.random()*900+100));
+$("mpEnter").onclick=async()=>{ const nm=($("mpName").value||"").trim()||(L("群友","Member")+Math.floor(Math.random()*900+100));
   MP.name=nm; show("mpJoin",false); $("mpChat").style.display="flex"; $("mpInputBar").style.display="flex";
-  $("mpChat").innerHTML='<div class="sys">正在进群…</div>';
-  await MP.send(`${nm} 进群了 👋`,true); mpPoll(); MP.timer=setInterval(mpPoll,3000); };
+  $("mpChat").innerHTML=`<div class="sys">${tr("正在进群…")}</div>`;
+  await MP.send(L(`${nm} 进群了 👋`,`${nm} joined the group 👋`),true); mpPoll(); MP.timer=setInterval(mpPoll,3000); };
 $("mpLeave").onclick=()=>{ if(MP.dmWith){ exitDM(); } else { MP.stop(); backToMenu(); } };
 $("mpDmBack").onclick=exitDM;
 $("mpSend").onclick=mpSendMsg; $("mpText").addEventListener("keydown",e=>{ if(e.key==="Enter") mpSendMsg(); });
 function enterDM(name){ if(!name||name===MP.name) return; MP.dmWith=name;
   $("mpMode").style.display="flex"; $("mpDmName").textContent=name;
-  $("mpText").placeholder="私聊 "+name+" …"; mpPoll(); }
-function exitDM(){ MP.dmWith=null; $("mpMode").style.display="none"; $("mpText").placeholder="点某人昵称可私聊 · 群里说点什么…"; mpPoll(); }
+  $("mpText").placeholder=L("私聊 "+name+" …","Whisper "+name+" …"); mpPoll(); }
+function exitDM(){ MP.dmWith=null; $("mpMode").style.display="none"; $("mpText").placeholder=tr("点某人昵称可私聊 · 群里说点什么…"); mpPoll(); }
 async function mpSendMsg(){ const inp=$("mpText"); const t=(inp.value||"").trim(); if(!t) return; inp.value="";
   if(MP.dmWith) await MP.sendDM(MP.dmWith,t); else await MP.send(t,false); mpPoll(); }
 MP.stop=()=>{ if(MP.timer){ clearInterval(MP.timer); MP.timer=null; } MP.dmWith=null; $("mpMode").style.display="none"; };
 async function mpPoll(){ const d=await MP.get(); const box=$("mpChat"); if(!box||box.style.display==="none") return;
-  if(!d){ box.innerHTML='<div class="sys bad">连不上服务器（离线/沙盒环境）</div>'; return; }
+  if(!d){ box.innerHTML=`<div class="sys bad">${tr("连不上服务器（离线/沙盒环境）")}</div>`; return; }
   const now=Date.now(); const online=new Set();
   (d.messages||[]).forEach(m=>{ if(now-(m.ts||0)<90000) online.add(m.name); });
   box.innerHTML="";
   if(MP.dmWith){
     // 私聊视图：只显示我和对方之间的私信
     const thread=(d.dms||[]).filter(m=>(m.from===MP.name&&m.to===MP.dmWith)||(m.from===MP.dmWith&&m.to===MP.name));
-    if(!thread.length){ const s=document.createElement("div"); s.className="sys"; s.textContent="🔒 和 "+MP.dmWith+" 的私聊（只有你俩看得到）"; box.appendChild(s); }
+    if(!thread.length){ const s=document.createElement("div"); s.className="sys"; s.textContent=L("🔒 和 "+MP.dmWith+" 的私聊（只有你俩看得到）","🔒 Private chat with "+MP.dmWith+" (only you two can see it)"); box.appendChild(s); }
     thread.forEach(m=>{ const me=m.from===MP.name; const w=document.createElement("div"); w.className="msg"+(me?" me":"");
       w.innerHTML=me?`<div class="av">${m.role||"👤"}</div><div class="body"><div class="bub priv">${esc(m.text)}</div></div>`
         :`<div class="av">${m.role||"👤"}</div><div class="body"><div class="who">${esc(m.from)}</div><div class="bub priv">${esc(m.text)}</div></div>`;
@@ -1226,7 +1524,7 @@ async function mpPoll(){ const d=await MP.get(); const box=$("mpChat"); if(!box|
   } else {
     // 群聊视图：昵称可点私聊；提示有无新私信
     const dmToMe=(d.dms||[]).filter(m=>m.to===MP.name && now-(m.ts||0)<120000);
-    if(dmToMe.length){ const s=document.createElement("div"); s.className="sys good"; s.textContent="🔔 你有 "+dmToMe.length+" 条私信，点对方昵称查看"; box.appendChild(s); }
+    if(dmToMe.length){ const s=document.createElement("div"); s.className="sys good"; s.textContent=L("🔔 你有 "+dmToMe.length+" 条私信，点对方昵称查看","🔔 You have "+dmToMe.length+" new whisper(s), tap a name to view"); box.appendChild(s); }
     (d.messages||[]).forEach(m=>{
       if(m.sys){ const s=document.createElement("div"); s.className="sys"; s.textContent=m.text; box.appendChild(s); return; }
       const me=m.name===MP.name; const w=document.createElement("div"); w.className="msg"+(me?" me":"");
@@ -1236,7 +1534,7 @@ async function mpPoll(){ const d=await MP.get(); const box=$("mpChat"); if(!box|
       box.appendChild(w); });
     box.querySelectorAll(".who.dm").forEach(x=>x.onclick=()=>enterDM(x.getAttribute("data-dm")));
   }
-  box.scrollTop=box.scrollHeight; $("mpOnline").textContent="在线 "+online.size; }
+  box.scrollTop=box.scrollHeight; $("mpOnline").textContent=tr("在线 ")+online.size; }
 function esc(s){ return String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c])); }
 
 /* 通用 */
@@ -1252,6 +1550,7 @@ $("againBtn").onclick=()=>{ show("overScreen",false); buildRoleGrid(); show("rol
 $("quitBtn").onclick=()=>{ goArcade(); };
 $("homeBtn2").onclick=()=>{ show("overScreen",false); backToMenu(); };
 refreshAchCount();
+applyLang();
 
 if(typeof window!=="undefined") window.__ww={get g(){return g;}, newGame, doAction, endRound, buy, useItem, ITEM, ROLE_KEYS, ACT_DEF, court, aiOne, get WSAVE(){return WSAVE;}, checkAch, ACHIEVEMENTS, claimRed, openRedGive, pickRed, RED_GIVE, openBM, buyBM, BM_ITEMS, swapRole, openRoster, groupCount, POP_DEF, openWhisper, pickWhisper, NPCS, openKickTarget, doKick, aff, factionAff, groupChatter, npcAction};
 </script>
