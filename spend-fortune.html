@@ -178,6 +178,15 @@
   .bookcell{background:#12241c;border:1px solid var(--line);border-radius:9px;padding:8px 3px;text-align:center;}
   .bookcell.got{border-color:var(--gold);} .bookcell.miss{opacity:.4;}
   .bookcell .bi{font-size:22px;filter:grayscale(1);} .bookcell.got .bi{filter:none;} .bookcell .bn{font-size:9px;margin-top:2px;} .bookcell .bc{font-size:9px;color:var(--gold);font-weight:800;}
+  .bankbtn.trade{background:linear-gradient(180deg,#2a7d6a,#1a5145);border-color:#38a184;box-shadow:0 3px 0 #123a30;margin-top:6px;}
+  .invrow{display:flex;align-items:center;gap:9px;background:#12241c;border:1px solid var(--line);border-radius:10px;padding:7px 10px;margin-bottom:6px;}
+  .invrow .ii{font-size:22px;width:30px;text-align:center;} .invrow .it{flex:1;min-width:0;} .invrow .inm{font-weight:800;font-size:13px;} .invrow .ival{font-size:10px;color:var(--muted);}
+  .invrow .iq{color:var(--gold);font-weight:900;font-size:12px;} .invrow .iact{display:flex;gap:4px;}
+  .mktrow{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#12241c;border:1px solid var(--line);border-radius:9px;padding:7px 10px;margin-bottom:5px;font-size:12px;}
+  .mktrow .mkn{font-weight:700;} .mktrow .mkp{font-weight:900;font-variant-numeric:tabular-nums;}
+  .newsrow{background:#0f1a22;border-left:3px solid var(--blue);border-radius:7px;padding:6px 9px;margin-bottom:5px;font-size:11px;line-height:1.5;color:#cfe;}
+  .merit{background:linear-gradient(180deg,#1a2e1f,#12241c);border:1px solid var(--gold-d);border-radius:10px;padding:9px 11px;margin-bottom:9px;text-align:center;}
+  .merit .mv{font-weight:900;color:var(--gold);font-size:15px;}
 </style>
 </head>
 <body>
@@ -219,6 +228,7 @@
       <button class="bankbtn auc" onclick="openAuction()">🔨 <span data-i18n="拍卖">拍卖</span></button>
       <button class="bankbtn gift" onclick="openGifts()">🎁 <span data-i18n="礼物">礼物</span><span class="gbadge" id="giftBadge"></span></button>
     </div>
+    <button class="bankbtn trade" onclick="openTrade()">🎒 <span data-i18n="仓库">仓库</span> · <span data-i18n="二手市场">二手市场</span> · <span data-i18n="美食">美食</span></button>
     <div class="dockrow2">
       <div class="db" onclick="openAch()">🏆 <span data-i18n="成就">成就</span></div>
       <div class="db" onclick="openRec()">📊 <span data-i18n="排行榜">排行榜</span></div>
@@ -279,6 +289,8 @@
   <div class="overlay hidden" id="aucScreen"><div class="sheet" id="aucSheet"></div></div>
   <!-- 礼物中心 -->
   <div class="overlay hidden" id="giftScreen"><div class="sheet" id="giftSheet"></div></div>
+  <!-- 仓库 / 二手市场 -->
+  <div class="overlay hidden" id="tradeScreen"><div class="sheet" id="tradeSheet"></div></div>
 
 </div></div>
 
@@ -381,6 +393,16 @@ const TR={
   "每日签到":"Daily Check-in","神秘快递":"Mystery Delivery","AI好友":"AI Friend","节日礼物":"Festival Gift","生日礼物":"Birthday Gift","超稀有":"Ultra-Rare",
   "普通":"Common","稀有":"Rare","超稀有礼":"Super Rare","史诗":"Epic","传说":"Legendary","神话":"Mythic","至尊":"Supreme",
   "春节":"Spring Festival","圣诞节":"Christmas","万圣节":"Halloween","新年":"New Year","🎂 生日快乐！":"🎂 Happy Birthday!","🎊 神秘慈善赠礼！":"🎊 Mystery charity gift!",
+  // 仓库 / 二手 / 美食
+  "仓库":"Warehouse","二手市场":"Resale","美食":"Food","🎒 仓库 · 二手交易":"🎒 Warehouse · Resale","我的仓库":"My Warehouse","行情 · 新闻":"Market · News",
+  "空空如也，先去买点东西吧":"Empty — go buy some things first!","市值":"Value","出售":"Sell","批量卖出":"Sell all","食用":"Eat","全部":"all",
+  "已卖出":"Sold","二手成交额":"Resale volume","商人等级":"Merchant","手续费":"Fee","市场行情（每日波动，低买高卖）":"Market prices (fluctuate daily — buy low, sell high)",
+  "今日新闻":"Today's News","饮料":"Drinks","快餐":"Fast Food","世界美食":"World Cuisine","甜品":"Desserts","超市":"Supermarket",
+  "食物":"Food","恢复心情":"Mood","饱食":"Satiety","好吃！":"Yummy!","新人商人":"Rookie","优秀商人":"Skilled","百万商人":"Millionaire","商业大亨":"Magnate","全球首富商人":"Tycoon",
+  "📉 股市暴跌，避险情绪升温":"📉 Markets crash, risk-off mood","📈 黄金大涨，收藏走强":"📈 Gold surges, collectibles up",
+  "🏠 房价上涨":"🏠 Property prices rise","🚀 科技突破，科技资产暴涨":"🚀 Tech breakthrough — tech assets soar","🌪️ 自然灾害，多地资产受挫":"🌪️ Disaster hits asset values",
+  "🖼️ 艺术热潮，藏品升值":"🖼️ Art boom lifts collectibles","📈 全球经济繁荣，资产普涨":"📈 Global boom lifts all assets","🚗 豪车热，二手车价上扬":"🚗 Luxury-car craze lifts resale",
+  "涨":"up","跌":"down","估价":"Est.",
 };
 function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
 function nm(o){ return LANG==="en" ? o.en : o.zh; }
@@ -394,6 +416,7 @@ function applyLang(){
   if(window.financeApplyLang) financeApplyLang();
   if(window.aucApplyLang) aucApplyLang();
   if(window.giftApplyLang) giftApplyLang();
+  if(window.tradeApplyLang) tradeApplyLang();
 }
 function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("spendLang",LANG);}catch(e){} applyLang(); }
 
@@ -436,6 +459,16 @@ const CATS=[
   {id:"won", zh:"世界奇观", en:"World Wonders", ico:"🌍", type:"building", building:true, items:[
     {zh:"金字塔复制品",en:"Pyramid Replica",ico:"🔺",p:5*B},{zh:"人工岛",en:"Artificial Island",ico:"🏝️",p:30*B},
     {zh:"超级城市",en:"Mega City",ico:"🌆",p:100*B},{zh:"月球基地",en:"Moon Base",ico:"🌙",p:150*B},{zh:"火星城市",en:"Mars City",ico:"🔴",p:300*B}]},
+  {id:"drink", zh:"饮料", en:"Drinks", ico:"🥤", type:"food", items:[
+    {zh:"矿泉水",en:"Water",ico:"💧",p:1},{zh:"可乐",en:"Cola",ico:"🥤",p:3},{zh:"果汁",en:"Juice",ico:"🧃",p:5},{zh:"咖啡",en:"Coffee",ico:"☕",p:8},{zh:"奶茶",en:"Milk Tea",ico:"🧋",p:10},{zh:"能量饮料",en:"Energy Drink",ico:"⚡",p:15}]},
+  {id:"fast", zh:"快餐", en:"Fast Food", ico:"🍔", type:"food", items:[
+    {zh:"汉堡",en:"Burger",ico:"🍔",p:12},{zh:"薯条",en:"Fries",ico:"🍟",p:8},{zh:"炸鸡",en:"Fried Chicken",ico:"🍗",p:20},{zh:"热狗",en:"Hot Dog",ico:"🌭",p:10},{zh:"披萨",en:"Pizza",ico:"🍕",p:25},{zh:"三明治",en:"Sandwich",ico:"🥪",p:15}]},
+  {id:"cuisine", zh:"世界美食", en:"World Cuisine", ico:"🍜", type:"food", items:[
+    {zh:"拉面",en:"Ramen",ico:"🍜",p:30},{zh:"寿司",en:"Sushi",ico:"🍣",p:120},{zh:"牛排",en:"Steak",ico:"🥩",p:200},{zh:"火锅",en:"Hot Pot",ico:"🍲",p:300},{zh:"烤肉",en:"BBQ",ico:"🍖",p:180},{zh:"海鲜拼盘",en:"Seafood Platter",ico:"🦐",p:800},{zh:"龙虾",en:"Lobster",ico:"🦞",p:1500},{zh:"鱼子酱",en:"Caviar",ico:"🐟",p:5000}]},
+  {id:"dessert", zh:"甜品", en:"Desserts", ico:"🍰", type:"food", items:[
+    {zh:"蛋糕",en:"Cake",ico:"🍰",p:50},{zh:"冰淇淋",en:"Ice Cream",ico:"🍦",p:15},{zh:"巧克力",en:"Chocolate",ico:"🍫",p:30},{zh:"马卡龙",en:"Macaron",ico:"🧁",p:40},{zh:"曲奇",en:"Cookie",ico:"🍪",p:20}]},
+  {id:"grocery", zh:"超市", en:"Supermarket", ico:"🛒", type:"food", items:[
+    {zh:"水果",en:"Fruit",ico:"🍎",p:5},{zh:"蔬菜",en:"Veggies",ico:"🥦",p:4},{zh:"肉类",en:"Meat",ico:"🥩",p:25},{zh:"牛奶",en:"Milk",ico:"🥛",p:6},{zh:"面包",en:"Bread",ico:"🍞",p:8},{zh:"零食",en:"Snacks",ico:"🍿",p:12},{zh:"调味料",en:"Seasoning",ico:"🧂",p:10},{zh:"冷冻食品",en:"Frozen Food",ico:"🧊",p:18}]},
 ];
 CATS.forEach((c,ci)=>c.items.forEach((it,ii)=>{ it.id=c.id+"_"+ii; it.cat=c; }));
 const ALL=CATS.flatMap(c=>c.items);
@@ -458,6 +491,8 @@ const ACHS=[
   {id:"auc1", ico:"🔨", zh:"第一次举牌", en:"First Bid", d:"参与一次拍卖竞价", chk:s=>(s.aucBids||0)>=1},
   {id:"aucCur", ico:"🏛️", zh:"世界收藏馆", en:"World Curator", d:"竞得100件拍品", chk:s=>(s.collection?s.collection.length:0)>=100},
   {id:"aucLeg", ico:"👑", zh:"拍卖传奇", en:"Auction Legend", d:"单件拍品成交超$100B", chk:s=>(s.aucBiggest||0)>=100e9},
+  {id:"foodie", ico:"🍴", zh:"美食家", en:"Foodie", d:"食用50份美食", chk:s=>(s.meals||0)>=50},
+  {id:"merchant", ico:"🏪", zh:"二手大亨", en:"Resale Mogul", d:"二手成交额超$50B", chk:s=>(s.sold||0)>=50e9},
 ];
 const START_BAL=400*B;
 
@@ -473,6 +508,7 @@ function freshState(){
     stocks:{}, px:{}, insured:{}, chips:0, wagered:0, cstats:{plays:0,wins:0,biggest:0,net:0},
     collection:[], aucBids:0, aucWon:0, aucBiggest:0, aucSpent:0,
     mail:[], checkStreak:0, lastCheckin:0, giftLog:{}, giftsGot:0, birthday:12+Math.floor(Math.random()*28), bdayDone:false,
+    mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
     incomePeak:0, netPeak:START_BAL, won:false, ending:"" };
 }
 function newGame(){
@@ -772,6 +808,7 @@ function vipTier(){ let t=VIPS[0]; for(const v of VIPS) if(S.wagered>=v.min) t=v
 
 /*-------- 每日结算 --------*/
 function financeReset(){ if(dayTimer) clearInterval(dayTimer); STOCKS.forEach(s=>S.px[s.id]=s.px);
+  if(window.tradeReset) tradeReset();
   dayTimer=setInterval(()=>{ if(S&&!S.over) dayTick(); }, 7000); }
 function dayTick(){
   if(!S||S.over) return;
@@ -798,6 +835,7 @@ function dayTick(){
   else if(loansTotal()>Math.max(1,netWorth())) S.creditPts=Math.max(0,S.creditPts-5);
   S.netPeak=Math.max(S.netPeak,netWorth());
   if(window.giftDayTick) giftDayTick();
+  if(window.tradeDayTick) tradeDayTick();
   markDirty(); if(bankOpen()) renderBank();
 }
 function countTypeAdj(cat,n){ if(cat.type==="car")S.cars+=n; else if(cat.type==="plane")S.planes+=n; if(cat.type==="house")S.houses+=n; if(cat.building)S.buildings+=n; }
@@ -1233,6 +1271,81 @@ function renderGifts(){
   }
   h+=`<button class="btn ghost" style="padding:9px;margin-top:10px" onclick="byId('giftScreen').classList.add('hidden')">${tr("关闭")}</button>`;
   byId("giftSheet").innerHTML=h;
+}
+</script>
+
+<script>
+/*==================== 🎒 仓库 · 二手市场 · 行情新闻 ====================*/
+const TRADE_TYPES=["tech","car","plane","ship","house","building","fun","luxury","science","food"];
+const COLL_TYPES=["art","col","biz","prop"];
+const MERCHANT=[{zh:"新人商人",en:"Rookie",min:0,fee:0.15},{zh:"优秀商人",en:"Skilled",min:1e9,fee:0.12},{zh:"百万商人",en:"Millionaire",min:10e9,fee:0.09},{zh:"商业大亨",en:"Magnate",min:100e9,fee:0.06},{zh:"全球首富商人",en:"Tycoon",min:1e12,fee:0.03}];
+const NEWS_POOL=[
+  {zh:"🚀 科技突破，科技资产暴涨",t:["tech","science"],d:0.22},
+  {zh:"🏠 房价上涨",t:["house","building"],d:0.16},
+  {zh:"🖼️ 艺术热潮，藏品升值",t:["art","col","luxury"],d:0.18},
+  {zh:"🚗 豪车热，二手车价上扬",t:["car"],d:0.2},
+  {zh:"📈 黄金大涨，收藏走强",t:["col","luxury"],d:0.15},
+  {zh:"📈 全球经济繁荣，资产普涨",t:TRADE_TYPES,d:0.08},
+  {zh:"📉 股市暴跌，避险情绪升温",t:["building","biz","science"],d:-0.16},
+  {zh:"🌪️ 自然灾害，多地资产受挫",t:["house","building","car"],d:-0.18},
+];
+let tradeView="inv", invSort="val";
+function tradeReset(){ [...TRADE_TYPES,...COLL_TYPES].forEach(t=>{ S.mkt[t]=0.78+Math.random()*0.18; S.mktPrev[t]=S.mkt[t]; }); }
+function tradeDayTick(){ if(!S)return;
+  for(const t of [...TRADE_TYPES,...COLL_TYPES]){ S.mktPrev[t]=S.mkt[t]; S.mkt[t]=clampMkt(S.mkt[t]*(1+(Math.random()-0.5)*0.12)); }
+  if(Math.random()<0.55){ const nw=pickNews(); nw.t.forEach(t=>{ if(S.mkt[t]!=null) S.mkt[t]=clampMkt(S.mkt[t]+nw.d*(0.5+Math.random())); });
+    S.news.unshift({day:S.day, zh:nw.zh}); if(S.news.length>14) S.news.pop(); }
+}
+function clampMkt(v){ return Math.max(0.45, Math.min(1.5, v)); }
+function pickNews(){ return NEWS_POOL[Math.floor(Math.random()*NEWS_POOL.length)]; }
+function mktOf(type){ return S.mkt[type]!=null?S.mkt[type]:0.8; }
+function itemResale(it){ return Math.round(it.p*mktOf(it.cat.type)); }
+function merchant(){ let m=MERCHANT[0]; for(const x of MERCHANT) if(S.sold>=x.min) m=x; return m; }
+function feeRate(){ return merchant().fee; }
+/*-------- 卖出 / 食用 --------*/
+function sellItem(id,qty){ const it=ALL.find(x=>x.id===id); if(!it)return; const have=S.owned[id]||0; qty=Math.min(have,qty); if(qty<=0)return;
+  const gross=itemResale(it)*qty, net=Math.round(gross*(1-feeRate())); S.owned[id]=have-qty; countTypeAdj(it.cat,-qty);
+  S.bal+=net; S.sold+=net; toast("💰 "+tr("已卖出")+" "+it.ico+"×"+qty+" +"+shortMoney(net)); checkAch(); refreshTrade(); }
+function sellAllType(id){ const it=ALL.find(x=>x.id===id); sellItem(id, S.owned[id]||0); }
+function sellColl(idx){ const c=S.collection[idx]; if(!c)return; const net=Math.round(c.price*mktOf(c.cat||"col")*(1-feeRate()));
+  S.collection.splice(idx,1); S.bal+=net; S.sold+=net; toast("💰 +"+shortMoney(net)); checkAch(); refreshTrade(); }
+function eatFood(id){ const have=S.owned[id]||0; if(have<=0)return; const it=ALL.find(x=>x.id===id); S.owned[id]=have-1; S.meals++;
+  toast(it.ico+" "+tr("好吃！")+" "+tr("恢复心情")+"+10 · "+tr("饱食")+"+20"); checkAch(); refreshTrade(); }
+/*-------- UI --------*/
+function openTrade(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} tradeView="inv"; byId("tradeScreen").classList.remove("hidden"); renderTrade(); }
+function tradeGo(v){ tradeView=v; renderTrade(); }
+function refreshTrade(){ markDirty(); if(!byId("tradeScreen").classList.contains("hidden")) renderTrade(); }
+function tradeApplyLang(){ if(!byId("tradeScreen").classList.contains("hidden")) renderTrade(); }
+function ownedList(){ const arr=[]; for(const it of ALL){ const n=S.owned[it.id]||0; if(n>0) arr.push({it,n}); }
+  if(invSort==="val") arr.sort((a,b)=>itemResale(b.it)*b.n-itemResale(a.it)*a.n); else arr.sort((a,b)=>b.n-a.n); return arr; }
+function renderTrade(){
+  let h=`<h2>🎒 <span>${tr("🎒 仓库 · 二手交易")}</span></h2>
+    <div class="frow" style="margin-bottom:8px"><div class="fl">💵 ${tr("账户余额")}</div><div class="fv">${money(S.bal)}</div></div>
+    <div class="ftabs">`;
+  [["inv","🎒 "+tr("我的仓库")],["mkt","📊 "+tr("行情 · 新闻")]].forEach(t=> h+=`<div class="ftab${tradeView===t[0]?" on":""}" onclick="tradeGo('${t[0]}')">${t[1]}</div>`);
+  h+=`</div>`;
+  if(tradeView==="inv"){
+    const list=ownedList();
+    const m=merchant();
+    h+=`<div class="merit"><div class="ballab">${tr("商人等级")} · ${tr("手续费")} ${Math.round(feeRate()*100)}%</div><div class="mv">${tr(LANG==="en"?m.en:m.zh)} · ${tr("已卖出")} ${shortMoney(S.sold)}</div></div>`;
+    if(!list.length && !S.collection.length) h+=`<div class="note" style="padding:14px">${tr("空空如也，先去买点东西吧")}</div>`;
+    list.slice(0,80).forEach(o=>{ const it=o.it, food=it.cat.type==="food", val=itemResale(it);
+      h+=`<div class="invrow"><div class="ii">${it.ico}</div><div class="it"><div class="inm">${nm(it)} <span class="iq">×${o.n.toLocaleString("en-US")}</span></div><div class="ival">${tr("估价")} ${priceFmt(val)}/${LANG==="en"?"ea":"件"}</div></div>
+        <div class="iact">${food?`<button class="fbtn sm gold" onclick="eatFood('${it.id}')">${tr("食用")}</button>`:""}<button class="fbtn sm" onclick="sellItem('${it.id}',1)">${tr("出售")}</button><button class="fbtn sm blue" onclick="sellAllType('${it.id}')">${tr("全部")}</button></div></div>`; });
+    if(S.collection.length){ h+=`<div class="ballab" style="margin:8px 0 5px">🏛️ ${tr("我的收藏")}</div>`;
+      S.collection.slice().reverse().slice(0,40).forEach((c,ri)=>{ const idx=S.collection.length-1-ri; const val=Math.round(c.price*mktOf(c.cat||"col"));
+        h+=`<div class="invrow"><div class="ii">${c.ico}</div><div class="it"><div class="inm">${(LANG==="en"?c.name.en:c.name.zh)} <small style="color:${c.rar.col}">${c.rar.ico}</small></div><div class="ival">${tr("估价")} ${shortMoney(val)}</div></div><div class="iact"><button class="fbtn sm" onclick="sellColl(${idx})">${tr("出售")}</button></div></div>`; }); }
+  } else {
+    h+=`<div class="note" style="text-align:left">${tr("市场行情（每日波动，低买高卖）")}</div>`;
+    const labels={tech:"电子",car:"汽车",plane:"飞机",ship:"船舶",house:"住宅",building:"建筑",fun:"娱乐",luxury:"奢侈品",science:"科技",food:"食品",art:"艺术",col:"收藏",biz:"企业",prop:"地产"};
+    [...TRADE_TYPES,...COLL_TYPES].forEach(t=>{ const v=mktOf(t), pv=S.mktPrev[t]!=null?S.mktPrev[t]:v, ch=(v-pv)/pv*100;
+      h+=`<div class="mktrow"><span class="mkn">${tr(labels[t]||t)}</span><span class="mkp"><span class="${ch>=0?"up":"down"}">${ch>=0?"▲":"▼"} ${Math.abs(ch).toFixed(1)}%</span> · ×${v.toFixed(2)}</span></div>`; });
+    h+=`<div class="ballab" style="margin:9px 0 5px">📰 ${tr("今日新闻")}</div>`;
+    if(!S.news.length) h+=`<div class="note">—</div>`;
+    else S.news.slice(0,10).forEach(n=> h+=`<div class="newsrow">${tr("第%天").replace? tr("第%天").replace("%",n.day):("D"+n.day)} · ${tr(n.zh)}</div>`);
+  }
+  h+=`<button class="btn ghost" style="padding:9px;margin-top:10px" onclick="byId('tradeScreen').classList.add('hidden')">${tr("关闭")}</button>`;
+  byId("tradeSheet").innerHTML=h;
 }
 </script>
 </body>
