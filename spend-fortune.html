@@ -202,6 +202,13 @@
   .citycard .cct{font-size:9px;font-weight:800;color:var(--green);margin-top:2px;}
   .perkchip{display:inline-block;font-size:9px;font-weight:800;padding:1px 6px;border-radius:9px;margin:1px 1px 0;}
   .perkbuy{background:#1a3a2c;color:#6fe0a0;} .perksell{background:#3a2a10;color:var(--gold);}
+  .bankbtn.forbes{background:linear-gradient(180deg,#9a7b1e,#6a5312);border-color:#c9a52e;box-shadow:0 3px 0 #4a3a0e;margin-top:6px;}
+  .myrank{background:linear-gradient(180deg,#3a2f0e,#241d08);border:1px solid var(--gold);border-radius:12px;padding:12px;margin-bottom:10px;text-align:center;}
+  .myrank .rk{font-size:30px;font-weight:900;color:var(--gold);} .myrank .rl{font-size:11px;color:#e8d9a0;margin-top:2px;} .myrank .rv{font-size:13px;font-weight:800;margin-top:3px;}
+  .frank{display:flex;align-items:center;gap:9px;background:#12241c;border:1px solid var(--line);border-radius:9px;padding:6px 10px;margin-bottom:4px;}
+  .frank.me{border-color:var(--gold);background:#211a08;} .frank .fr{width:30px;font-weight:900;color:var(--muted);text-align:center;font-size:13px;}
+  .frank.me .fr{color:var(--gold);} .frank .fi{font-size:18px;} .frank .fn{flex:1;font-weight:700;font-size:13px;} .frank .fnv{color:var(--gold);font-weight:900;font-size:12px;font-variant-numeric:tabular-nums;}
+  .frank .top1{color:#ffd700;} .frank .top2{color:#c8d0dc;} .frank .top3{color:#e0954a;}
 </style>
 </head>
 <body>
@@ -245,6 +252,7 @@
     </div>
     <button class="bankbtn trade" onclick="openTrade()">🎒 <span data-i18n="仓库">仓库</span> · <span data-i18n="二手市场">二手市场</span> · <span data-i18n="美食">美食</span></button>
     <button class="bankbtn world" onclick="openWorld()">🌍 <span data-i18n="世界地图">世界地图</span> · ✈️ <span data-i18n="飞机旅行">飞机旅行</span></button>
+    <button class="bankbtn forbes" onclick="openForbes()">🏆 <span data-i18n="福布斯全球富豪榜">福布斯全球富豪榜</span></button>
     <div class="dockrow2">
       <div class="db" onclick="openAch()">🏆 <span data-i18n="成就">成就</span></div>
       <div class="db" onclick="openRec()">📊 <span data-i18n="排行榜">排行榜</span></div>
@@ -309,6 +317,8 @@
   <div class="overlay hidden" id="tradeScreen"><div class="sheet" id="tradeSheet"></div></div>
   <!-- 世界地图 -->
   <div class="overlay hidden" id="worldScreen"><div class="sheet" id="worldSheet"></div></div>
+  <!-- 福布斯排行榜 -->
+  <div class="overlay hidden" id="forbesScreen"><div class="sheet" id="forbesSheet"></div></div>
 
 </div></div>
 
@@ -438,6 +448,11 @@ const TR={
   "雾都":"Fog City","浪漫花都":"Romance Capital","阿尔卑斯堡":"Alpine Keep","北境峡湾":"Nordic Fjord",
   "黄金沙城":"Golden Sands","琉璃穹顶":"Glass Dome","樱花都":"Sakura Metropolis","深港湾":"Shenzhen Bay","狮城港":"Lion Port","孟买之门":"Mumbai Gate",
   "金字塔城":"Pyramid City","彩虹角":"Cape Rainbow","阳光海岸城":"Sunshine Coast","冰川之心":"Glacier Heart",
+  // 福布斯排行榜
+  "福布斯全球富豪榜":"Forbes Rich List","🏆 福布斯全球富豪榜":"🏆 Forbes World Rich List","你":"YOU","全球排名":"Global Rank","共":"of","名富豪":"","你的数值":"Your value",
+  "财富总榜":"Wealth","消费排行":"Spending","收藏排行":"Collection","地产排行":"Real Estate","公司排行":"Companies","拍卖排行":"Auctions","慈善排行":"Charity",
+  "❤️ 慈善捐赠":"❤️ Donate to Charity","捐赠可提升慈善排名与社会声望。":"Donations raise your charity rank & social prestige.","捐赠":"Donate","累计捐赠":"Total donated","社会声望":"Prestige",
+  "距上一名还差":"Gap to next rank","恭喜登顶！":"You're #1 in the world!",
 };
 function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
 function nm(o){ return LANG==="en" ? o.en : o.zh; }
@@ -453,6 +468,7 @@ function applyLang(){
   if(window.giftApplyLang) giftApplyLang();
   if(window.tradeApplyLang) tradeApplyLang();
   if(window.worldApplyLang) worldApplyLang();
+  if(window.forbesApplyLang) forbesApplyLang();
 }
 function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("spendLang",LANG);}catch(e){} applyLang(); }
 
@@ -529,6 +545,8 @@ const ACHS=[
   {id:"aucLeg", ico:"👑", zh:"拍卖传奇", en:"Auction Legend", d:"单件拍品成交超$100B", chk:s=>(s.aucBiggest||0)>=100e9},
   {id:"foodie", ico:"🍴", zh:"美食家", en:"Foodie", d:"食用50份美食", chk:s=>(s.meals||0)>=50},
   {id:"merchant", ico:"🏪", zh:"二手大亨", en:"Resale Mogul", d:"二手成交额超$50B", chk:s=>(s.sold||0)>=50e9},
+  {id:"philan", ico:"❤️", zh:"大慈善家", en:"Philanthropist", d:"累计捐赠超$10B", chk:s=>(s.donated||0)>=10e9},
+  {id:"forbes1", ico:"🥇", zh:"福布斯首富", en:"World's Richest", d:"登顶福布斯财富榜", chk:s=>typeof forbesTop1==="function"&&netWorth()>=forbesTop1()},
 ];
 const START_BAL=400*B;
 
@@ -546,7 +564,7 @@ function freshState(){
     mail:[], checkStreak:0, lastCheckin:0, giftLog:{}, giftsGot:0, birthday:12+Math.floor(Math.random()*28), bdayDone:false,
     mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
     shopLevel:1, listings:[], shopSold:0,
-    city:"", land:{}, traveled:0,
+    city:"", land:{}, traveled:0, donated:0,
     incomePeak:0, netPeak:START_BAL, won:false, ending:"" };
 }
 function newGame(){
@@ -849,7 +867,7 @@ function vipTier(){ let t=VIPS[0]; for(const v of VIPS) if(S.wagered>=v.min) t=v
 
 /*-------- 每日结算 --------*/
 function financeReset(){ if(dayTimer) clearInterval(dayTimer); STOCKS.forEach(s=>S.px[s.id]=s.px);
-  if(window.tradeReset) tradeReset(); if(window.worldReset) worldReset();
+  if(window.tradeReset) tradeReset(); if(window.worldReset) worldReset(); if(window.forbesReset) forbesReset();
   dayTimer=setInterval(()=>{ if(S&&!S.over) dayTick(); }, 7000); }
 function dayTick(){
   if(!S||S.over) return;
@@ -878,6 +896,7 @@ function dayTick(){
   if(window.giftDayTick) giftDayTick();
   if(window.tradeDayTick) tradeDayTick();
   if(window.shopDayTick) shopDayTick();
+  if(window.forbesDayTick) forbesDayTick();
   markDirty(); if(bankOpen()) renderBank();
 }
 function countTypeAdj(cat,n){ if(cat.type==="car")S.cars+=n; else if(cat.type==="plane")S.planes+=n; if(cat.type==="house")S.houses+=n; if(cat.building)S.buildings+=n; }
@@ -1486,6 +1505,72 @@ function renderWorld(){ const c=curCity();
     h+=`</div>`; });
   h+=`<button class="btn ghost" style="padding:9px;margin-top:10px" onclick="byId('worldScreen').classList.add('hidden')">${tr("关闭")}</button>`;
   byId("worldSheet").innerHTML=h;
+}
+</script>
+
+<script>
+/*==================== 🏆 福布斯全球富豪榜 ====================*/
+const RN1=["星链","钻石","钢铁","石油","黄金","量子","云端","硅谷","天河","北极","太阳","深海","陨石","彩虹","雷霆","苍穹","翡翠","白金","水晶","巨龙","凤凰","麒麟","银河","超新星","远洋"];
+const EN1=["Starlink","Diamond","Steel","Oil","Gold","Quantum","Cloud","Silicon","Skyriver","Arctic","Solar","Abyss","Meteor","Rainbow","Thunder","Azure","Emerald","Platinum","Crystal","Dragon","Phoenix","Qilin","Galaxy","Nova","Ocean"];
+const RN2=["大亨","女王","巨头","帝王","教父","霸主","传奇","男爵","大王","家族","主席","公爵","巨鳄","财神","掌门","大佬","实业家","投资人","首富","巨擘"];
+const EN2=["Magnate","Queen","Tycoon","Emperor","Godfather","Overlord","Legend","Baron","King","Dynasty","Chairman","Duke","Whale","Croesus","Master","Boss","Industrialist","Investor","Mogul","Titan"];
+const RICO=["🤖","💎","🏭","🛢️","👑","🚀","🏦","📱","🏙️","🎬","⚡","💰","🛰️","🏗️","💼","🧬","🍾","🛥️","✈️","🏆"];
+let RIVALS=[], forbesCat="net";
+const FORBES_CATS=[
+  {id:"net",zh:"财富总榜",en:"Wealth",val:()=>netWorth()},
+  {id:"spent",zh:"消费排行",en:"Spending",val:()=>S.spent},
+  {id:"coll",zh:"收藏排行",en:"Collection",val:()=>scoreColl()},
+  {id:"estate",zh:"地产排行",en:"Real Estate",val:()=>scoreEstate()},
+  {id:"comp",zh:"公司排行",en:"Companies",val:()=>scoreComp()},
+  {id:"auc",zh:"拍卖排行",en:"Auctions",val:()=>S.aucSpent||0},
+  {id:"charity",zh:"慈善排行",en:"Charity",val:()=>S.donated||0},
+];
+function forbesReset(){ RIVALS=[]; const used=new Set();
+  for(let k=0;k<100;k++){ let i,j,key,g=0; do{ i=Math.floor(Math.random()*RN1.length); j=Math.floor(Math.random()*RN2.length); key=i+"_"+j; }while(used.has(key)&&g++<80); used.add(key);
+    const net=Math.round(2e12*Math.pow(0.955,k)*(0.85+Math.random()*0.3));
+    RIVALS.push({ zh:RN1[i]+RN2[j], en:EN1[i]+" "+EN2[j], ico:apick(RICO), net,
+      f:{spent:0.1+Math.random()*0.4, coll:0.02+Math.random()*0.18, estate:0.1+Math.random()*0.35, comp:0.05+Math.random()*0.28, auc:0.01+Math.random()*0.15, charity:0.004+Math.random()*0.1} }); }
+}
+function forbesDayTick(){ for(const r of RIVALS) r.net=Math.max(1e9, r.net*(1+(Math.random()-0.47)*0.04)); }
+function forbesTop1(){ if(!RIVALS.length)return Infinity; let m=0; for(const r of RIVALS) if(r.net>m)m=r.net; return m; }
+function scoreColl(){ let s=0; if(S.collection) for(const c of S.collection) s+=c.price; for(const it of ALL) if(it.cat.type==="luxury") s+=it.p*(S.owned[it.id]||0); return s; }
+function scoreEstate(){ let s=0; for(const it of ALL){ const t=it.cat.type; if(t==="house"||t==="building") s+=it.p*(S.owned[it.id]||0); } if(window.landValue) s+=landValue(); return s; }
+function scoreComp(){ let s=0; for(const it of ALL) if(it.cat.type==="science") s+=it.p*(S.owned[it.id]||0); if(S.collection) for(const c of S.collection) if(c.cat==="biz") s+=c.price; return s; }
+function rivalVal(r,cat){ return cat==="net"?r.net:r.net*r.f[cat]; }
+function pRank(cat){ const pv=FORBES_CATS.find(c=>c.id===cat).val(); let cnt=0; for(const r of RIVALS) if(rivalVal(r,cat)>pv) cnt++; return cnt+1; }
+/*-------- 慈善 --------*/
+function donate(amt){ if(!S)return; amt=Math.round(amt); if(amt<=0)return; if(amt>S.bal){toast(tr("现金不足"));return;} S.bal-=amt; S.donated+=amt; toast("❤️ "+tr("捐赠")+" "+shortMoney(amt)); markDirty(); checkAch(); refreshForbes(); }
+function donateCustom(){ donate(parseAmt(byId("donIn").value)); }
+/*-------- UI --------*/
+function openForbes(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} byId("forbesScreen").classList.remove("hidden"); renderForbes(); }
+function forbesGo(c){ forbesCat=c; renderForbes(); }
+function refreshForbes(){ markDirty(); if(!byId("forbesScreen").classList.contains("hidden")) renderForbes(); }
+function forbesApplyLang(){ if(!byId("forbesScreen").classList.contains("hidden")) renderForbes(); }
+function renderForbes(){ const cat=forbesCat, cObj=FORBES_CATS.find(c=>c.id===cat);
+  const pv=cObj.val(), rank=pRank(cat), total=RIVALS.length+1;
+  let h=`<h2>🏆 <span>${tr("🏆 福布斯全球富豪榜")}</span></h2><div class="ftabs">`;
+  FORBES_CATS.forEach(c=> h+=`<div class="ftab${cat===c.id?" on":""}" onclick="forbesGo('${c.id}')">${tr(c.zh)}</div>`);
+  h+=`</div>
+    <div class="myrank"><div class="rk">#${rank}</div><div class="rl">${tr("全球排名")} · ${tr("共")} ${total} ${LANG==="en"?"":tr("名富豪")}</div><div class="rv">${tr("你的数值")}：${shortMoney(pv)}</div></div>`;
+  if(cat==="charity"){
+    h+=`<div class="note" style="text-align:left">${tr("捐赠可提升慈善排名与社会声望。")}</div>
+      <div class="frow"><div class="fl">❤️ ${tr("累计捐赠")}</div><div class="fv">${shortMoney(S.donated||0)}</div></div>
+      <div class="betrow"><input class="fin" style="margin:0;flex:1" id="donIn" inputmode="decimal" placeholder="1b"><button class="fbtn red" onclick="donateCustom()">${tr("捐赠")}</button></div>
+      <div class="fgrid2" style="margin-bottom:8px"><button class="fbtn sm red" onclick="donate(1e8)">+$100M</button><button class="fbtn sm red" onclick="donate(1e9)">+$1B</button></div>`;
+  }
+  // ranked list
+  const rows=RIVALS.map(r=>({ico:r.ico,name:LANG==="en"?r.en:r.zh,val:rivalVal(r,cat),me:false}));
+  rows.push({ico:"🧑‍💼",name:tr("你"),val:pv,me:true});
+  rows.sort((a,b)=>b.val-a.val);
+  const meIdx=rows.findIndex(r=>r.me);
+  const show=[]; for(let i=0;i<Math.min(13,rows.length);i++) show.push(i);
+  if(meIdx>12){ show.push(-1); [meIdx-1,meIdx,meIdx+1].forEach(i=>{ if(i>=0&&i<rows.length&&!show.includes(i)) show.push(i); }); }
+  show.forEach(i=>{ if(i===-1){ h+=`<div style="text-align:center;color:var(--muted);font-size:12px;margin:2px 0">···</div>`; return; }
+    const r=rows[i], rk=i+1, medal=rk<=3?["top1","top2","top3"][rk-1]:"";
+    h+=`<div class="frank${r.me?" me":""}"><div class="fr ${medal}">${rk<=3?["🥇","🥈","🥉"][rk-1]:rk}</div><div class="fi">${r.ico}</div><div class="fn">${r.name}</div><div class="fnv">${shortMoney(r.val)}</div></div>`; });
+  if(cat==="net" && rank===1) h+=`<div class="note" style="color:var(--gold);margin-top:6px">🥇 ${tr("恭喜登顶！")}</div>`;
+  h+=`<button class="btn ghost" style="padding:9px;margin-top:10px" onclick="byId('forbesScreen').classList.add('hidden')">${tr("关闭")}</button>`;
+  byId("forbesSheet").innerHTML=h;
 }
 </script>
 </body>
