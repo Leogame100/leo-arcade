@@ -162,6 +162,22 @@
   .ses.world{border-color:var(--gold);} .ses.myst{border-color:#a45ce0;}
   .colrow{display:flex;align-items:center;gap:8px;background:#12241c;border:1px solid var(--line);border-radius:9px;padding:6px 9px;margin-bottom:5px;font-size:12px;}
   .colrow .ci{font-size:18px;} .colrow .cn{flex:1;font-weight:700;} .colrow .cp{color:var(--gold);font-weight:800;font-variant-numeric:tabular-nums;}
+  .bankrow.r3{grid-template-columns:repeat(3,1fr);}
+  .bankbtn.gift{position:relative;background:linear-gradient(180deg,#a83b6f,#6f2549);border-color:#c04c86;box-shadow:0 3px 0 #45152c;}
+  .gbadge{position:absolute;top:-6px;right:-4px;min-width:18px;height:18px;background:var(--red);color:#fff;border-radius:9px;font-size:11px;font-weight:900;line-height:18px;padding:0 4px;display:none;}
+  .gbadge.show{display:block;}
+  /* 签到 */
+  .checkgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0;}
+  .cday{background:#12241c;border:1px solid var(--line);border-radius:10px;padding:8px 3px;text-align:center;}
+  .cday.done{border-color:var(--green);background:#16321f;opacity:.7;} .cday.today{border-color:var(--gold);background:#221c0f;box-shadow:0 0 0 2px rgba(255,207,74,.3);}
+  .cday .cdn{font-size:9px;color:var(--muted);} .cday .cdi{font-size:20px;margin:2px 0;} .cday .cdr{font-size:9px;font-weight:800;line-height:1.2;}
+  .mailrow{display:flex;align-items:center;gap:9px;background:#12241c;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px;}
+  .mailrow .mi{font-size:22px;} .mailrow .mt{flex:1;} .mailrow .mn{font-weight:800;font-size:13px;} .mailrow .md{font-size:10px;color:var(--muted);}
+  .qtag{font-size:10px;font-weight:900;padding:1px 7px;border-radius:10px;}
+  .bookgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .bookcell{background:#12241c;border:1px solid var(--line);border-radius:9px;padding:8px 3px;text-align:center;}
+  .bookcell.got{border-color:var(--gold);} .bookcell.miss{opacity:.4;}
+  .bookcell .bi{font-size:22px;filter:grayscale(1);} .bookcell.got .bi{filter:none;} .bookcell .bn{font-size:9px;margin-top:2px;} .bookcell .bc{font-size:9px;color:var(--gold);font-weight:800;}
 </style>
 </head>
 <body>
@@ -198,9 +214,10 @@
 
   <div class="dock">
     <div class="oneclick" id="oneClick"></div>
-    <div class="bankrow">
-      <button class="bankbtn" onclick="openBank()">🏦 <span data-i18n="银河国际银行">银河国际银行</span></button>
-      <button class="bankbtn auc" onclick="openAuction()">🔨 <span data-i18n="世界拍卖中心">世界拍卖中心</span></button>
+    <div class="bankrow r3">
+      <button class="bankbtn" onclick="openBank()">🏦 <span data-i18n="银行">银行</span></button>
+      <button class="bankbtn auc" onclick="openAuction()">🔨 <span data-i18n="拍卖">拍卖</span></button>
+      <button class="bankbtn gift" onclick="openGifts()">🎁 <span data-i18n="礼物">礼物</span><span class="gbadge" id="giftBadge"></span></button>
     </div>
     <div class="dockrow2">
       <div class="db" onclick="openAch()">🏆 <span data-i18n="成就">成就</span></div>
@@ -260,6 +277,8 @@
   <div class="overlay hidden" id="bankScreen"><div class="sheet" id="bankSheet"></div></div>
   <!-- 模拟拍卖 -->
   <div class="overlay hidden" id="aucScreen"><div class="sheet" id="aucSheet"></div></div>
+  <!-- 礼物中心 -->
+  <div class="overlay hidden" id="giftScreen"><div class="sheet" id="giftSheet"></div></div>
 
 </div></div>
 
@@ -350,6 +369,18 @@ const TR={
   "优秀":"Fine","稀有":"Rare","史诗":"Epic","传说":"Legendary","神话":"Mythic","唯一":"Unique",
   "最大成交价":"Biggest sale","竞得数量":"Lots won","日收益":"income/day","还没有藏品":"No collection yet",
   "神秘宝石":"Mystery Gem","皇家皇冠":"Royal Crown","传奇城堡":"Legendary Castle","太空探索计划":"Space Program","初代AI原型机":"First-Gen AI Prototype",
+  // 礼物中心
+  "银行":"Bank","拍卖":"Auction","礼物":"Gifts","🎁 礼物中心":"🎁 Gift Center",
+  "礼物均为游戏内虚拟奖励，仅供娱乐，不涉及真实金钱。":"All gifts are in-game virtual rewards for fun only — no real money involved.",
+  "每日签到":"Daily Check-in","礼物邮箱":"Gift Mailbox","收集册":"Gift Book","连续签到":"Streak","今日已签到":"Checked in today","签到领取":"Check in",
+  "第%天":"Day %","超级礼包":"Super Pack","随机汽车":"Random Car","神秘礼盒":"Mystery Box","钻石":"Diamond","豪宅券":"Mansion Coupon","抽奖券":"Lucky Ticket",
+  "全部领取":"Claim All","没有新礼物":"No new gifts","新礼物":"new","来自":"from","收集率":"Collected","已获得":"Got","件礼物":"gifts received",
+  "现金红包":"Cash","宝石":"Gemstone","豪车钥匙":"Luxury Car","房产":"Property","公司股份":"Company Shares","艺术品":"Artwork","收藏品":"Collectible",
+  "娱乐城代币":"Casino Tokens","拍卖券":"Auction Voucher","银行提现券":"Bank Voucher","奖杯":"Trophy","生日蛋糕":"Birthday Cake","节日红包":"Festival Packet",
+  "私人岛屿":"Private Island","私人飞机":"Private Jet","限定头像框":"Avatar Frame","神秘慈善赠礼":"Charity Gift","世界福利":"World Welfare",
+  "每日签到":"Daily Check-in","神秘快递":"Mystery Delivery","AI好友":"AI Friend","节日礼物":"Festival Gift","生日礼物":"Birthday Gift","超稀有":"Ultra-Rare",
+  "普通":"Common","稀有":"Rare","超稀有礼":"Super Rare","史诗":"Epic","传说":"Legendary","神话":"Mythic","至尊":"Supreme",
+  "春节":"Spring Festival","圣诞节":"Christmas","万圣节":"Halloween","新年":"New Year","🎂 生日快乐！":"🎂 Happy Birthday!","🎊 神秘慈善赠礼！":"🎊 Mystery charity gift!",
 };
 function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
 function nm(o){ return LANG==="en" ? o.en : o.zh; }
@@ -362,6 +393,7 @@ function applyLang(){
   if(!byId("recScreen").classList.contains("hidden")) openRec();
   if(window.financeApplyLang) financeApplyLang();
   if(window.aucApplyLang) aucApplyLang();
+  if(window.giftApplyLang) giftApplyLang();
 }
 function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("spendLang",LANG);}catch(e){} applyLang(); }
 
@@ -440,6 +472,7 @@ function freshState(){
     day:1, dayAcc:0, deposit:0, terms:[], loans:[], credit:5, creditPts:800,
     stocks:{}, px:{}, insured:{}, chips:0, wagered:0, cstats:{plays:0,wins:0,biggest:0,net:0},
     collection:[], aucBids:0, aucWon:0, aucBiggest:0, aucSpent:0,
+    mail:[], checkStreak:0, lastCheckin:0, giftLog:{}, giftsGot:0, birthday:12+Math.floor(Math.random()*28), bdayDone:false,
     incomePeak:0, netPeak:START_BAL, won:false, ending:"" };
 }
 function newGame(){
@@ -764,6 +797,7 @@ function dayTick(){
   if(loansTotal()===0) S.creditPts=Math.min(1000,S.creditPts+2);
   else if(loansTotal()>Math.max(1,netWorth())) S.creditPts=Math.max(0,S.creditPts-5);
   S.netPeak=Math.max(S.netPeak,netWorth());
+  if(window.giftDayTick) giftDayTick();
   markDirty(); if(bankOpen()) renderBank();
 }
 function countTypeAdj(cat,n){ if(cat.type==="car")S.cars+=n; else if(cat.type==="plane")S.planes+=n; if(cat.type==="house")S.houses+=n; if(cat.building)S.buildings+=n; }
@@ -852,7 +886,7 @@ function finishCheck(){ if(!S||S.over)return; if(S.bal<=0 && S.deposit<=0 && ter
 /*-------- HUD --------*/
 function financeHud(){ if(!S)return; const nv=byId("netVal"),iv=byId("incVal"),dv=byId("dayVal");
   if(nv) nv.textContent=shortMoney(netWorth()); if(iv) iv.textContent="+"+shortMoney(assetIncome()+depInterest());
-  if(dv) dv.textContent="📅 "+(LANG==="en"?"Day "+S.day:"第 "+S.day+" 天"); }
+  if(dv) dv.textContent="📅 "+(LANG==="en"?"Day "+S.day:"第 "+S.day+" 天"); if(window.giftBadge) giftBadge(); }
 
 /*==================== 面板 UI ====================*/
 function bankOpen(){ return !byId("bankScreen").classList.contains("hidden"); }
@@ -1097,6 +1131,109 @@ function renderAuction(){
   byId("aucSheet").innerHTML=h;
 }
 function aucGo(v){ aucView=v; renderAuction(); }
+</script>
+
+<script>
+/*==================== 🎁 礼物中心 ====================*/
+const GQ=[{zh:"普通",en:"Common",ico:"⚪",col:"#9fb0a4",mul:1,w:46},{zh:"稀有",en:"Rare",ico:"🟢",col:"#4caf50",mul:2,w:26},{zh:"超稀有",en:"Super Rare",ico:"🔵",col:"#3a8fe0",mul:4,w:14},{zh:"史诗",en:"Epic",ico:"🟣",col:"#a45ce0",mul:8,w:8},{zh:"传说",en:"Legendary",ico:"🟠",col:"#e8912a",mul:16,w:4},{zh:"神话",en:"Mythic",ico:"🔴",col:"#e0463b",mul:32,w:1.5},{zh:"至尊",en:"Supreme",ico:"🌈",col:"#c04cff",mul:70,w:0.5}];
+const GKINDS=[
+ {id:"cash",zh:"现金红包",en:"Cash",ico:"💵"},{id:"gem",zh:"宝石",en:"Gemstone",ico:"💎"},{id:"diamond",zh:"钻石",en:"Diamond",ico:"💠"},
+ {id:"car",zh:"豪车钥匙",en:"Luxury Car",ico:"🚗"},{id:"house",zh:"房产",en:"Property",ico:"🏠"},{id:"company",zh:"公司股份",en:"Company Shares",ico:"🏢"},
+ {id:"art",zh:"艺术品",en:"Artwork",ico:"🖼️"},{id:"collectible",zh:"收藏品",en:"Collectible",ico:"🏺"},{id:"chips",zh:"娱乐城代币",en:"Casino Tokens",ico:"🎰"},
+ {id:"ticket",zh:"拍卖券",en:"Auction Voucher",ico:"🎫"},{id:"voucher",zh:"银行提现券",en:"Bank Voucher",ico:"💳"},{id:"trophy",zh:"奖杯",en:"Trophy",ico:"🏆"},
+ {id:"cake",zh:"生日蛋糕",en:"Birthday Cake",ico:"🎂"},{id:"redpacket",zh:"节日红包",en:"Festival Packet",ico:"🧧"},{id:"island",zh:"私人岛屿",en:"Private Island",ico:"🏝️"},
+ {id:"plane",zh:"私人飞机",en:"Private Jet",ico:"🛩️"},{id:"frame",zh:"限定头像框",en:"Avatar Frame",ico:"👑"},{id:"charity",zh:"神秘慈善赠礼",en:"Charity Gift",ico:"🎊"},
+];
+const GBY=Object.fromEntries(GKINDS.map(g=>[g.id,g]));
+const FESTS=[["春节","Spring Festival"],["圣诞节","Christmas"],["万圣节","Halloween"],["新年","New Year"]];
+const COMMON_KINDS=["cash","cash","gem","diamond","car","house","company","art","collectible","chips","ticket","voucher","trophy","redpacket"];
+const GSRC={delivery:"神秘快递", ai:"AI好友", world:"世界福利", fest:"节日礼物", bday:"生日礼物", rare:"超稀有"};
+let giftView="checkin";
+function qPick(boost){ const tot=GQ.reduce((a,q)=>a+q.w,0); let x=Math.random()*tot,i=0; for(;i<GQ.length;i++){x-=GQ[i].w;if(x<=0)break;} return Math.min(GQ.length-1,i+(boost||0)); }
+function genGift(pool,src){ return {kind:apick(pool||COMMON_KINDS), q:qPick(Math.random()<0.15?1:0), day:S.day, src:src||"delivery"}; }
+function giftOwn(type){ const items=ALL.filter(it=>it.cat.type===type); if(!items.length){S.bal+=1e6;return shortMoney(1e6);} const it=apick(items); S.owned[it.id]=(S.owned[it.id]||0)+1; countType(it.cat,1); return it.ico+nm(it); }
+function giftOwnItem(id){ const it=ALL.find(x=>x.id===id); if(!it){S.bal+=1e7;return shortMoney(1e7);} S.owned[it.id]=(S.owned[it.id]||0)+1; countType(it.cat,1); return it.ico+nm(it); }
+function giftColl(catId,val){ val=Math.round(val); const inc=catId==="biz"?Math.round(val*0.001):(catId==="prop"?Math.round(val*0.0008):0);
+  const nmp={art:["艺术藏品","Artwork","🖼️"],col:["珍稀藏品","Collectible","🏺"],biz:["公司股份","Company Shares","🏢"]}[catId]||["藏品","Collectible","🏺"];
+  S.collection.push({name:{zh:nmp[0],en:nmp[1]},ico:nmp[2],price:val,income:inc,cat:catId,rar:{zh:"礼物",en:"Gift",ico:"🎁",col:"#c04c86"}}); return nmp[2]+shortMoney(val); }
+function grantGift(g){ const q=GQ[g.q]||GQ[0], mul=q.mul; let gain="";
+  switch(g.kind){
+    case "cash": { const a=Math.round(1e5*mul*(0.6+Math.random()*1.2)); S.bal+=a; gain=shortMoney(a); break; }
+    case "gem": { const a=Math.round(5e5*mul); S.bal+=a; gain=shortMoney(a); break; }
+    case "diamond": { const a=Math.round(2e6*mul); S.bal+=a; gain=shortMoney(a); break; }
+    case "chips": { const a=Math.round(1e6*mul); S.chips+=a; gain="🪙"+shortMoney(a); break; }
+    case "ticket": case "voucher": { const a=Math.round(3e5*mul); S.bal+=a; gain=shortMoney(a); break; }
+    case "trophy": case "cake": case "frame": { const a=Math.round(2e5*mul); S.bal+=a; gain=shortMoney(a); break; }
+    case "redpacket": { const a=Math.round(8e5*mul); S.bal+=a; gain=shortMoney(a); break; }
+    case "car": gain=giftOwn("car"); break;
+    case "house": gain=giftOwn("house"); break;
+    case "company": gain=giftColl("biz",3e7*mul); break;
+    case "art": gain=giftColl("art",2e6*mul); break;
+    case "collectible": gain=giftColl("col",1e6*mul); break;
+    case "island": gain=giftOwnItem("res_4"); break;
+    case "plane": gain=giftOwnItem("plane_1"); break;
+    case "charity": { const a=Math.round(3e8*mul); S.bal+=a; gain=shortMoney(a); break; }
+    case "world": { if(Math.random()<0.5){ S.bal+=500e6; gain=shortMoney(500e6);} else gain=giftOwn("house"); break; }
+    default: { S.bal+=1e5; gain=shortMoney(1e5); }
+  }
+  S.giftsGot++; if(GBY[g.kind]) S.giftLog[g.kind]=(S.giftLog[g.kind]||0)+1; return gain;
+}
+function giftDayTick(){ if(!S)return;
+  const n=1+Math.floor(Math.random()*5); for(let i=0;i<n;i++) S.mail.push(genGift(null,"delivery"));
+  if(Math.random()<0.3) S.mail.push(genGift(["cash","art","car","trophy","redpacket","chips","gem"],"ai"));
+  if(Math.random()<0.08) S.mail.push({kind:"world",q:2,day:S.day,src:"world"});
+  if(Math.random()<0.05){ const f=apick(FESTS); S.mail.push({kind:"redpacket",q:3,day:S.day,src:"fest",fest:f}); }
+  if(!S.bdayDone && S.day>=S.birthday){ S.bdayDone=true; S.mail.push({kind:"cake",q:5,day:S.day,src:"bday"}); S.mail.push({kind:"cash",q:6,day:S.day,src:"bday"}); toast(tr("🎂 生日快乐！")); }
+  if(Math.random()<0.002){ S.mail.push({kind:"charity",q:6,day:S.day,src:"rare"}); toast(tr("🎊 神秘慈善赠礼！")); }
+  if(S.mail.length>99) S.mail=S.mail.slice(-99);
+  if(window.giftBadge) giftBadge();
+}
+const CHECKIN=[null,{kind:"cash",q:2},{kind:"car",q:2},{kind:"mystery"},{kind:"diamond",q:3},{kind:"house",q:3},{kind:"chips",q:3},{kind:"super"}];
+function claimCheckin(){ if(!S)return; if(S.lastCheckin>=S.day){ toast(tr("今日已签到")); return; }
+  const day=(S.checkStreak%7)+1; S.lastCheckin=S.day; S.checkStreak++;
+  const g=CHECKIN[day], gains=[];
+  if(g.kind==="mystery"){ const gg=genGift(); gains.push(GBY[gg.kind].ico+grantGift(gg)); }
+  else if(g.kind==="super"){ [{kind:"cash",q:5},{kind:"collectible",q:4},{kind:"chips",q:4}].forEach(p=>gains.push(GBY[p.kind].ico+grantGift({kind:p.kind,q:p.q}))); }
+  else gains.push(GBY[g.kind].ico+grantGift(g));
+  toast("🎉 "+tr("第%天").replace("%",day)+" +"+gains.join(" ")); refreshGift();
+}
+function claimAll(){ if(!S||!S.mail.length){ toast(tr("没有新礼物")); return; } const n=S.mail.length; S.mail.forEach(grantGift); S.mail=[]; toast("🎁 +"+n+" "+tr("件礼物")); refreshGift(); }
+function giftBadge(){ const b=byId("giftBadge"); if(!b||!S)return; const c=(S.mail?S.mail.length:0)+((S.lastCheckin<S.day)?1:0); if(c>0){b.textContent=c>99?"99+":c; b.classList.add("show");} else b.classList.remove("show"); }
+/*-------- UI --------*/
+function openGifts(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} giftView="checkin"; byId("giftScreen").classList.remove("hidden"); renderGifts(); }
+function giftGo(v){ giftView=v; renderGifts(); }
+function refreshGift(){ markDirty(); giftBadge(); if(!byId("giftScreen").classList.contains("hidden")) renderGifts(); }
+function giftApplyLang(){ if(!byId("giftScreen").classList.contains("hidden")) renderGifts(); }
+function qtag(q){ return `<span class="qtag" style="background:${q.col}22;color:${q.col}">${q.ico} ${tr(q.zh)}</span>`; }
+function renderGifts(){
+  let h=`<h2>🎁 <span>${tr("🎁 礼物中心")}</span></h2>
+    <div class="casnote">${tr("礼物均为游戏内虚拟奖励，仅供娱乐，不涉及真实金钱。")}</div>
+    <div class="ftabs">`;
+  [["checkin","📅 "+tr("每日签到")],["mail","📮 "+tr("礼物邮箱")+(S.mail.length?` (${S.mail.length})`:"")],["book","🏆 "+tr("收集册")]].forEach(t=> h+=`<div class="ftab${giftView===t[0]?" on":""}" onclick="giftGo('${t[0]}')">${t[1]}</div>`);
+  h+=`</div>`;
+  if(giftView==="checkin"){
+    const done=S.checkStreak%7, canToday=S.lastCheckin<S.day, todayIdx=done;
+    const icos=["","💵","🚗","🎁","💠","🏠","🎰","🎉"];
+    h+=`<div class="frow"><div class="fl">${tr("连续签到")}</div><div class="fv">${S.checkStreak} ${tr("天")}</div></div><div class="checkgrid">`;
+    for(let d=1;d<=7;d++){ const isDone=d<=done, isToday=(d===todayIdx+1);
+      h+=`<div class="cday${isDone?" done":(isToday&&canToday?" today":"")}"><div class="cdn">${tr("第%天").replace("%",d)}</div><div class="cdi">${icos[d]}</div><div class="cdr">${isDone?"✓":(d===7?tr("超级礼包"):"")}</div></div>`; }
+    h+=`</div><button class="fbtn ${canToday?"":"dis"}" style="width:100%;padding:11px;font-size:15px" onclick="claimCheckin()">${canToday?"🎉 "+tr("签到领取"):tr("今日已签到")}</button>`;
+  }
+  else if(giftView==="mail"){
+    if(!S.mail.length) h+=`<div class="note" style="padding:14px">${tr("没有新礼物")}</div>`;
+    else { h+=`<button class="fbtn gold" style="width:100%;margin-bottom:8px" onclick="claimAll()">📬 ${tr("全部领取")} (${S.mail.length})</button>`;
+      S.mail.slice().reverse().slice(0,40).forEach(g=>{ const k=GBY[g.kind]||{ico:"🎁",zh:"礼物",en:"Gift"}, q=GQ[g.q]||GQ[0];
+        h+=`<div class="mailrow"><div class="mi">${k.ico}</div><div class="mt"><div class="mn">${LANG==="en"?k.en:k.zh}</div><div class="md">${tr("来自")} ${tr(GSRC[g.src]||"神秘快递")}${g.fest?" · "+(LANG==="en"?g.fest[1]:g.fest[0]):""}</div></div>${qtag(q)}</div>`; }); }
+  }
+  else if(giftView==="book"){
+    const got=Object.keys(S.giftLog).length, total=GKINDS.length, rate=Math.round(got/total*100);
+    h+=`<div style="text-align:center;margin:6px 0"><div class="fv" style="font-size:16px">${tr("收集率")} ${rate}%</div><div class="ballab">${tr("已获得")} ${got}/${total} · ${S.giftsGot} ${tr("件礼物")}</div></div><div class="bookgrid">`;
+    GKINDS.forEach(k=>{ const c=S.giftLog[k.id]||0; h+=`<div class="bookcell ${c?"got":"miss"}"><div class="bi">${k.ico}</div><div class="bn">${LANG==="en"?k.en:k.zh}</div><div class="bc">${c?"×"+c:"—"}</div></div>`; });
+    h+=`</div>`;
+  }
+  h+=`<button class="btn ghost" style="padding:9px;margin-top:10px" onclick="byId('giftScreen').classList.add('hidden')">${tr("关闭")}</button>`;
+  byId("giftSheet").innerHTML=h;
+}
 </script>
 </body>
 </html>
