@@ -187,6 +187,10 @@
   .newsrow{background:#0f1a22;border-left:3px solid var(--blue);border-radius:7px;padding:6px 9px;margin-bottom:5px;font-size:11px;line-height:1.5;color:#cfe;}
   .merit{background:linear-gradient(180deg,#1a2e1f,#12241c);border:1px solid var(--gold-d);border-radius:10px;padding:9px 11px;margin-bottom:9px;text-align:center;}
   .merit .mv{font-weight:900;color:var(--gold);font-size:15px;}
+  .listrow{background:#12241c;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px;}
+  .listrow .lh{display:flex;align-items:center;gap:8px;} .listrow .lhn{flex:1;font-weight:800;font-size:13px;} .listrow .lhp{color:var(--gold);font-weight:900;font-size:12px;}
+  .steps{display:flex;gap:3px;margin-top:6px;} .steps .st{flex:1;height:5px;border-radius:3px;background:#25453a;} .steps .st.on{background:var(--green);}
+  .lstage{font-size:11px;font-weight:800;margin-top:4px;} .lstage.paid{color:var(--green);}
 </style>
 </head>
 <body>
@@ -403,6 +407,13 @@ const TR={
   "🏠 房价上涨":"🏠 Property prices rise","🚀 科技突破，科技资产暴涨":"🚀 Tech breakthrough — tech assets soar","🌪️ 自然灾害，多地资产受挫":"🌪️ Disaster hits asset values",
   "🖼️ 艺术热潮，藏品升值":"🖼️ Art boom lifts collectibles","📈 全球经济繁荣，资产普涨":"📈 Global boom lifts all assets","🚗 豪车热，二手车价上扬":"🚗 Luxury-car craze lifts resale",
   "涨":"up","跌":"down","估价":"Est.",
+  // 玩家商店 + 物流
+  "我的商店":"My Shop","上架":"List","店铺等级":"Shop Level","升级":"Upgrade","在售商品":"Listings","槽位":"slots","溢价":"premium",
+  "一级小店":"Corner Shop","精品店":"Boutique","大型商场":"Mega Mall","世界商城":"World Emporium",
+  "🏷 在售":"🏷 Listed","📦 待发货":"📦 Awaiting shipment","🚚 运输中":"🚚 In transit","✅ 已送达":"✅ Delivered","💰 收到货款":"💰 Paid",
+  "撤下":"Delist","槽位已满，请升级店铺":"Slots full — upgrade your shop","找到买家！":"Buyer found!","货款到账":"Payment received",
+  "店铺出售价更高，但需等买家+物流，比二手即时出售更划算。":"Your shop sells higher — but needs a buyer + shipping. Worth more than instant resale.","店铺成交":"Shop sales","已是最高等级":"Max level",
+  "在「我的仓库」里点 🛍 上架商品":"Tap 🛍 on items in My Warehouse to list them",
 };
 function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
 function nm(o){ return LANG==="en" ? o.en : o.zh; }
@@ -509,6 +520,7 @@ function freshState(){
     collection:[], aucBids:0, aucWon:0, aucBiggest:0, aucSpent:0,
     mail:[], checkStreak:0, lastCheckin:0, giftLog:{}, giftsGot:0, birthday:12+Math.floor(Math.random()*28), bdayDone:false,
     mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
+    shopLevel:1, listings:[], shopSold:0,
     incomePeak:0, netPeak:START_BAL, won:false, ending:"" };
 }
 function newGame(){
@@ -836,6 +848,7 @@ function dayTick(){
   S.netPeak=Math.max(S.netPeak,netWorth());
   if(window.giftDayTick) giftDayTick();
   if(window.tradeDayTick) tradeDayTick();
+  if(window.shopDayTick) shopDayTick();
   markDirty(); if(bankOpen()) renderBank();
 }
 function countTypeAdj(cat,n){ if(cat.type==="car")S.cars+=n; else if(cat.type==="plane")S.planes+=n; if(cat.type==="house")S.houses+=n; if(cat.building)S.buildings+=n; }
@@ -1322,7 +1335,7 @@ function renderTrade(){
   let h=`<h2>🎒 <span>${tr("🎒 仓库 · 二手交易")}</span></h2>
     <div class="frow" style="margin-bottom:8px"><div class="fl">💵 ${tr("账户余额")}</div><div class="fv">${money(S.bal)}</div></div>
     <div class="ftabs">`;
-  [["inv","🎒 "+tr("我的仓库")],["mkt","📊 "+tr("行情 · 新闻")]].forEach(t=> h+=`<div class="ftab${tradeView===t[0]?" on":""}" onclick="tradeGo('${t[0]}')">${t[1]}</div>`);
+  [["inv","🎒 "+tr("我的仓库")],["shop","🛍 "+tr("我的商店")+(S.listings&&S.listings.length?` (${S.listings.length})`:"")],["mkt","📊 "+tr("行情 · 新闻")]].forEach(t=> h+=`<div class="ftab${tradeView===t[0]?" on":""}" onclick="tradeGo('${t[0]}')">${t[1]}</div>`);
   h+=`</div>`;
   if(tradeView==="inv"){
     const list=ownedList();
@@ -1331,11 +1344,12 @@ function renderTrade(){
     if(!list.length && !S.collection.length) h+=`<div class="note" style="padding:14px">${tr("空空如也，先去买点东西吧")}</div>`;
     list.slice(0,80).forEach(o=>{ const it=o.it, food=it.cat.type==="food", val=itemResale(it);
       h+=`<div class="invrow"><div class="ii">${it.ico}</div><div class="it"><div class="inm">${nm(it)} <span class="iq">×${o.n.toLocaleString("en-US")}</span></div><div class="ival">${tr("估价")} ${priceFmt(val)}/${LANG==="en"?"ea":"件"}</div></div>
-        <div class="iact">${food?`<button class="fbtn sm gold" onclick="eatFood('${it.id}')">${tr("食用")}</button>`:""}<button class="fbtn sm" onclick="sellItem('${it.id}',1)">${tr("出售")}</button><button class="fbtn sm blue" onclick="sellAllType('${it.id}')">${tr("全部")}</button></div></div>`; });
+        <div class="iact">${food?`<button class="fbtn sm gold" onclick="eatFood('${it.id}')">${tr("食用")}</button>`:""}<button class="fbtn sm" onclick="sellAllType('${it.id}')">${tr("出售")}</button><button class="fbtn sm blue" onclick="listItem('${it.id}')">🛍 ${tr("上架")}</button></div></div>`; });
     if(S.collection.length){ h+=`<div class="ballab" style="margin:8px 0 5px">🏛️ ${tr("我的收藏")}</div>`;
       S.collection.slice().reverse().slice(0,40).forEach((c,ri)=>{ const idx=S.collection.length-1-ri; const val=Math.round(c.price*mktOf(c.cat||"col"));
         h+=`<div class="invrow"><div class="ii">${c.ico}</div><div class="it"><div class="inm">${(LANG==="en"?c.name.en:c.name.zh)} <small style="color:${c.rar.col}">${c.rar.ico}</small></div><div class="ival">${tr("估价")} ${shortMoney(val)}</div></div><div class="iact"><button class="fbtn sm" onclick="sellColl(${idx})">${tr("出售")}</button></div></div>`; }); }
-  } else {
+  } else if(tradeView==="shop"){ h+=shopHtml(); }
+  else {
     h+=`<div class="note" style="text-align:left">${tr("市场行情（每日波动，低买高卖）")}</div>`;
     const labels={tech:"电子",car:"汽车",plane:"飞机",ship:"船舶",house:"住宅",building:"建筑",fun:"娱乐",luxury:"奢侈品",science:"科技",food:"食品",art:"艺术",col:"收藏",biz:"企业",prop:"地产"};
     [...TRADE_TYPES,...COLL_TYPES].forEach(t=>{ const v=mktOf(t), pv=S.mktPrev[t]!=null?S.mktPrev[t]:v, ch=(v-pv)/pv*100;
@@ -1346,6 +1360,44 @@ function renderTrade(){
   }
   h+=`<button class="btn ghost" style="padding:9px;margin-top:10px" onclick="byId('tradeScreen').classList.add('hidden')">${tr("关闭")}</button>`;
   byId("tradeSheet").innerHTML=h;
+}
+</script>
+
+<script>
+/*==================== 🛍 玩家商店 + 🚚 快递物流 ====================*/
+const SHOP_LEVELS=[
+  {zh:"一级小店",en:"Corner Shop",slots:3,fee:0.12,prem:1.0,up:0},
+  {zh:"精品店",en:"Boutique",slots:6,fee:0.09,prem:1.08,up:5e9},
+  {zh:"大型商场",en:"Mega Mall",slots:12,fee:0.06,prem:1.18,up:50e9},
+  {zh:"世界商城",en:"World Emporium",slots:24,fee:0.03,prem:1.3,up:500e9},
+];
+function shopLv(){ return SHOP_LEVELS[(S.shopLevel||1)-1]||SHOP_LEVELS[0]; }
+function listItem(id){ if(!S)return; const it=ALL.find(x=>x.id===id); const have=S.owned[id]||0; if(!it||have<=0)return;
+  if(S.listings.length>=shopLv().slots){ toast(tr("槽位已满，请升级店铺")); return; }
+  const price=Math.max(1,Math.round(itemResale(it)*shopLv().prem)); S.owned[id]=0; countTypeAdj(it.cat,-have);
+  S.listings.push({id, qty:have, price, sold:false, ship:0}); toast("🛍 "+it.ico+"×"+have+" "+tr("上架")); refreshTrade(); }
+function delistItem(idx){ const l=S.listings[idx]; if(!l||l.sold)return; const it=ALL.find(x=>x.id===l.id); S.owned[l.id]=(S.owned[l.id]||0)+l.qty; if(it)countTypeAdj(it.cat,l.qty); S.listings.splice(idx,1); refreshTrade(); }
+function upgradeShop(){ if(!S)return; if(S.shopLevel>=SHOP_LEVELS.length){ toast(tr("已是最高等级")); return; } const nxt=SHOP_LEVELS[S.shopLevel]; if(nxt.up>S.bal){ toast(tr("现金不足")); return; } S.bal-=nxt.up; S.shopLevel++; refreshTrade(); }
+function shopDayTick(){ if(!S)return;
+  for(let i=S.listings.length-1;i>=0;i--){ const l=S.listings[i]; const it=ALL.find(x=>x.id===l.id);
+    if(!l.sold){ const mkt=it?itemResale(it):l.price; const ratio=mkt>0?l.price/mkt:1; const chance=Math.max(0.12,Math.min(0.85,0.55-(ratio-1)*0.6));
+      if(Math.random()<chance){ l.sold=true; l.ship=0; toast("🔔 "+(it?it.ico:"")+" "+tr("找到买家！")); } }
+    else { l.ship++; if(l.ship>=3){ const net=Math.round(l.price*l.qty*(1-shopLv().fee)); S.bal+=net; S.shopSold+=net; S.sold+=net; S.listings.splice(i,1); toast("💰 "+tr("货款到账")+" +"+shortMoney(net)); checkAch(); } }
+  }
+  if(!byId("tradeScreen").classList.contains("hidden")) renderTrade();
+}
+function shopHtml(){ const lv=shopLv();
+  let h=`<div class="note" style="text-align:left">${tr("店铺出售价更高，但需等买家+物流，比二手即时出售更划算。")}</div>
+    <div class="merit"><div class="mv">🛍 ${tr(LANG==="en"?lv.en:lv.zh)}</div>
+    <div class="ballab" style="margin-top:3px">${tr("槽位")} ${S.listings.length}/${lv.slots} · ${tr("手续费")} ${Math.round(lv.fee*100)}% · ${tr("溢价")} +${Math.round((lv.prem-1)*100)}% · ${tr("店铺成交")} ${shortMoney(S.shopSold)}</div></div>`;
+  if(S.shopLevel<SHOP_LEVELS.length){ const nxt=SHOP_LEVELS[S.shopLevel]; h+=`<button class="fbtn gold" style="width:100%;margin-bottom:9px" onclick="upgradeShop()">⬆ ${tr("升级")} → ${tr(LANG==="en"?nxt.en:nxt.zh)} · ${shortMoney(nxt.up)}</button>`; }
+  if(!S.listings.length) h+=`<div class="note">${tr("空空如也，先去买点东西吧")}</div><div class="note" style="margin-top:4px">${tr("在「我的仓库」里点 🛍 上架商品")}</div>`;
+  else S.listings.forEach((l,i)=>{ const it=ALL.find(x=>x.id===l.id); const stage= !l.sold ? tr("🏷 在售") : ([tr("📦 待发货"),tr("🚚 运输中"),tr("✅ 已送达")][l.ship]||tr("💰 收到货款"));
+    const step=l.sold?l.ship+1:0;
+    h+=`<div class="listrow"><div class="lh"><span>${it?it.ico:"📦"}</span><span class="lhn">${it?nm(it):"?"} ×${l.qty.toLocaleString("en-US")}</span><span class="lhp">${shortMoney(l.price*l.qty)}</span></div>
+      <div class="steps">${[0,1,2].map(s=>`<div class="st${step>s?" on":""}"></div>`).join("")}</div>
+      <div class="lstage ${l.sold&&l.ship>=2?"paid":""}">${stage}${!l.sold?` · <span onclick="delistItem(${i})" style="color:var(--red);cursor:pointer">${tr("撤下")}</span>`:""}</div></div>`; });
+  return h;
 }
 </script>
 </body>
