@@ -42,8 +42,21 @@
     font-weight:800;font-size:13px;cursor:pointer;color:var(--muted);}
   .qty.on{background:var(--green);color:#04140b;border-color:var(--green);}
   /* 分类标签 */
-  .tabs{flex:0 0 auto;display:flex;gap:6px;overflow-x:auto;padding:8px 10px 4px;scrollbar-width:none;}
+  .tabs{display:flex;gap:6px;overflow-x:auto;padding:8px 10px 4px;scrollbar-width:none;scroll-behavior:smooth;}
   .tabs::-webkit-scrollbar{display:none;}
+  /* 分类标签「还有更多」滚动提示 */
+  .tabswrap{flex:0 0 auto;position:relative;}
+  .tabswrap::after,.tabswrap::before{content:"";position:absolute;top:0;bottom:0;width:34px;pointer-events:none;opacity:0;transition:opacity .2s;z-index:2;}
+  .tabswrap::after{right:0;background:linear-gradient(90deg,rgba(10,20,16,0),rgba(10,20,16,.95));}
+  .tabswrap::before{left:0;background:linear-gradient(270deg,rgba(10,20,16,0),rgba(10,20,16,.95));}
+  .tabswrap.more-r::after{opacity:1;} .tabswrap.more-l::before{opacity:1;}
+  .tabmore{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:22px;height:22px;border-radius:50%;
+    background:var(--gold);color:#3a2a00;border:none;font-size:15px;font-weight:900;line-height:1;cursor:pointer;
+    display:none;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 5px rgba(0,0,0,.5);animation:nudge 1.6s ease-in-out infinite;}
+  .tabmore{right:3px;} .tabmore.left{left:3px;right:auto;}
+  .tabswrap.more-r .tabmore:not(.left){display:flex;} .tabswrap.more-l .tabmore.left{display:flex;}
+  @keyframes nudge{0%,100%{transform:translateY(-50%) translateX(0);}50%{transform:translateY(-50%) translateX(2px);}}
+  @media (prefers-reduced-motion:reduce){ .tabmore{animation:none;} .tabs{scroll-behavior:auto;} }
   .tab{flex:0 0 auto;background:#12241c;border:1px solid var(--line);border-radius:16px;padding:6px 12px;
     font-size:12px;font-weight:800;cursor:pointer;color:var(--muted);white-space:nowrap;}
   .tab.on{background:var(--gold);color:#3a2a00;border-color:var(--gold);}
@@ -267,7 +280,11 @@
     </div>
   </div>
 
-  <div class="tabs" id="tabs"></div>
+  <div class="tabswrap" id="tabsWrap">
+    <div class="tabs" id="tabs"></div>
+    <button class="tabmore" id="tabMore" onclick="scrollTabs(1)" aria-label="更多分类">›</button>
+    <button class="tabmore left" id="tabPrev" onclick="scrollTabs(-1)" aria-label="上一组">‹</button>
+  </div>
   <div id="items"></div>
 
   <div class="dock">
@@ -790,7 +807,18 @@ function buildTabs(){
   const t=byId("tabs"); t.innerHTML="";
   CATS.filter(c=>!c.vipMin||(window.vipIdx&&vipIdx()>=c.vipMin)).forEach(c=>{ const el=document.createElement("div"); el.className="tab"+(S&&S.cat===c.id?" on":"");
     el.textContent=c.ico+" "+nm(c); el.onclick=()=>{ if(S){S.cat=c.id; buildTabs(); renderItems();} }; t.appendChild(el); });
+  syncTabMore();
 }
+/* 分类标签「还有更多」提示：左右渐隐 + 箭头 */
+function syncTabMore(){
+  const t=byId("tabs"), w=byId("tabsWrap"); if(!t||!w||!w.classList) return;
+  const max=t.scrollWidth-t.clientWidth;
+  w.classList.toggle("more-r", max>4 && t.scrollLeft < max-4);
+  w.classList.toggle("more-l", t.scrollLeft > 4);
+}
+function scrollTabs(dir){ const t=byId("tabs"); if(!t) return; t.scrollLeft += dir*Math.max(120, t.clientWidth*0.7); setTimeout(syncTabMore,320); }
+(function(){ const t=byId("tabs"); if(t&&t.addEventListener) t.addEventListener("scroll",syncTabMore,{passive:true});
+  if(typeof window!=="undefined"&&window.addEventListener) window.addEventListener("resize",syncTabMore); })();
 function renderItems(){
   const box=byId("items"); if(!S){ box.innerHTML=""; return; }
   const cat=CATS.find(c=>c.id===S.cat)||CATS[0];
