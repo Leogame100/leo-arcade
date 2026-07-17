@@ -219,7 +219,23 @@
   .tiermini{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:8px 0;}
   .tiermini .tm{font-size:10px;font-weight:800;padding:3px 7px;border-radius:10px;background:#12241c;border:1px solid var(--line);color:var(--muted);}
   .tiermini .tm.on{background:var(--gold);color:#3a2a00;border-color:var(--gold);}
-</style>
+  /* 紧凑功能图标栏（替代原来的大按钮，节省视野） */
+  .iconbar{display:flex;gap:3px;margin-top:6px;}
+  .ib{flex:1;min-width:0;background:#162b22;border:1px solid var(--line);border-radius:9px;padding:5px 1px;cursor:pointer;color:var(--ink);
+    position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;transition:transform .05s;}
+  .ib:active{transform:scale(.92);} .ib:hover{border-color:var(--green-d);}
+  .ib i{font-size:16px;font-style:normal;line-height:1.1;} .ib b{font-size:8px;font-weight:800;white-space:nowrap;letter-spacing:-.2px;}
+  .ib .gbadge{top:-5px;right:-3px;min-width:15px;height:15px;line-height:15px;font-size:9px;}
+  /* 帝国 */
+  .empbar{background:linear-gradient(180deg,#2a2410,#181405);border:1px solid var(--gold-d);border-radius:12px;padding:11px;margin-bottom:10px;text-align:center;}
+  .empbar .eb{font-size:20px;font-weight:900;color:var(--gold);} .empbar .ep{height:7px;background:#0e1209;border-radius:4px;margin-top:6px;overflow:hidden;}
+  .empbar .ep>i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--green));}
+  .divrow{display:flex;align-items:center;gap:9px;background:#12241c;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px;}
+  .divrow.owned{border-color:var(--gold);background:#1d1a0c;} .divrow .di{font-size:22px;} .divrow .dt{flex:1;min-width:0;}
+  .divrow .dn{font-weight:800;font-size:13px;} .divrow .dd{font-size:10px;color:var(--muted);margin-top:1px;}
+  .divrow .dlv{font-size:10px;color:var(--gold);font-weight:800;}
+  .museum{background:linear-gradient(180deg,#1a2436,#101728);border:1px solid #3a5f9e;border-radius:12px;padding:11px;margin-bottom:10px;text-align:center;}
+  .museum .mg{font-size:34px;font-weight:900;} .museum .ms{font-size:11px;color:#bcd;margin-top:2px;}
 </head>
 <body>
 <script>function goArcade(){if(window.top!==window.self){try{window.parent.postMessage("leo-arcade-home","*");}catch(e){}}else{location.href="index.html";}}</script>
@@ -255,19 +271,17 @@
 
   <div class="dock">
     <div class="oneclick" id="oneClick"></div>
-    <div class="bankrow r3">
-      <button class="bankbtn" onclick="openBank()">🏦 <span data-i18n="银行">银行</span></button>
-      <button class="bankbtn auc" onclick="openAuction()">🔨 <span data-i18n="拍卖">拍卖</span></button>
-      <button class="bankbtn gift" onclick="openGifts()">🎁 <span data-i18n="礼物">礼物</span><span class="gbadge" id="giftBadge"></span></button>
-    </div>
-    <button class="bankbtn trade" onclick="openTrade()">🎒 <span data-i18n="仓库">仓库</span> · <span data-i18n="二手市场">二手市场</span> · <span data-i18n="美食">美食</span></button>
-    <button class="bankbtn world" onclick="openWorld()">🌍 <span data-i18n="世界地图">世界地图</span> · ✈️ <span data-i18n="飞机旅行">飞机旅行</span></button>
-    <button class="bankbtn forbes" onclick="openForbes()">🏆 <span data-i18n="福布斯全球富豪榜">福布斯全球富豪榜</span></button>
-    <button class="bankbtn vip" onclick="openVip()">🎫 <span data-i18n="VIP黑卡会员">VIP 黑卡会员</span></button>
-    <div class="dockrow2">
-      <div class="db" onclick="openAch()">🏆 <span data-i18n="成就">成就</span></div>
-      <div class="db" onclick="openRec()">📊 <span data-i18n="排行榜">排行榜</span></div>
-      <div class="db" onclick="openStart()">⚙️ <span data-i18n="模式">模式</span></div>
+    <div class="iconbar">
+      <button class="ib" onclick="openBank()" title="银行"><i>🏦</i><b data-i18n="银行">银行</b></button>
+      <button class="ib" onclick="openAuction()" title="拍卖"><i>🔨</i><b data-i18n="拍卖">拍卖</b></button>
+      <button class="ib" onclick="openGifts()" title="礼物"><i>🎁</i><b data-i18n="礼物">礼物</b><span class="gbadge" id="giftBadge"></span></button>
+      <button class="ib" onclick="openTrade()" title="仓库"><i>🎒</i><b data-i18n="仓库">仓库</b></button>
+      <button class="ib" onclick="openWorld()" title="世界地图"><i>🌍</i><b data-i18n="地图">地图</b></button>
+      <button class="ib" onclick="openForbes()" title="福布斯"><i>🏆</i><b data-i18n="富豪榜">富豪榜</b></button>
+      <button class="ib" onclick="openVip()" title="VIP"><i>🎫</i><b>VIP</b></button>
+      <button class="ib" onclick="openEmpire()" title="财富帝国"><i>🌟</i><b data-i18n="帝国">帝国</b></button>
+      <button class="ib" onclick="openAch()" title="成就"><i>🏅</i><b data-i18n="成就">成就</b></button>
+      <button class="ib" onclick="openStart()" title="模式"><i>⚙️</i><b data-i18n="模式">模式</b></button>
     </div>
   </div>
 
@@ -281,6 +295,7 @@
       <div class="disc" data-i18n="免责" style="margin-bottom:10px;">⚠️ 灵感来源于全球超高净值富豪 · 纯属娱乐模拟 · 非官方，未获任何个人或机构授权</div>
       <div class="ballab" style="text-align:center" data-i18n="选择模式">选择模式</div>
       <div class="modeseg" id="modeSeg"></div>
+      <button class="btn" id="contBtn" style="display:none;background:var(--gold);color:#3a2a00" onclick="loadGame()" data-i18n="继续游戏">▶ 继续上次游戏</button>
       <button class="btn" id="startBtn" data-i18n="开始挥霍">💰 开始挥霍</button>
       <button class="btn ghost" onclick="openRec()" data-i18n="查看纪录">📊 查看纪录</button>
     </div>
@@ -332,6 +347,8 @@
   <div class="overlay hidden" id="forbesScreen"><div class="sheet" id="forbesSheet"></div></div>
   <!-- VIP 黑卡 -->
   <div class="overlay hidden" id="vipScreen"><div class="sheet" id="vipSheet"></div></div>
+  <!-- 财富帝国 -->
+  <div class="overlay hidden" id="empScreen"><div class="sheet" id="empSheet"></div></div>
 
 </div></div>
 
@@ -473,6 +490,16 @@ const TR={
   "💰 交易手续费":"💰 Trade fees","💳 每日礼遇":"💳 Daily stipend","🖤 黑卡专属商品":"🖤 Black-Card items","购物95折起":"Member pricing","全球免机票":"Free flights worldwide",
   "存款利率提升·贷款利率降低·信用额度提升":"Higher savings rate · lower loan rate · bigger credit line","拍卖成交价优惠":"Discount on auction wins","二手/店铺手续费减免":"Lower resale/shop fees",
   "解锁黑卡专属超奢商品":"Unlocks ultra-luxury exclusives","每天到账":"credited daily","已解锁":"Unlocked","未解锁":"Locked","会员越高特权越强":"Higher tier = stronger perks",
+  // 帝国 / 新分类 / 存档
+  "地图":"Map","富豪榜":"Rich List","帝国":"Empire","继续游戏":"▶ Continue","▶ 继续上次游戏":"▶ Continue last game","进度已保存":"Progress saved",
+  "🌟 财富帝国":"🌟 Wealth Empire","帝国进度":"Empire progress","收购":"Acquire","扩张":"Expand","已收购":"Owned","部门日收益":"Division income/day",
+  "银行集团":"Banking Group","跨国企业":"Multinational","酒店集团":"Hotel Group","连锁商场":"Mall Chain","铁路网络":"Railway Network","航空公司":"Airline",
+  "海运公司":"Shipping Line","能源集团":"Energy Group","通信公司":"Telecom","博物馆联盟":"Museum Alliance","娱乐集团":"Entertainment Group","自建城市":"Your Own City",
+  "🏆 财富帝国达成！":"🏆 WEALTH EMPIRE COMPLETE!","收购全部12大部门并升至满级":"Acquire all 12 divisions and max them out",
+  "🦖 收藏馆评分":"🦖 Museum Rating","藏品":"Pieces","评分":"Score","等级":"Grade","收藏越多越稀有，评分越高":"More & rarer pieces = higher rating",
+  "宠物":"Pets","特种载具":"Special Vehicles","主题公园":"Theme Parks",
+  "帝国模式":"Empire Mode","收购全部12大商业部门，建立你的财富帝国。":"Acquire all 12 divisions and build your empire.",
+  "混沌模式":"Chaos Mode","事件频发+行情剧烈波动，刺激但危险。":"Constant events + wild market swings — thrilling but risky.",
 };
 function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
 function nm(o){ return LANG==="en" ? o.en : o.zh; }
@@ -490,6 +517,7 @@ function applyLang(){
   if(window.worldApplyLang) worldApplyLang();
   if(window.forbesApplyLang) forbesApplyLang();
   if(window.vipApplyLang) vipApplyLang();
+  if(window.empApplyLang) empApplyLang();
 }
 function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("spendLang",LANG);}catch(e){} applyLang(); }
 
@@ -542,6 +570,12 @@ const CATS=[
     {zh:"蛋糕",en:"Cake",ico:"🍰",p:50},{zh:"冰淇淋",en:"Ice Cream",ico:"🍦",p:15},{zh:"巧克力",en:"Chocolate",ico:"🍫",p:30},{zh:"马卡龙",en:"Macaron",ico:"🧁",p:40},{zh:"曲奇",en:"Cookie",ico:"🍪",p:20}]},
   {id:"grocery", zh:"超市", en:"Supermarket", ico:"🛒", type:"food", items:[
     {zh:"水果",en:"Fruit",ico:"🍎",p:5},{zh:"蔬菜",en:"Veggies",ico:"🥦",p:4},{zh:"肉类",en:"Meat",ico:"🥩",p:25},{zh:"牛奶",en:"Milk",ico:"🥛",p:6},{zh:"面包",en:"Bread",ico:"🍞",p:8},{zh:"零食",en:"Snacks",ico:"🍿",p:12},{zh:"调味料",en:"Seasoning",ico:"🧂",p:10},{zh:"冷冻食品",en:"Frozen Food",ico:"🧊",p:18}]},
+  {id:"pet", zh:"宠物", en:"Pets", ico:"🐶", type:"fun", items:[
+    {zh:"狗",en:"Dog",ico:"🐶",p:2000},{zh:"猫",en:"Cat",ico:"🐱",p:1500},{zh:"鹦鹉",en:"Parrot",ico:"🦜",p:3000},{zh:"马",en:"Horse",ico:"🐴",p:50*K},{zh:"赛马",en:"Race Horse",ico:"🏇",p:2*M},{zh:"熊猫（游戏设定）",en:"Panda (fictional)",ico:"🐼",p:5*M},{zh:"宠物庄园",en:"Pet Estate",ico:"🏡",p:50*M}]},
+  {id:"vehicle", zh:"特种载具", en:"Special Vehicles", ico:"🚔", type:"car", items:[
+    {zh:"警车",en:"Police Car",ico:"🚔",p:80*K},{zh:"救护车",en:"Ambulance",ico:"🚑",p:200*K},{zh:"校车",en:"School Bus",ico:"🚌",p:120*K},{zh:"工程车",en:"Crane Truck",ico:"🚜",p:300*K},{zh:"装甲车",en:"Armored Van",ico:"🚐",p:900*K},{zh:"火车",en:"Train",ico:"🚂",p:20*M},{zh:"地铁列车",en:"Metro Train",ico:"🚈",p:40*M}]},
+  {id:"park", zh:"主题公园", en:"Theme Parks", ico:"🎢", type:"building", building:true, items:[
+    {zh:"鬼屋",en:"Haunted House",ico:"👻",p:20*M},{zh:"摩天轮",en:"Ferris Wheel",ico:"🎡",p:30*M},{zh:"过山车",en:"Roller Coaster",ico:"🎢",p:50*M},{zh:"水上乐园",en:"Water Park",ico:"🏄",p:300*M},{zh:"动物园",en:"Zoo",ico:"🦁",p:500*M},{zh:"大型主题乐园",en:"Mega Theme Park",ico:"🎠",p:5*B}]},
   {id:"vip", zh:"🖤黑卡专属", en:"🖤 Black Card", ico:"🖤", type:"luxury", vipMin:5, items:[
     {zh:"私人海岛群",en:"Private Archipelago",ico:"🏝️",p:20*B},{zh:"超级游艇船队",en:"Superyacht Fleet",ico:"🛥️",p:15*B},{zh:"私人太空站",en:"Private Space Station",ico:"🛰️",p:80*B},{zh:"环球酒店集团",en:"Global Hotel Group",ico:"🏨",p:120*B},{zh:"私人卫星网络",en:"Satellite Network",ico:"📡",p:200*B},{zh:"至尊黑卡藏品",en:"Supreme Black Relic",ico:"🖤",p:500*B}]},
 ];
@@ -553,6 +587,8 @@ const MODES=[
   {id:"discount", zh:"折扣模式", en:"Discount", d:"商品随机打折，可以买到更多东西。"},
   {id:"greedy", zh:"疯狂贪婪模式", en:"Greedy Inflation", d:"价格随购买持续上涨，考验消费策略。"},
   {id:"events", zh:"随机事件模式", en:"Random Events", d:"每隔一段时间触发事件：黑五五折、全球缺货、限时拍卖、神秘宝箱。"},
+  {id:"empire", zh:"帝国模式", en:"Empire Mode", d:"收购全部12大商业部门，建立你的财富帝国。"},
+  {id:"chaos", zh:"混沌模式", en:"Chaos Mode", d:"事件频发+行情剧烈波动，刺激但危险。"},
 ];
 const ACHS=[
   {id:"m1", ico:"💵", zh:"第一桶金", en:"First Million", d:"花费100万美元", chk:s=>s.spent>=1e6},
@@ -570,6 +606,7 @@ const ACHS=[
   {id:"merchant", ico:"🏪", zh:"二手大亨", en:"Resale Mogul", d:"二手成交额超$50B", chk:s=>(s.sold||0)>=50e9},
   {id:"philan", ico:"❤️", zh:"大慈善家", en:"Philanthropist", d:"累计捐赠超$10B", chk:s=>(s.donated||0)>=10e9},
   {id:"forbes1", ico:"🥇", zh:"福布斯首富", en:"World's Richest", d:"登顶福布斯财富榜", chk:s=>typeof forbesTop1==="function"&&netWorth()>=forbesTop1()},
+  {id:"empire", ico:"🌟", zh:"财富帝国", en:"Wealth Empire", d:"收购全部12大部门并升至满级", chk:s=>typeof empDone==="function"&&empDone()},
 ];
 const START_BAL=400*B;
 
@@ -587,14 +624,14 @@ function freshState(){
     mail:[], checkStreak:0, lastCheckin:0, giftLog:{}, giftsGot:0, birthday:12+Math.floor(Math.random()*28), bdayDone:false,
     mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
     shopLevel:1, listings:[], shopSold:0,
-    city:"", land:{}, traveled:0, donated:0,
+    city:"", land:{}, traveled:0, donated:0, emp:{},
     incomePeak:0, netPeak:START_BAL, won:false, ending:"" };
 }
 function newGame(){
   stopAuto(); clearInterval(eventTimer); eventTimer=null; greedyMul=1;
   S=freshState(); S.t0=nowMs();
   if(MODE==="discount") rollDiscounts();
-  if(MODE==="events"){ eventTimer=setInterval(tickEvent, 1000); }
+  if(MODE==="events"||MODE==="chaos"){ eventTimer=setInterval(tickEvent, 1000); }
   if(window.financeReset) financeReset();
   closeOv("startScreen"); buildTabs(); buildOneClick(); buildQty(); renderItems(); renderHud();
 }
@@ -699,7 +736,7 @@ function showEventFlash(zhKey){ showEvent(tr(zhKey)); setTimeout(hideEvent, 2600
 
 /*==================== 结算 ====================*/
 function endRun(){
-  if(S.over) return; S.over=true; stopAuto(); clearInterval(eventTimer);
+  if(S.over) return; S.over=true; if(window.clearSave) clearSave(); stopAuto(); clearInterval(eventTimer);
   checkAch(); // 财富清零
   const secs=(nowMs()-S.t0)/1000;
   const rec=loadRec();
@@ -797,7 +834,7 @@ function buildModes(){
 }
 
 /*==================== 覆盖层 ====================*/
-function openStart(){ stopAuto(); buildModes(); byId("startScreen").classList.remove("hidden"); }
+function openStart(){ stopAuto(); buildModes(); if(window.syncContBtn) syncContBtn(); byId("startScreen").classList.remove("hidden"); }
 function closeOv(id){ byId(id).classList.add("hidden"); }
 function openAch(){
   const have=gotAch(); byId("achSub").textContent=have.length+" / "+ACHS.length;
@@ -878,11 +915,11 @@ function termsTotal(){ return S?S.terms.reduce((a,t)=>a+t.amt,0):0; }
 function stockValue(){ if(!S)return 0; let v=0; for(const st of STOCKS) v+=(S.stocks[st.id]||0)*S.px[st.id]; return v; }
 function assetIncome(){ if(!S)return 0; let s=0; for(const it of ALL){ const y=YIELD[it.cat.type]; if(y) s+=it.p*y*(S.owned[it.id]||0); }
   if(S.collection) for(const c of S.collection) s+=c.income||0;
-  if(window.landIncome) s+=landIncome(); return s; }
+  if(window.landIncome) s+=landIncome(); if(window.empIncome) s+=empIncome(); return s; }
 function depInterest(){ return S?S.deposit*ACTIVE_RATE*(window.vipDepMul?vipDepMul():1)/12:0; }
 function netWorth(){ if(!S)return 0; let a=0; for(const it of ALL) a+=it.p*(S.owned[it.id]||0)*0.5;
   if(S.collection) for(const c of S.collection) a+=c.price*0.5;
-  if(window.landValue) a+=landValue();
+  if(window.landValue) a+=landValue(); if(window.empValue) a+=empValue();
   return S.bal+S.deposit+termsTotal()+stockValue()+a-loansTotal(); }
 function creditStars(){ const p=S.creditPts; return p>=800?5:p>=600?4:p>=400?3:p>=200?2:1; }
 function loanRate(){ return (0.10-(creditStars()-1)*0.012)*(window.vipLoanMul?vipLoanMul():1); }
@@ -922,6 +959,7 @@ function dayTick(){
   if(window.shopDayTick) shopDayTick();
   if(window.forbesDayTick) forbesDayTick();
   if(window.vipDayTick) vipDayTick();
+  if(window.saveGame) saveGame();
   markDirty(); if(bankOpen()) renderBank();
 }
 function countTypeAdj(cat,n){ if(cat.type==="car")S.cars+=n; else if(cat.type==="plane")S.planes+=n; if(cat.type==="house")S.houses+=n; if(cat.building)S.buildings+=n; }
@@ -954,7 +992,7 @@ function doInsure(i){ const ip=INSUR[i]; if(S.insured[ip.id])return; if(ip.prem>
 /*-------- 破产 / 资产变现 --------*/
 function doSellAll(){ let got=0; for(const it of ALL){ const n=S.owned[it.id]||0; if(n>0){ got+=it.p*n*0.5; S.owned[it.id]=0; } }
   S.bal+=Math.round(got); S.cars=S.planes=S.houses=S.buildings=0; toast("💰 +"+shortMoney(got)); refreshFin(); }
-function doBankrupt(){ if(!S||S.over)return; S.over=true; S.ending="bankrupt"; S.won=false; if(dayTimer)clearInterval(dayTimer); stopAuto(); clearInterval(eventTimer);
+function doBankrupt(){ if(!S||S.over)return; S.over=true; if(window.clearSave) clearSave(); S.ending="bankrupt"; S.won=false; if(dayTimer)clearInterval(dayTimer); stopAuto(); clearInterval(eventTimer);
   S.creditPts=150; closeOv("bankScreen");
   const rec=loadRec(); rec.runs=(rec.runs||0)+1; saveRec(rec);
   document.querySelector("#overScreen .big").textContent="💸";
@@ -1644,6 +1682,76 @@ function renderVip(){ const idx=vipIdx(), v=VCARDS[idx], nxt=VCARDS[idx+1];
   h+=`<div class="note">${tr("会员越高特权越强")}</div><button class="btn ghost" style="padding:9px;margin-top:8px" onclick="byId('vipScreen').classList.add('hidden')">${tr("关闭")}</button>`;
   byId("vipSheet").innerHTML=h;
 }
+</script>
+
+<script>
+/*==================== 🌟 财富帝国 + 🦖 收藏馆评分 + 💾 存档 ====================*/
+const DIVS=[
+  {id:"bank",zh:"银行集团",en:"Banking Group",ico:"🏦",cost:60e9,inc:0.0009},
+  {id:"corp",zh:"跨国企业",en:"Multinational",ico:"🏢",cost:80e9,inc:0.001},
+  {id:"hotel",zh:"酒店集团",en:"Hotel Group",ico:"🏨",cost:50e9,inc:0.0011},
+  {id:"mall",zh:"连锁商场",en:"Mall Chain",ico:"🏬",cost:45e9,inc:0.001},
+  {id:"rail",zh:"铁路网络",en:"Railway Network",ico:"🚄",cost:90e9,inc:0.0008},
+  {id:"air",zh:"航空公司",en:"Airline",ico:"✈️",cost:70e9,inc:0.0009},
+  {id:"shipco",zh:"海运公司",en:"Shipping Line",ico:"🚢",cost:65e9,inc:0.0009},
+  {id:"energy",zh:"能源集团",en:"Energy Group",ico:"⚡",cost:110e9,inc:0.0012},
+  {id:"tel",zh:"通信公司",en:"Telecom",ico:"📡",cost:85e9,inc:0.001},
+  {id:"museum",zh:"博物馆联盟",en:"Museum Alliance",ico:"🏛️",cost:40e9,inc:0.0007},
+  {id:"ent",zh:"娱乐集团",en:"Entertainment Group",ico:"🎢",cost:55e9,inc:0.001},
+  {id:"city",zh:"自建城市",en:"Your Own City",ico:"🏙️",cost:250e9,inc:0.0015},
+];
+const DIV_MAX=5;
+function divLv(id){ return (S&&S.emp&&S.emp[id])||0; }
+function divCost(d){ const lv=divLv(d.id); return lv===0?d.cost:Math.round(d.cost*lv*1.6); }
+function buyDiv(id){ const d=DIVS.find(x=>x.id===id); if(!d)return; const lv=divLv(id); if(lv>=DIV_MAX){return;}
+  const c=divCost(d); if(c>S.bal){ toast(tr("现金不足")); return; }
+  S.bal-=c; S.emp[id]=lv+1; toast(d.ico+" "+tr(d.zh)+" Lv"+S.emp[id]); markDirty(); checkAch(); refreshEmp(); }
+function empIncome(){ if(!S||!S.emp)return 0; let s=0; for(const d of DIVS){ const lv=divLv(d.id); if(lv>0) s+=d.cost*d.inc*lv; } return s; }
+function empValue(){ if(!S||!S.emp)return 0; let s=0; for(const d of DIVS){ const lv=divLv(d.id); if(lv>0) s+=d.cost*lv*0.6; } return s; }
+function empLevels(){ let s=0; for(const d of DIVS) s+=divLv(d.id); return s; }
+function empDone(){ return empLevels()>=DIVS.length*DIV_MAX; }
+/*-------- 🦖 收藏馆评分 --------*/
+function museumScore(){ if(!S||!S.collection)return 0; let s=S.collection.length*8;
+  for(const c of S.collection) s+=Math.log10(Math.max(10,c.price))*6;
+  for(const it of ALL) if(it.cat.type==="luxury") s+=(S.owned[it.id]||0)>0?4:0;
+  return Math.round(s); }
+function museumGrade(){ const s=museumScore(); return s>=2500?"S":s>=1200?"A":s>=500?"B":s>=150?"C":"D"; }
+/*-------- 💾 存档 --------*/
+function saveGame(){ if(!S||S.over) return; try{ localStorage.setItem("spendSave", JSON.stringify({v:1,S,RIVALS,MODE,greedyMul})); }catch(e){} }
+function hasSave(){ try{ return !!localStorage.getItem("spendSave"); }catch(e){ return false; } }
+function clearSave(){ try{ localStorage.removeItem("spendSave"); }catch(e){} }
+function loadGame(){
+  try{ const d=JSON.parse(localStorage.getItem("spendSave")); if(!d||!d.S) return false;
+    S=d.S; if(d.RIVALS&&d.RIVALS.length) RIVALS=d.RIVALS; MODE=d.MODE||"normal"; greedyMul=d.greedyMul||1;
+    if(!S.emp) S.emp={}; if(!S.mkt) S.mkt={}; if(!S.listings) S.listings=[]; if(!S.land) S.land={};
+    if(dayTimer) clearInterval(dayTimer); dayTimer=setInterval(()=>{ if(S&&!S.over) dayTick(); },7000);
+    clearInterval(eventTimer); eventTimer=null; if(MODE==="events"||MODE==="chaos") eventTimer=setInterval(tickEvent,1000);
+    stopAuto(); closeOv("startScreen"); buildTabs(); buildOneClick(); buildQty(); renderItems(); renderHud();
+    toast("💾 "+tr("继续游戏")); return true;
+  }catch(e){ return false; }
+}
+function syncContBtn(){ const b=byId("contBtn"); if(b) b.style.display=hasSave()?"block":"none"; }
+/*-------- UI --------*/
+function openEmpire(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} byId("empScreen").classList.remove("hidden"); renderEmp(); }
+function refreshEmp(){ markDirty(); if(!byId("empScreen").classList.contains("hidden")) renderEmp(); }
+function empApplyLang(){ if(!byId("empScreen").classList.contains("hidden")) renderEmp(); }
+function renderEmp(){ const lv=empLevels(), max=DIVS.length*DIV_MAX, pct=Math.round(lv/max*100);
+  let h=`<h2>🌟 <span>${tr("🌟 财富帝国")}</span></h2>
+    <div class="empbar"><div class="eb">${tr("帝国进度")} ${lv}/${max} · ${pct}%</div><div class="ep"><i style="width:${pct}%"></i></div>
+      <div class="ballab" style="margin-top:6px">${tr("部门日收益")} <b style="color:var(--green)">+${shortMoney(empIncome())}</b></div>
+      ${empDone()?`<div style="color:var(--gold);font-weight:900;margin-top:6px">${tr("🏆 财富帝国达成！")}</div>`:`<div class="ballab" style="margin-top:4px">${tr("收购全部12大部门并升至满级")}</div>`}</div>
+    <div class="museum"><div class="mg" style="color:${{S:"#c04cff",A:"#e8912a",B:"#3a8fe0",C:"#4caf50",D:"#9fb0a4"}[museumGrade()]}">${museumGrade()}</div>
+      <div class="ms">${tr("🦖 收藏馆评分")} · ${tr("评分")} ${museumScore()} · ${tr("藏品")} ${S.collection.length}</div>
+      <div class="ms" style="opacity:.7">${tr("收藏越多越稀有，评分越高")}</div></div>`;
+  DIVS.forEach(d=>{ const l=divLv(d.id), c=divCost(d), maxed=l>=DIV_MAX;
+    h+=`<div class="divrow${l>0?" owned":""}"><div class="di">${d.ico}</div>
+      <div class="dt"><div class="dn">${tr(d.zh)} ${l>0?`<span class="dlv">Lv${l}/${DIV_MAX}</span>`:""}</div>
+      <div class="dd">${l>0?`+${shortMoney(d.cost*d.inc*l)}/${LANG==="en"?"d":"天"}`:`+${shortMoney(d.cost*d.inc)}/${LANG==="en"?"d":"天"} @Lv1`}</div></div>
+      ${maxed?`<span class="fv">MAX</span>`:`<button class="fbtn sm ${l>0?"gold":""}" onclick="buyDiv('${d.id}')">${l>0?tr("扩张"):tr("收购")}<br>${shortMoney(c)}</button>`}</div>`; });
+  h+=`<button class="btn ghost" style="padding:9px;margin-top:8px" onclick="byId('empScreen').classList.add('hidden')">${tr("关闭")}</button>`;
+  byId("empSheet").innerHTML=h;
+}
+syncContBtn();
 </script>
 </body>
 </html>
