@@ -124,7 +124,7 @@
     border-radius:11px;padding:10px;font-size:14px;font-weight:900;cursor:pointer;letter-spacing:.3px;box-shadow:0 3px 0 #12224a;}
   .bankbtn:active{transform:translateY(2px);box-shadow:0 1px 0 #12224a;}
   /* 金融面板 */
-  .ftabs{display:flex;gap:5px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none;} .ftabs::-webkit-scrollbar{display:none;}
+  .ftabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
   .ftab{flex:0 0 auto;background:#12241c;border:1px solid var(--line);border-radius:14px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;color:var(--muted);white-space:nowrap;}
   .ftab.on{background:var(--gold);color:#3a2a00;border-color:var(--gold);}
   .fsec{margin-bottom:10px;}
@@ -518,6 +518,15 @@ const TR={
   "宠物":"Pets","特种载具":"Special Vehicles","主题公园":"Theme Parks",
   "帝国模式":"Empire Mode","收购全部12大商业部门，建立你的财富帝国。":"Acquire all 12 divisions and build your empire.",
   "混沌模式":"Chaos Mode","事件频发+行情剧烈波动，刺激但危险。":"Constant events + wild market swings — thrilling but risky.",
+  // 多结局
+  "结局收集":"Endings","多种通关方式":"multiple ways to win",
+  "财富清零":"Spent It All","把现金/存款/股票/贷款全部归零":"Zero out cash, savings, stocks & loans",
+  "财富帝国":"Wealth Empire","12大商业部门全部升至满级":"Max out all 12 business divisions",
+  "世界首富":"World's Richest","登顶福布斯财富榜":"Reach #1 on the Forbes rich list",
+  "收藏之王":"Master Curator","收藏馆评分达到 S 级":"Reach an S-grade museum rating",
+  "慈善圣人":"Saint of Charity","累计捐赠满 $100B":"Donate $100B in total",
+  "环球地主":"Global Landlord","在全部18座城市都拥有土地":"Own land in all 18 cities",
+  "万物收藏家":"Own Everything","每一种商品都至少拥有1件":"Own at least one of every item",
 };
 function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
 function nm(o){ return LANG==="en" ? o.en : o.zh; }
@@ -753,22 +762,31 @@ function hideEvent(){ byId("eventBar").classList.remove("show"); }
 function showEventFlash(zhKey){ showEvent(tr(zhKey)); setTimeout(hideEvent, 2600); }
 
 /*==================== 结算 ====================*/
-function endRun(){
+function endRun(winId){
   if(S.over) return; S.over=true; if(window.clearSave) clearSave(); stopAuto(); clearInterval(eventTimer);
-  checkAch(); // 财富清零
+  if(window.stopDayTimer) stopDayTimer();
+  S.won=true; S.ending=winId||"zero";
+  checkAch();
   const secs=(nowMs()-S.t0)/1000;
   const rec=loadRec();
-  const isFast = S.bal<=0 && (!rec.fastest || secs<rec.fastest);
-  if(S.bal<=0 && (!rec.fastest||secs<rec.fastest)) rec.fastest=secs;
+  const isZero = S.ending==="zero";
+  const isFast = isZero && (!rec.fastest || secs<rec.fastest);
+  if(isFast) rec.fastest=secs;
   if(S.items>(rec.mostItems||0)) rec.mostItems=S.items;
   rec.totalSpent=(rec.totalSpent||0)+S.spent;
   rec.runs=(rec.runs||0)+1;
   saveRec(rec);
+  if(window.saveEnding) saveEnding(S.ending);
+  const W = window.WINS ? window.WINS.find(x=>x.id===S.ending) : null;
+  const bigEl=document.querySelector("#overScreen .big"), h2=document.querySelector("#overScreen h2");
+  if(bigEl) bigEl.textContent = W?W.ico:"🎉";
+  if(h2) h2.textContent = W?(LANG==="en"?W.en:W.zh):tr("全部花光！");
   const favId=Object.keys(S.fav).sort((a,b)=>S.fav[b]-S.fav[a])[0];
   const favIt=ALL.find(it=>it.id===favId);
-  byId("overSub").textContent=tr("恭喜！你把一切都花光了");
+  byId("overSub").textContent = W?tr(W.d):tr("恭喜！你把一切都花光了");
   byId("overStats").innerHTML=[
     row(tr("用时"), fmtTime(secs)+(isFast?"  🥇"+tr("新纪录！"):"")),
+    row(tr("净资产"), shortMoney(netWorth())),
     row(tr("平均每秒"), shortMoney(S.spent/Math.max(0.5,secs))),
     row(tr("购买总数"), S.items.toLocaleString("en-US")),
     row(tr("最爱商品"), favIt?(favIt.ico+" "+nm(favIt)+" ×"+S.fav[favId].toLocaleString("en-US")):tr("无")),
@@ -874,12 +892,19 @@ function openAch(){
 }
 function openRec(){
   const r=loadRec();
-  byId("recList").innerHTML=[
+  let h=[
     row(tr("最快花光"), r.fastest?fmtTime(r.fastest):tr("无")),
     row(tr("单局最多购买"), (r.mostItems||0).toLocaleString("en-US")),
     row(tr("累计消费"), shortMoney(r.totalSpent||0)),
     row(tr("游玩局数"), (r.runs||0)),
   ].join("");
+  if(window.WINS){
+    const eds = window.gotEndings?gotEndings():[];
+    h+=`<div class="ballab" style="margin:10px 0 5px">🏁 ${tr("结局收集")} ${eds.length}/${window.WINS.length} · ${tr("多种通关方式")}</div>`;
+    window.WINS.forEach(w=>{ const got=eds.includes(w.id);
+      h+=`<div class="achrow${got?" got":""}"><div class="ai">${w.ico}</div><div class="at"><div class="an">${LANG==="en"?w.en:w.zh}</div><div class="ad">${tr(w.d)}</div></div><div class="ax">${got?"✓":""}</div></div>`; });
+  }
+  byId("recList").innerHTML=h;
   byId("recScreen").classList.remove("hidden");
 }
 
@@ -956,6 +981,7 @@ function creditLimit(){ return 100e9*(creditStars()/5)*(window.vipCreditMul?vipC
 function vipTier(){ let t=VIPS[0]; for(const v of VIPS) if(S.wagered>=v.min) t=v; return t; }
 
 /*-------- 每日结算 --------*/
+function stopDayTimer(){ if(dayTimer){ clearInterval(dayTimer); dayTimer=null; } }
 function financeReset(){ if(dayTimer) clearInterval(dayTimer); STOCKS.forEach(s=>S.px[s.id]=s.px);
   if(window.tradeReset) tradeReset(); if(window.worldReset) worldReset(); if(window.forbesReset) forbesReset();
   dayTimer=setInterval(()=>{ if(S&&!S.over) dayTick(); }, 7000); }
@@ -988,6 +1014,7 @@ function dayTick(){
   if(window.shopDayTick) shopDayTick();
   if(window.forbesDayTick) forbesDayTick();
   if(window.vipDayTick) vipDayTick();
+  if(window.checkWins) checkWins();
   if(window.saveGame) saveGame();
   markDirty(); if(bankOpen()) renderBank();
 }
@@ -1072,7 +1099,7 @@ function dice(pick){ const bet=curBet(); if(bet>S.chips){toast(tr("筹码不足"
 let slotMsg="";
 
 /*-------- 结束判定 --------*/
-function finishCheck(){ if(!S||S.over)return; if(S.bal<=0 && S.deposit<=0 && termsTotal()<=0 && stockValue()<=0 && loansTotal()<=0){ if(dayTimer)clearInterval(dayTimer); S.won=true; endRun(); } }
+function finishCheck(){ if(!S||S.over)return; if(window.checkWins) checkWins(); }
 
 /*-------- HUD --------*/
 function financeHud(){ if(!S)return; const nv=byId("netVal"),iv=byId("incVal"),dv=byId("dayVal");
@@ -1780,6 +1807,27 @@ function renderEmp(){ const lv=empLevels(), max=DIVS.length*DIV_MAX, pct=Math.ro
   h+=`<button class="btn ghost" style="padding:9px;margin-top:8px" onclick="byId('empScreen').classList.add('hidden')">${tr("关闭")}</button>`;
   byId("empSheet").innerHTML=h;
 }
+/*==================== 🏁 多结局：更多获胜条件 ====================*/
+const WINS=[
+  {id:"zero", ico:"💸", zh:"财富清零", en:"Spent It All", d:"把现金/存款/股票/贷款全部归零",
+    chk:()=>S.bal<=0 && S.deposit<=0 && termsTotal()<=0 && stockValue()<=0 && loansTotal()<=0},
+  {id:"empire", ico:"🌟", zh:"财富帝国", en:"Wealth Empire", d:"12大商业部门全部升至满级",
+    chk:()=>empDone()},
+  {id:"forbes", ico:"🥇", zh:"世界首富", en:"World's Richest", d:"登顶福布斯财富榜",
+    chk:()=>RIVALS.length>0 && netWorth()>=forbesTop1()},
+  {id:"museum", ico:"🦖", zh:"收藏之王", en:"Master Curator", d:"收藏馆评分达到 S 级",
+    chk:()=>museumGrade()==="S"},
+  {id:"saint", ico:"❤️", zh:"慈善圣人", en:"Saint of Charity", d:"累计捐赠满 $100B",
+    chk:()=>(S.donated||0)>=100e9},
+  {id:"landlord", ico:"🌍", zh:"环球地主", en:"Global Landlord", d:"在全部18座城市都拥有土地",
+    chk:()=>CITIES.every(c=>(S.land[c.id]||0)>0)},
+  {id:"collector", ico:"🏆", zh:"万物收藏家", en:"Own Everything", d:"每一种商品都至少拥有1件",
+    chk:()=>ALL.every(it=>(S.owned[it.id]||0)>0)},
+];
+function gotEndings(){ try{ return JSON.parse(localStorage.getItem("spendEndings")||"[]"); }catch(e){ return []; } }
+function saveEnding(id){ try{ const a=gotEndings(); if(a.indexOf(id)<0){ a.push(id); localStorage.setItem("spendEndings",JSON.stringify(a)); } }catch(e){} }
+window.WINS=WINS;
+function checkWins(){ if(!S||S.over) return; for(const w of WINS){ let ok=false; try{ ok=!!w.chk(); }catch(e){} if(ok){ endRun(w.id); return; } } }
 syncContBtn();
 </script>
 </body>
