@@ -519,7 +519,7 @@ const TR={
   "帝国模式":"Empire Mode","收购全部12大商业部门，建立你的财富帝国。":"Acquire all 12 divisions and build your empire.",
   "混沌模式":"Chaos Mode","事件频发+行情剧烈波动，刺激但危险。":"Constant events + wild market swings — thrilling but risky.",
   // 多结局
-  "结局收集":"Endings","多种通关方式":"multiple ways to win",
+  "结局收集":"Endings","多种通关方式":"multiple ways to win","存档损坏，已重置":"Save was corrupted — reset",
   "财富清零":"Spent It All","把现金/存款/股票/贷款全部归零":"Zero out cash, savings, stocks & loans",
   "财富帝国":"Wealth Empire","12大商业部门全部升至满级":"Max out all 12 business divisions",
   "世界首富":"World's Richest","登顶福布斯财富榜":"Reach #1 on the Forbes rich list",
@@ -656,7 +656,7 @@ function freshState(){
 }
 function newGame(){
   stopAuto(); clearInterval(eventTimer); eventTimer=null; greedyMul=1;
-  S=freshState(); S.t0=nowMs();
+  S=freshState(); S.t0=nowMs(); S.elapsed=0;
   if(MODE==="discount") rollDiscounts();
   if(MODE==="events"||MODE==="chaos"){ eventTimer=setInterval(tickEvent, 1000); }
   if(window.financeReset) financeReset();
@@ -1089,7 +1089,8 @@ function slots(){ const bet=curBet(); if(bet>S.chips){toast(tr("筹码不足"));
   slotMsg=mult>=8?(tr("你赢了")+" ×"+mult+" +"+shortMoney(net)):(mult>0?"+"+shortMoney(net):tr("庄家赢")); refreshFin(); }
 // 幸运转盘
 function wheel(){ const bet=curBet(); if(bet>S.chips){toast(tr("筹码不足"));return;} S.chips-=bet; S.wagered+=bet;
-  const slots2=[0,0,1,1,1.5,2,2,3,5,10]; const mult=slots2[Math.floor(Math.random()*slots2.length)]; const win=Math.round(bet*mult); if(win>0)S.chips+=win;
+  const slots2=[0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,2,2,3,8]; // sum 19/20 => RTP 0.95 (与其它游戏一致的庄家优势)
+  const mult=slots2[Math.floor(Math.random()*slots2.length)]; const win=Math.round(bet*mult); if(win>0)S.chips+=win;
   wheelTxt="×"+mult; casWin(0,win-bet); slotMsg=mult>0?"×"+mult+" +"+shortMoney(win-bet):tr("庄家赢"); refreshFin(); }
 // 骰子
 function dice(pick){ const bet=curBet(); if(bet>S.chips){toast(tr("筹码不足"));return;} S.chips-=bet; S.wagered+=bet;
@@ -1489,7 +1490,7 @@ function sellItem(id,qty){ const it=ALL.find(x=>x.id===id); if(!it)return; const
 function sellAllType(id){ const it=ALL.find(x=>x.id===id); sellItem(id, S.owned[id]||0); }
 function sellColl(idx){ const c=S.collection[idx]; if(!c)return; const net=Math.round(c.price*mktOf(c.cat||"col")*(1-feeRate()));
   S.collection.splice(idx,1); S.bal+=net; S.sold+=net; toast("💰 +"+shortMoney(net)); checkAch(); refreshTrade(); }
-function eatFood(id){ const have=S.owned[id]||0; if(have<=0)return; const it=ALL.find(x=>x.id===id); S.owned[id]=have-1; S.meals++;
+function eatFood(id){ const have=S.owned[id]||0; if(have<=0)return; const it=ALL.find(x=>x.id===id); if(!it)return; S.owned[id]=have-1; countTypeAdj(it.cat,-1); S.meals++;
   toast(it.ico+" "+tr("好吃！")+" "+tr("恢复心情")+"+10 · "+tr("饱食")+"+20"); checkAch(); refreshTrade(); }
 /*-------- UI --------*/
 function openTrade(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} tradeView="inv"; byId("tradeScreen").classList.remove("hidden"); renderTrade(); }
@@ -1767,24 +1768,39 @@ function empValue(){ if(!S||!S.emp)return 0; let s=0; for(const d of DIVS){ cons
 function empLevels(){ let s=0; for(const d of DIVS) s+=divLv(d.id); return s; }
 function empDone(){ return empLevels()>=DIVS.length*DIV_MAX; }
 /*-------- 🦖 收藏馆评分 --------*/
-function museumScore(){ if(!S||!S.collection)return 0; let s=S.collection.length*8;
-  for(const c of S.collection) s+=Math.log10(Math.max(10,c.price))*6;
-  for(const it of ALL) if(it.cat.type==="luxury") s+=(S.owned[it.id]||0)>0?4:0;
+const RAR_W={"礼物":0.5,"普通":1,"优秀":2,"稀有":4,"史诗":8,"传说":16,"神话":32,"唯一":60};
+function museumScore(){ if(!S||!S.collection)return 0; let s=0;
+  for(const c of S.collection){ const w=(c.rar&&RAR_W[c.rar.zh])||1; s+=w*(2+Math.log10(Math.max(10,c.price))/2); }
+  for(const it of ALL) if(it.cat.type==="luxury"&&(S.owned[it.id]||0)>0) s+=2;
   return Math.round(s); }
-function museumGrade(){ const s=museumScore(); return s>=2500?"S":s>=1200?"A":s>=500?"B":s>=150?"C":"D"; }
+function museumGrade(){ const s=museumScore(); return s>=2000?"S":s>=900?"A":s>=350?"B":s>=100?"C":"D"; }
 /*-------- 💾 存档 --------*/
-function saveGame(){ if(!S||S.over) return; try{ localStorage.setItem("spendSave", JSON.stringify({v:1,S,RIVALS,MODE,greedyMul})); }catch(e){} }
+function saveGame(){ if(!S||S.over) return; try{ S.elapsed=Math.max(0,nowMs()-S.t0); localStorage.setItem("spendSave", JSON.stringify({v:1,S,RIVALS,MODE,greedyMul})); }catch(e){} }
 function hasSave(){ try{ return !!localStorage.getItem("spendSave"); }catch(e){ return false; } }
 function clearSave(){ try{ localStorage.removeItem("spendSave"); }catch(e){} }
 function loadGame(){
+  const prevS=S, prevMode=MODE;
   try{ const d=JSON.parse(localStorage.getItem("spendSave")); if(!d||!d.S) return false;
-    S=d.S; if(d.RIVALS&&d.RIVALS.length) RIVALS=d.RIVALS; MODE=d.MODE||"normal"; greedyMul=d.greedyMul||1;
-    if(!S.emp) S.emp={}; if(!S.mkt) S.mkt={}; if(!S.listings) S.listings=[]; if(!S.land) S.land={};
+    // 用一份全新状态兜底，再覆盖存档里的字段：任何旧存档缺失的字段都会自动补上默认值
+    S=Object.assign(freshState(), d.S);
+    if(d.RIVALS&&d.RIVALS.length) RIVALS=d.RIVALS; else if(!RIVALS.length) forbesReset();
+    MODE=d.MODE||"normal"; greedyMul=d.greedyMul||1;
+    if(!S.px||!Object.keys(S.px).length) STOCKS.forEach(x=>S.px[x.id]=x.px);
+    if(!S.mkt||!Object.keys(S.mkt).length) tradeReset();
+    if(!S.city) worldReset();
+    S.t0=nowMs()-(S.elapsed||0);   // performance.now() 从0重启：按已累计时长重新对齐，避免纪录错乱
+    S.over=false;
     if(dayTimer) clearInterval(dayTimer); dayTimer=setInterval(()=>{ if(S&&!S.over) dayTick(); },7000);
     clearInterval(eventTimer); eventTimer=null; if(MODE==="events"||MODE==="chaos") eventTimer=setInterval(tickEvent,1000);
-    stopAuto(); closeOv("startScreen"); buildTabs(); buildOneClick(); buildQty(); renderItems(); renderHud();
+    LOT=null; bj=null; stopAuto();
+    closeOv("startScreen"); buildTabs(); buildOneClick(); buildQty(); renderItems(); renderHud();
     toast("💾 "+tr("继续游戏")); return true;
-  }catch(e){ return false; }
+  }catch(e){
+    // 存档损坏：回滚到读档前的状态并清掉坏档，避免关掉开始界面后卡死在崩溃的每日结算里
+    S=prevS; MODE=prevMode; if(dayTimer){ clearInterval(dayTimer); dayTimer=null; }
+    clearSave(); syncContBtn(); byId("startScreen").classList.remove("hidden");
+    toast("⚠️ "+tr("存档损坏，已重置")); return false;
+  }
 }
 function syncContBtn(){ const b=byId("contBtn"); if(b) b.style.display=hasSave()?"block":"none"; }
 /*-------- UI --------*/
@@ -1810,7 +1826,7 @@ function renderEmp(){ const lv=empLevels(), max=DIVS.length*DIV_MAX, pct=Math.ro
 /*==================== 🏁 多结局：更多获胜条件 ====================*/
 const WINS=[
   {id:"zero", ico:"💸", zh:"财富清零", en:"Spent It All", d:"把现金/存款/股票/贷款全部归零",
-    chk:()=>S.bal<=0 && S.deposit<=0 && termsTotal()<=0 && stockValue()<=0 && loansTotal()<=0},
+    chk:()=>S.bal<=0 && S.deposit<=0 && (S.chips||0)<=0 && termsTotal()<=0 && stockValue()<=0 && loansTotal()<=0},
   {id:"empire", ico:"🌟", zh:"财富帝国", en:"Wealth Empire", d:"12大商业部门全部升至满级",
     chk:()=>empDone()},
   {id:"forbes", ico:"🥇", zh:"世界首富", en:"World's Richest", d:"登顶福布斯财富榜",
