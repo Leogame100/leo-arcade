@@ -218,6 +218,16 @@
   .bankbtn.forbes{background:linear-gradient(180deg,#9a7b1e,#6a5312);border-color:#c9a52e;box-shadow:0 3px 0 #4a3a0e;margin-top:6px;}
   .myrank{background:linear-gradient(180deg,#3a2f0e,#241d08);border:1px solid var(--gold);border-radius:12px;padding:12px;margin-bottom:10px;text-align:center;}
   .myrank .rk{font-size:30px;font-weight:900;color:var(--gold);} .myrank .rl{font-size:11px;color:#e8d9a0;margin-top:2px;} .myrank .rv{font-size:13px;font-weight:800;margin-top:3px;}
+  .cascard{position:relative;overflow:hidden;background:linear-gradient(135deg,#2a1030,#0e0512);border:1px solid #7a4cc0;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 5px 18px rgba(0,0,0,.5);}
+  .cascard .ccbig{position:absolute;right:10px;top:6px;font-size:44px;opacity:.3;}
+  .cascard .ccname{font-weight:900;font-size:15px;color:#f0d8ff;} .cascard .ccrow{font-size:11px;color:#cbb8e0;margin-top:5px;}
+  .cascard .ccbar{height:6px;background:rgba(255,255,255,.15);border-radius:4px;margin-top:7px;overflow:hidden;} .cascard .ccbar>i{display:block;height:100%;background:linear-gradient(90deg,#c04cff,#ffd76a);}
+  .duel{background:linear-gradient(135deg,#3a0e12,#1a0508);border:1px solid var(--red);border-radius:14px;padding:12px;margin-bottom:10px;text-align:center;}
+  .duel .dh{font-weight:900;font-size:15px;color:#ff9a8f;} .duel .ds{font-size:11px;color:#e0b0aa;margin-top:3px;line-height:1.5;}
+  .duel .dvs{display:flex;align-items:center;justify-content:center;gap:12px;margin:9px 0;}
+  .duel .dside{text-align:center;} .duel .droll{font-size:30px;font-weight:900;font-variant-numeric:tabular-nums;} .duel .dname{font-size:11px;color:var(--muted);margin-top:1px;}
+  .duel .dvsx{font-size:16px;font-weight:900;color:var(--gold);}
+  .duel .dres{font-weight:900;font-size:15px;margin:6px 0;} .duel .dres.win{color:var(--green);} .duel .dres.lose{color:var(--red);}
   .frank{display:flex;align-items:center;gap:9px;background:#12241c;border:1px solid var(--line);border-radius:9px;padding:6px 10px;margin-bottom:4px;}
   .frank.me{border-color:var(--gold);background:#211a08;} .frank .fr{width:30px;font-weight:900;color:var(--muted);text-align:center;font-size:13px;}
   .frank.me .fr{color:var(--gold);} .frank .fi{font-size:18px;} .frank .fn{flex:1;font-weight:700;font-size:13px;} .frank .fnv{color:var(--gold);font-weight:900;font-size:12px;font-variant-numeric:tabular-nums;}
@@ -501,6 +511,12 @@ const TR={
   "财富总榜":"Wealth","消费排行":"Spending","收藏排行":"Collection","地产排行":"Real Estate","公司排行":"Companies","拍卖排行":"Auctions","慈善排行":"Charity",
   "❤️ 慈善捐赠":"❤️ Donate to Charity","捐赠可提升慈善排名与社会声望。":"Donations raise your charity rank & social prestige.","捐赠":"Donate","累计捐赠":"Total donated","社会声望":"Prestige",
   "距上一名还差":"Gap to next rank","恭喜登顶！":"You're #1 in the world!",
+  // 赌场会员卡 + 富豪对赌
+  "赌场会员卡":"Casino Card","距":"to ","已满级":"Max tier","输钱返现":"Loss cashback","每日返还净亏损":"daily rebate on net losses","音效":"Sound",
+  "⚔️ 富豪对赌":"⚔️ Tycoon Duel","和富豪比点数，赢者通吃你押上的筹码。50/50 纯赌运，敢押上全部身家吗？":"Roll against a tycoon, winner takes your stake. 50/50 pure luck — dare to wager it all?",
+  "对手":"Opponent","挑战榜首":"Challenge #1","随机富豪":"Random tycoon","押注":"Wager","一成":"10%","半数":"Half","全部身家":"ALL IN","开赌":"DUEL!",
+  "你赢了！赢得":"YOU WIN! +","你输了…损失":"You lose… −","现金不足以对赌":"Not enough cash to duel","请先选择对手":"Pick an opponent first",
+  "对赌战绩":"Duel record","胜":"W","负":"L","最大单场":"Biggest","🎰 你击败了世界首富！":"🎰 You beat the world's richest!",
   // VIP 黑卡
   "VIP黑卡会员":"VIP Black Card","🎫 VIP 黑卡会员":"🎫 VIP Black Card","会员等级":"Membership","累计消费":"Total spent","距下一级":"To next tier","已是最高等级":"Max tier",
   "普通会员":"Member","银卡":"Silver","金卡":"Gold","铂金卡":"Platinum","钻石卡":"Diamond","黑卡":"Black Card","至尊黑卡":"Supreme Black",
@@ -631,6 +647,7 @@ const ACHS=[
   {id:"aucLeg", ico:"👑", zh:"拍卖传奇", en:"Auction Legend", d:"单件拍品成交超$100B", chk:s=>(s.aucBiggest||0)>=100e9},
   {id:"foodie", ico:"🍴", zh:"美食家", en:"Foodie", d:"食用50份美食", chk:s=>(s.meals||0)>=50},
   {id:"merchant", ico:"🏪", zh:"二手大亨", en:"Resale Mogul", d:"二手成交额超$50B", chk:s=>(s.sold||0)>=50e9},
+  {id:"gambler", ico:"🎲", zh:"赌神对决", en:"High Roller Duel", d:"对赌击败福布斯首富", chk:s=>!!s.beatTop},
   {id:"philan", ico:"❤️", zh:"大慈善家", en:"Philanthropist", d:"累计捐赠超$10B", chk:s=>(s.donated||0)>=10e9},
   {id:"forbes1", ico:"🥇", zh:"福布斯首富", en:"World's Richest", d:"登顶福布斯财富榜", chk:s=>typeof forbesTop1==="function"&&netWorth()>=forbesTop1()},
   {id:"empire", ico:"🌟", zh:"财富帝国", en:"Wealth Empire", d:"收购全部12大部门并升至满级", chk:s=>typeof empDone==="function"&&empDone()},
@@ -650,8 +667,8 @@ function freshState(){
     collection:[], aucBids:0, aucWon:0, aucBiggest:0, aucSpent:0,
     mail:[], checkStreak:0, lastCheckin:0, giftLog:{}, giftsGot:0, birthday:12+Math.floor(Math.random()*28), bdayDone:false,
     mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
-    shopLevel:1, listings:[], shopSold:0,
-    city:"", land:{}, traveled:0, donated:0, emp:{},
+    shopLevel:1, listings:[], shopSold:0, casDayNet:0,
+    city:"", land:{}, traveled:0, donated:0, emp:{}, duelW:0, duelL:0, duelBest:0, beatTop:false, duelMsg:null,
     incomePeak:0, netPeak:START_BAL, won:false, ending:"" };
 }
 function newGame(){
@@ -956,7 +973,21 @@ const INSUR=[
   {id:"vehicle",zh:"飞机游艇保险",en:"Vehicle Insurance",types:["plane","ship","car"],prem:1e9},
   {id:"biz",zh:"企业保险",en:"Business Insurance",types:["science"],prem:3e9},
 ];
-const VIPS=[{zh:"普通会员",en:"Member",min:0},{zh:"银卡",en:"Silver",min:1e6},{zh:"金卡",en:"Gold",min:10e6},{zh:"钻石",en:"Diamond",min:100e6},{zh:"黑卡",en:"Black",min:1e9},{zh:"黑钻至尊",en:"Black Diamond",min:10e9}];
+const VIPS=[{zh:"普通会员",en:"Member",min:0,cb:0,ico:"🎫"},{zh:"银卡",en:"Silver",min:1e6,cb:0.03,ico:"🥈"},{zh:"金卡",en:"Gold",min:10e6,cb:0.06,ico:"🥇"},{zh:"钻石",en:"Diamond",min:100e6,cb:0.09,ico:"💎"},{zh:"黑卡",en:"Black",min:1e9,cb:0.12,ico:"🖤"},{zh:"黑钻至尊",en:"Black Diamond",min:10e9,cb:0.15,ico:"👑"}];
+function casCashback(){ return (vipTier().cb)||0; }
+let AC=null;
+function sndOn(){ try{return localStorage.getItem("spendSnd")!=="0";}catch(e){return true;} }
+function toggleSnd(){ try{localStorage.setItem("spendSnd",sndOn()?"0":"1");}catch(e){} if(sndOn())casSound("win"); if(!byId("bankScreen").classList.contains("hidden"))renderBank(); }
+function ac(){ if(AC===false)return null; if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=false; return null; } } if(AC&&AC.state==="suspended"){ try{AC.resume();}catch(e){} } return AC||null; }
+function beep(freq,start,dur,type,vol){ const a=ac(); if(!a)return; try{ const o=a.createOscillator(),g=a.createGain(); o.type=type||"square"; o.frequency.value=freq; o.connect(g); g.connect(a.destination); const t=a.currentTime+start; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol||0.18,t+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.start(t); o.stop(t+dur+0.03); }catch(e){} }
+function casSound(kind){ if(!sndOn()||!ac())return;
+  if(kind==="lose"){ beep(260,0,0.16,"sawtooth",0.12); beep(180,0.13,0.28,"sawtooth",0.12); return; }
+  if(kind==="win"){ [523,659,784].forEach((f,i)=>beep(f,i*0.09,0.14,"square",0.18)); return; }
+  if(kind==="bigwin"){ [523,659,784,1047].forEach((f,i)=>beep(f,i*0.1,0.22,"square",0.2));
+    for(let i=0;i<12;i++) beep(1100+Math.random()*500,0.5+i*0.045,0.07,"triangle",0.12);
+    beep(784,1.02,0.16,"square",0.2); beep(1047,1.18,0.42,"square",0.2); return; }
+}
+function vipNext(){ const t=vipTier(); const i=VIPS.indexOf(t); return VIPS[i+1]||null; }
 const YIELD={house:0.0006, building:0.0008, science:0.001};
 const ACTIVE_RATE=0.005;
 let dayTimer=null, bankTab="deposit", casGame="menu", bj=null, bjLastBet=0, slotSpin="🎰 🎰 🎰", wheelTxt="🎡", diceTxt="🎲 🎲";
@@ -1014,6 +1045,8 @@ function dayTick(){
   if(window.shopDayTick) shopDayTick();
   if(window.forbesDayTick) forbesDayTick();
   if(window.vipDayTick) vipDayTick();
+  if((S.casDayNet||0)<0 && window.casCashback){ const back=Math.round(-S.casDayNet*casCashback()); if(back>0){ S.chips+=back; if(!byId("bankScreen").classList.contains("hidden")) renderBank(); } }
+  S.casDayNet=0;
   if(window.checkWins) checkWins();
   if(window.saveGame) saveGame();
   markDirty(); if(bankOpen()) renderBank();
@@ -1061,7 +1094,10 @@ function doBankrupt(){ if(!S||S.over)return; S.over=true; if(window.clearSave) c
 function buyChips(){ const a=parseAmt(byId("chipIn").value); if(a<=0)return; if(a>S.bal){toast(tr("现金不足"));return;} S.bal-=a; S.chips+=a; refreshFin(); }
 function cashChips(){ const a=Math.min(parseAmt(byId("chipIn").value)||S.chips, S.chips); if(a<=0)return; S.chips-=a; S.bal+=a; refreshFin(); }
 function curBet(){ return Math.max(1, Math.min(S.chips, parseAmt(byId("betIn")?byId("betIn").value:0)||bjLastBet||1e6)); }
-function casWin(amt,net){ S.chips+=amt; S.cstats.plays++; if(net>0){S.cstats.wins++; S.cstats.biggest=Math.max(S.cstats.biggest,net);} S.cstats.net+=net; }
+function casWin(amt,net,big){ S.chips+=amt; S.cstats.plays++;
+  if(net>0){ S.cstats.wins++; S.cstats.biggest=Math.max(S.cstats.biggest,net); casSound(big?"bigwin":"win"); }
+  else if(net<0){ casSound("lose"); }
+  S.cstats.net+=net; S.casDayNet=(S.casDayNet||0)+net; }
 // 21点
 function newDeck(){ const d=[],su=["♠","♥","♦","♣"],rk=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
   for(const s of su)for(const r of rk)d.push({r,s,red:s==="♥"||s==="♦"});
@@ -1076,7 +1112,7 @@ function bjDouble(){ if(!bj||bj.phase!=="player"||bj.ph.length>2)return; if(bj.b
   if(hval(bj.ph)>21){ bj.phase="done"; bj.msg=tr("爆牌")+" · "+tr("庄家赢"); casWin(0,-bj.bet); renderCasino(); } else bjStand(); }
 function bjStand(){ if(!bj||bj.phase!=="player")return; while(hval(bj.dh)<17) bj.dh.push(bj.deck.pop()); bjSettle(false); }
 function bjSettle(natural){ const p=hval(bj.ph), dl=hval(bj.dh); bj.phase="done"; let net;
-  if(natural){ const pay=Math.round(bj.bet*2.5); S.chips+=pay; net=pay-bj.bet; bj.msg=tr("黑杰克")+" +"+shortMoney(net); casWin(0,net); }
+  if(natural){ const pay=Math.round(bj.bet*2.5); S.chips+=pay; net=pay-bj.bet; bj.msg=tr("黑杰克")+" +"+shortMoney(net); casWin(0,net,true); }
   else if(dl>21||p>dl){ S.chips+=bj.bet*2; net=bj.bet; bj.msg=tr("你赢了")+" +"+shortMoney(net); casWin(0,net); }
   else if(p===dl){ S.chips+=bj.bet; bj.msg=tr("平局"); casWin(0,0); }
   else { bj.msg=tr("庄家赢"); casWin(0,-bj.bet); }
@@ -1085,18 +1121,18 @@ function bjSettle(natural){ const p=hval(bj.ph), dl=hval(bj.dh); bj.phase="done"
 function slots(){ const bet=curBet(); if(bet>S.chips){toast(tr("筹码不足"));return;} S.chips-=bet; S.wagered+=bet;
   const sym=["🍒","🍋","🔔","💎","7️⃣","⭐"]; const r=[0,0,0].map(()=>sym[Math.floor(Math.random()*sym.length)]); slotSpin=r.join("  ");
   let mult=0; if(r[0]===r[1]&&r[1]===r[2]) mult=(r[0]==="7️⃣"?30:r[0]==="💎"?15:8); else if(r[0]===r[1]||r[1]===r[2]||r[0]===r[2]) mult=1.5;
-  const win=Math.round(bet*mult); const net=win-bet; if(win>0) S.chips+=win; casWin(0,net);
+  const win=Math.round(bet*mult); const net=win-bet; if(win>0) S.chips+=win; casWin(0,net,mult>=8);
   slotMsg=mult>=8?(tr("你赢了")+" ×"+mult+" +"+shortMoney(net)):(mult>0?"+"+shortMoney(net):tr("庄家赢")); refreshFin(); }
 // 幸运转盘
 function wheel(){ const bet=curBet(); if(bet>S.chips){toast(tr("筹码不足"));return;} S.chips-=bet; S.wagered+=bet;
   const slots2=[0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,2,2,3,8]; // sum 19/20 => RTP 0.95 (与其它游戏一致的庄家优势)
   const mult=slots2[Math.floor(Math.random()*slots2.length)]; const win=Math.round(bet*mult); if(win>0)S.chips+=win;
-  wheelTxt="×"+mult; casWin(0,win-bet); slotMsg=mult>0?"×"+mult+" +"+shortMoney(win-bet):tr("庄家赢"); refreshFin(); }
+  wheelTxt="×"+mult; casWin(0,win-bet,mult>=3); slotMsg=mult>0?"×"+mult+" +"+shortMoney(win-bet):tr("庄家赢"); refreshFin(); }
 // 骰子
 function dice(pick){ const bet=curBet(); if(bet>S.chips){toast(tr("筹码不足"));return;} S.chips-=bet; S.wagered+=bet;
   const a=1+Math.floor(Math.random()*6), b=1+Math.floor(Math.random()*6), sum=a+b; diceTxt="🎲"+a+" 🎲"+b+" = "+sum;
   let win=0; if(pick==="high"&&sum>=8) win=bet*2; else if(pick==="low"&&sum<=6) win=bet*2; else if(pick==="seven"&&sum===7) win=bet*5;
-  if(win>0)S.chips+=win; casWin(0,win-bet); slotMsg=win>0?tr("你赢了")+" +"+shortMoney(win-bet):tr("庄家赢"); refreshFin(); }
+  if(win>0)S.chips+=win; casWin(0,win-bet,pick==="seven"&&win>0); slotMsg=win>0?tr("你赢了")+" +"+shortMoney(win-bet):tr("庄家赢"); refreshFin(); }
 let slotMsg="";
 
 /*-------- 结束判定 --------*/
@@ -1179,9 +1215,17 @@ function renderCasinoHtml(){
       <div class="switch" onclick="setCasino(true);renderBank()"><span>${tr("启用娱乐城")}</span><span class="sw"></span></div>
       <div class="note">${tr("娱乐城已关闭")}</div>`;
   }
-  let h=`<div class="casnote">${tr("🎰 仅限虚拟游戏币娱乐 · 不涉及任何真实金钱或兑换 · 请理性游戏")}
-    <div class="switch on" style="margin-top:6px" onclick="setCasino(false);renderBank()"><span>${tr("启用娱乐城")}</span><span class="sw"></span></div></div>
-    <div class="chips"><div><div class="ballab">${tr("筹码")} · VIP ${tr(vipTier().zh)}</div><div class="cv">🪙 ${shortMoney(S.chips)}</div></div>
+  const vt=vipTier(), nx=vipNext();
+  let h=`<div class="casnote" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <span>${tr("🎰 仅限虚拟游戏币娱乐 · 不涉及任何真实金钱或兑换 · 请理性游戏")}</span>
+      <button class="fbtn sm" style="flex:0 0 auto" onclick="toggleSnd()" title="${tr("音效")}">${sndOn()?"🔊":"🔇"}</button></div>
+    <div class="switch${casinoEnabled()?" on":""}" style="margin-bottom:9px" onclick="setCasino(${casinoEnabled()?"false":"true"});renderBank()"><span>${tr("启用娱乐城")}</span><span class="sw"></span></div>
+    <div class="cascard"><div class="ccbig">${vt.ico}</div>
+      <div class="ccname">${vt.ico} ${tr("赌场会员卡")} · ${tr(vt.zh)}</div>
+      <div class="ccrow">${tr("累计下注")} ${shortMoney(S.wagered)}${nx?` · ${tr("距")}${tr(nx.zh)} ${shortMoney(Math.max(0,nx.min-S.wagered))}`:` · ${tr("已满级")}`}</div>
+      <div class="ccrow">🎁 ${tr("输钱返现")} <b style="color:#ffd76a">${Math.round(casCashback()*100)}%</b> · ${tr("每日返还净亏损")}</div>
+      ${nx?`<div class="ccbar"><i style="width:${Math.max(4,Math.min(100,(S.wagered-vt.min)/(nx.min-vt.min)*100))}%"></i></div>`:""}</div>
+    <div class="chips"><div><div class="ballab">${tr("筹码")}</div><div class="cv">🪙 ${shortMoney(S.chips)}</div></div>
     <div style="display:flex;gap:5px;align-items:center"><input class="fin" style="margin:0;width:96px" id="chipIn" inputmode="decimal" placeholder="0">
     <button class="fbtn sm" onclick="buyChips()">${tr("买筹码")}</button><button class="fbtn gold sm" onclick="cashChips()">${tr("换回现金")}</button></div></div>`;
   const games=[["menu","🎲"],["bj","♠ "+tr("21点")],["slots","🎰 "+tr("老虎机")],["wheel","🎡 "+tr("幸运转盘")],["dice","🎲 "+tr("骰子")]];
@@ -1652,6 +1696,28 @@ function forbesReset(){ RIVALS=[]; const used=new Set();
       f:{spent:0.1+Math.random()*0.4, coll:0.02+Math.random()*0.18, estate:0.1+Math.random()*0.35, comp:0.05+Math.random()*0.28, auc:0.01+Math.random()*0.15, charity:0.004+Math.random()*0.1} }); }
 }
 function forbesDayTick(){ for(const r of RIVALS) r.net=Math.max(1e9, r.net*(1+(Math.random()-0.47)*0.04)); }
+/*-------- ⚔️ 富豪对赌：押上现金和富豪比点数，赢者通吃 --------*/
+let duelOpp="top";
+function duel(frac){ if(!S||S.over) return;
+  const stake = frac==="all" ? S.bal : Math.floor(S.bal*frac);
+  if(stake<=0){ toast(tr("现金不足以对赌")); return; }
+  const opp = duelOpp==="top" ? RIVALS.reduce((a,b)=>b.net>a.net?b:a, RIVALS[0]) : RIVALS[Math.floor(Math.random()*RIVALS.length)];
+  const isTop = opp.net>=forbesTop1();
+  let you,foe; do{ you=1+Math.floor(Math.random()*100); foe=1+Math.floor(Math.random()*100); }while(you===foe); // 平局重摇 => 精确 50/50
+  const win = you>foe;
+  if(win){ S.bal+=stake; S.duelW++; S.duelBest=Math.max(S.duelBest,stake); opp.net=Math.max(1e9,opp.net-stake);
+    if(isTop) S.beatTop=true;
+    casSound&&casSound("bigwin");
+    S.duelMsg={win:true, you, foe, opp:(LANG==="en"?opp.en:opp.zh), ico:opp.ico, amt:stake, top:isTop};
+    toast("🎲 "+tr("你赢了！赢得")+shortMoney(stake));
+    if(isTop) toast(tr("🎰 你击败了世界首富！"));
+  } else { S.bal-=stake; S.duelL++; casSound&&casSound("lose");
+    S.duelMsg={win:false, you, foe, opp:(LANG==="en"?opp.en:opp.zh), ico:opp.ico, amt:stake, top:isTop};
+    toast("🎲 "+tr("你输了…损失")+shortMoney(stake));
+  }
+  markDirty(); checkAch(); if(window.checkWins) checkWins(); refreshForbes();
+}
+function setDuelOpp(o){ duelOpp=o; renderForbes(); }
 function forbesTop1(){ if(!RIVALS.length)return Infinity; let m=0; for(const r of RIVALS) if(r.net>m)m=r.net; return m; }
 function scoreColl(){ let s=0; if(S.collection) for(const c of S.collection) s+=c.price; for(const it of ALL) if(it.cat.type==="luxury") s+=it.p*(S.owned[it.id]||0); return s; }
 function scoreEstate(){ let s=0; for(const it of ALL){ const t=it.cat.type; if(t==="house"||t==="building") s+=it.p*(S.owned[it.id]||0); } if(window.landValue) s+=landValue(); return s; }
@@ -1672,6 +1738,18 @@ function renderForbes(){ const cat=forbesCat, cObj=FORBES_CATS.find(c=>c.id===ca
   FORBES_CATS.forEach(c=> h+=`<div class="ftab${cat===c.id?" on":""}" onclick="forbesGo('${c.id}')">${tr(c.zh)}</div>`);
   h+=`</div>
     <div class="myrank"><div class="rk">#${rank}</div><div class="rl">${tr("全球排名")} · ${tr("共")} ${total} ${LANG==="en"?"":tr("名富豪")}</div><div class="rv">${tr("你的数值")}：${shortMoney(pv)}</div></div>`;
+  if(cat==="net"){
+    const m=S.duelMsg;
+    h+=`<div class="duel"><div class="dh">⚔️ ${tr("⚔️ 富豪对赌")}</div><div class="ds">${tr("和富豪比点数，赢者通吃你押上的筹码。50/50 纯赌运，敢押上全部身家吗？")}</div>`;
+    if(m){ h+=`<div class="dvs"><div class="dside"><div class="droll" style="color:${m.win?'var(--green)':'var(--ink)'}">${m.you}</div><div class="dname">${tr("你")}</div></div>
+      <div class="dvsx">VS</div><div class="dside"><div class="droll" style="color:${m.win?'var(--ink)':'var(--red)'}">${m.foe}</div><div class="dname">${m.ico}${m.opp}</div></div></div>
+      <div class="dres ${m.win?'win':'lose'}">${m.win?("🎉 +"+shortMoney(m.amt)+(m.top?" · 👑":"")):("💥 −"+shortMoney(m.amt))}</div>`; }
+    h+=`<div class="fgrid2" style="margin:7px 0"><button class="fbtn sm${duelOpp==='top'?' gold':''}" onclick="setDuelOpp('top')">👑 ${tr("挑战榜首")}</button><button class="fbtn sm${duelOpp==='rand'?' gold':''}" onclick="setDuelOpp('rand')">🎲 ${tr("随机富豪")}</button></div>
+      <div class="ballab">${tr("押注")} · 💵 ${shortMoney(S.bal)}</div>
+      <div class="fgrid4" style="margin:5px 0"><button class="fbtn sm" onclick="duel(0.1)">${tr("一成")}</button><button class="fbtn sm" onclick="duel(0.5)">${tr("半数")}</button><button class="fbtn red sm" style="grid-column:span 2" onclick="duel('all')">🔥 ${tr("全部身家")}</button></div>
+      <div class="frow" style="margin-top:4px"><div class="fl">${tr("对赌战绩")}</div><div class="fv">${tr("胜")}${S.duelW||0} · ${tr("负")}${S.duelL||0} · ${tr("最大单场")} ${shortMoney(S.duelBest||0)}</div></div>
+    </div>`;
+  }
   if(cat==="charity"){
     h+=`<div class="note" style="text-align:left">${tr("捐赠可提升慈善排名与社会声望。")}</div>
       <div class="frow"><div class="fl">❤️ ${tr("累计捐赠")}</div><div class="fv">${shortMoney(S.donated||0)}</div></div>
