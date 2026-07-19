@@ -243,8 +243,8 @@
   .tiermini .tm{font-size:10px;font-weight:800;padding:3px 7px;border-radius:10px;background:#12241c;border:1px solid var(--line);color:var(--muted);}
   .tiermini .tm.on{background:var(--gold);color:#3a2a00;border-color:var(--gold);}
   /* 紧凑功能图标栏（替代原来的大按钮，节省视野） */
-  .iconbar{display:flex;gap:3px;margin-top:6px;}
-  .ib{flex:1;min-width:0;background:#162b22;border:1px solid var(--line);border-radius:9px;padding:5px 1px;cursor:pointer;color:var(--ink);
+  .iconbar{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;}
+  .ib{flex:1 1 16%;min-width:0;background:#162b22;border:1px solid var(--line);border-radius:9px;padding:5px 1px;cursor:pointer;color:var(--ink);
     position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;transition:transform .05s;}
   .ib:active{transform:scale(.92);} .ib:hover{border-color:var(--green-d);}
   .ib i{font-size:16px;font-style:normal;line-height:1.1;} .ib b{font-size:8px;font-weight:800;white-space:nowrap;letter-spacing:-.2px;}
@@ -301,6 +301,7 @@
     <div class="oneclick" id="oneClick"></div>
     <div class="iconbar">
       <button class="ib" onclick="openBank()" title="银行"><i>🏦</i><b data-i18n="银行">银行</b></button>
+      <button class="ib" onclick="openGoldTab()" title="黄金"><i>🥇</i><b data-i18n="黄金">黄金</b></button>
       <button class="ib" onclick="openAuction()" title="拍卖"><i>🔨</i><b data-i18n="拍卖">拍卖</b></button>
       <button class="ib" onclick="openGifts()" title="礼物"><i>🎁</i><b data-i18n="礼物">礼物</b><span class="gbadge" id="giftBadge"></span></button>
       <button class="ib" onclick="openTrade()" title="仓库"><i>🎒</i><b data-i18n="仓库">仓库</b></button>
@@ -1164,6 +1165,7 @@ function financeHud(){ if(!S)return; const nv=byId("netVal"),iv=byId("incVal"),d
 function bankOpen(){ return !byId("bankScreen").classList.contains("hidden"); }
 function openBank(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} bankTab="deposit"; byId("bankScreen").classList.remove("hidden"); renderBank(); }
 function bankTabTo(t){ bankTab=t; if(t!=="casino") casGame="menu"; renderBank(); }
+function openGoldTab(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} bankTab="gold"; byId("bankScreen").classList.remove("hidden"); renderBank(); }
 function refreshFin(){ markDirty(); renderBank(); financeHud(); }
 function financeApplyLang(){ if(bankOpen()) renderBank(); }
 function stars(n){ let s=""; for(let i=0;i<5;i++) s+= i<n?"★":"<span class='off'>★</span>"; return s; }
