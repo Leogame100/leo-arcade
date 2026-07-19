@@ -439,7 +439,7 @@ const TR={
   "资不抵债！":"INSOLVENT!","你的债务已超过资产。请还款、出售资产，或宣告破产。":"Your debt exceeds your assets. Repay, sell assets, or declare bankruptcy.",
   "出售资产回血":"Sell assets for cash","宣告破产":"Declare bankruptcy","出售全部资产（5折回收）":"Sell all assets (50% back)",
   "科技股":"TechCo","能源股":"EnerCorp","地产股":"RealtyX","艾股 (AI)":"AI Labs","太空股":"SpaceInc","持股":"Shares","市值":"Value","现价":"Price",
-  "买入":"Buy","卖出":"Sell","股数":"shares","股票每天随机涨跌，投资有风险。":"Stocks move randomly each day — invest at your own risk.",
+  "买入":"Buy","卖出":"Sell","股数":"shares","股票每天随机涨跌，投资有风险。":"Stocks drift up over time but swing daily — buy dips, hold for gains.","📉 股市回调":"📉 Market pulls back",
   "资产保险":"Asset Insurance","房地产保险":"Property Insurance","豪华品保险":"Luxury Insurance","飞机游艇保险":"Vehicle Insurance","企业保险":"Business Insurance",
   "已投保":"Insured","投保":"Insure","保费":"Premium","投保后，灾难事件不会损毁该类资产。":"Insured asset types are protected from disaster events.",
   "🎰 仅限虚拟游戏币娱乐 · 不涉及任何真实金钱或兑换 · 请理性游戏":"🎰 Virtual chips for fun only · NO real money or cash-out of any kind · please play responsibly",
@@ -668,7 +668,7 @@ function freshState(){
     cat:CATS[0].id, over:false, eventMul:1, evName:"", discounts:{},
     // 金融
     day:1, dayAcc:0, deposit:0, terms:[], loans:[], credit:5, creditPts:800,
-    stocks:{}, px:{}, insured:{}, chips:0, wagered:0, cstats:{plays:0,wins:0,biggest:0,net:0},
+    stocks:{}, px:{}, pxPrev:{}, goldPrev:0, insured:{}, chips:0, wagered:0, cstats:{plays:0,wins:0,biggest:0,net:0},
     collection:[], aucBids:0, aucWon:0, aucBiggest:0, aucSpent:0,
     mail:[], checkStreak:0, lastCheckin:0, giftLog:{}, giftsGot:0, birthday:12+Math.floor(Math.random()*28), bdayDone:false,
     mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
@@ -1018,7 +1018,7 @@ function vipTier(){ let t=VIPS[0]; for(const v of VIPS) if(S.wagered>=v.min) t=v
 
 /*-------- 每日结算 --------*/
 function stopDayTimer(){ if(dayTimer){ clearInterval(dayTimer); dayTimer=null; } }
-function financeReset(){ if(dayTimer) clearInterval(dayTimer); STOCKS.forEach(s=>S.px[s.id]=s.px); S.goldPx=62+Math.random()*8;
+function financeReset(){ if(dayTimer) clearInterval(dayTimer); STOCKS.forEach(s=>{S.px[s.id]=s.px; S.pxPrev[s.id]=s.px;}); S.goldPx=62+Math.random()*8; S.goldPrev=S.goldPx;
   if(window.tradeReset) tradeReset(); if(window.worldReset) worldReset(); if(window.forbesReset) forbesReset();
   dayTimer=setInterval(()=>{ if(S&&!S.over) dayTick(); }, 7000); }
 function dayTick(){
@@ -1031,12 +1031,13 @@ function dayTick(){
   S.loans.forEach(l=>{ l.principal*=(1+l.rate/12); });
   // 被动收入
   const inc=assetIncome(); S.bal+=inc; S.incomePeak=Math.max(S.incomePeak,inc);
-  // 股市波动
-  STOCKS.forEach(s=>{ S.px[s.id]=Math.max(1, S.px[s.id]*(1+(Math.random()-0.47)*0.14)); });
-  { let gp=(S.goldPx||65)*(1+(Math.random()-0.49)*0.06); if(Math.random()<0.06) gp*= (Math.random()<0.5?1.15:0.87); S.goldPx=Math.max(25,Math.min(260,gp)); }
-  // 偶发金融事件
-  if(Math.random()<0.09){ const up=Math.random()<0.5; STOCKS.forEach(s=>S.px[s.id]*= up?1.25:0.75);
-    toast(up?tr("📈 股市大涨！"):tr("📉 股市暴跌！")); }
+  // 股市波动（温和 + 略微向上漂移，长期持有有回报，不再暴涨暴跌）
+  if(!S.pxPrev) S.pxPrev={};
+  STOCKS.forEach(s=>{ S.pxPrev[s.id]=S.px[s.id]; S.px[s.id]=Math.max(1, S.px[s.id]*(1+(Math.random()-0.45)*0.05)); });
+  { S.goldPrev=S.goldPx; let gp=(S.goldPx||65)*(1+(Math.random()-0.49)*0.045); if(Math.random()<0.04) gp*= (Math.random()<0.5?1.1:0.9); S.goldPx=Math.max(25,Math.min(260,gp)); }
+  // 偶发行情（较少、幅度较小、略偏上涨）
+  if(Math.random()<0.05){ const up=Math.random()<0.55; STOCKS.forEach(s=>S.px[s.id]*= up?1.12:0.90);
+    toast(up?tr("📈 股市大涨！"):tr("📉 股市回调")); }
   if(Math.random()<0.05){ const types=["house","building","plane","ship","car","tech","luxury","science"]; const t=types[Math.floor(Math.random()*types.length)];
     const covered=INSUR.some(ip=>S.insured[ip.id]&&ip.types.includes(t));
     if(covered) toast("🛡️ "+tr("💥 灾难！未投保资产受损").replace("未投保资产受损", LANG==="en"?"— "+tr("被保险公司赔付"):"已由保险赔付"));
@@ -1205,7 +1206,7 @@ function renderBank(){
   else if(T==="gold"){
     const px=S.goldPx||65, pl=goldPL(), have=S.gold||0;
     h+=`<div class="note" style="text-align:left">${tr("黄金按克买卖，金价每日波动——低买高卖。")}</div>
-      <div class="frow"><div class="fl">🥇 ${tr("金价")}<small>${tr("每克")}</small></div><div class="fv">$${px.toFixed(2)}/${tr("克")}</div></div>
+      <div class="frow"><div class="fl">🥇 ${tr("金价")}<small>${tr("每克")}</small></div><div class="fv">$${px.toFixed(2)}/${tr("克")} <span class="${(px-(S.goldPrev||px))>=0?'up':'down'}" style="font-size:11px">${(px-(S.goldPrev||px))>=0?'▲':'▼'}${(S.goldPrev?Math.abs((px-S.goldPrev)/S.goldPrev*100):0).toFixed(1)}%</span></div></div>
       <div class="frow"><div class="fl">${tr("持有")}<small>${tr("均价")} $${(S.goldAvg||0).toFixed(2)}/${tr("克")}</small></div><div class="fv">${fmtGram(have)}</div></div>
       <div class="frow"><div class="fl">${tr("市值")} / ${tr("浮动盈亏")}</div><div class="fv">${shortMoney(goldVal())} · <span class="${pl>=0?'up':'down'}">${pl>=0?'+':'−'}${shortMoney(Math.abs(pl))}</span></div></div>
       <input class="fin" id="goldIn" inputmode="decimal" placeholder="${tr("克数 或 金额(带$)")}">
@@ -1215,9 +1216,9 @@ function renderBank(){
   }
   else if(T==="stock"){
     h+=`<div class="note" style="text-align:left">${tr("股票每天随机涨跌，投资有风险。")}</div>`;
-    STOCKS.forEach(st=>{ const have=S.stocks[st.id]||0;
+    STOCKS.forEach(st=>{ const have=S.stocks[st.id]||0; const pv=(S.pxPrev&&S.pxPrev[st.id])||S.px[st.id]; const ch=pv>0?(S.px[st.id]-pv)/pv*100:0;
       h+=`<div class="frow"><div class="fl">${tr(st.zh)}<small>${tr("持股")} ${have} · ${tr("市值")} ${shortMoney(have*S.px[st.id])}</small></div>
-        <div style="text-align:right"><div class="fv">$${Math.round(S.px[st.id]).toLocaleString("en-US")}</div></div></div>
+        <div style="text-align:right"><div class="fv">$${Math.round(S.px[st.id]).toLocaleString("en-US")} <span class="${ch>=0?'up':'down'}" style="font-size:11px">${ch>=0?'▲':'▼'}${Math.abs(ch).toFixed(1)}%</span></div></div></div>
         <div class="betrow"><input class="fin" style="margin:0;flex:1" id="stk_${st.id}" inputmode="decimal" placeholder="${tr("股数")}">
         <button class="fbtn sm" onclick="doBuyStock('${st.id}')">${tr("买入")}</button><button class="fbtn gold sm" onclick="doSellStock('${st.id}')">${tr("卖出")}</button></div>`; });
   }
