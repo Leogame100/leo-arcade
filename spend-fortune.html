@@ -452,7 +452,7 @@ const TR={
   "资不抵债！":"INSOLVENT!","你的债务已超过资产。请还款、出售资产，或宣告破产。":"Your debt exceeds your assets. Repay, sell assets, or declare bankruptcy.",
   "出售资产回血":"Sell assets for cash","宣告破产":"Declare bankruptcy","出售全部资产（5折回收）":"Sell all assets (50% back)",
   "科技股":"TechCo","能源股":"EnerCorp","地产股":"RealtyX","艾股 (AI)":"AI Labs","太空股":"SpaceInc","持股":"Shares","市值":"Value","现价":"Price",
-  "买入":"Buy","卖出":"Sell","股数":"shares","股票每天随机涨跌，投资有风险。":"Stocks drift up over time but swing daily — buy dips, hold for gains.","📉 股市回调":"📉 Market pulls back",
+  "买入":"Buy","卖出":"Sell","股数":"shares","股票每天随机涨跌，投资有风险。":"Stocks drift up over time but swing daily — buy dips, hold for gains.","📉 股市回调":"📉 Market pulls back","股票内参":"Stock Tips","看新闻抢先布局：利好会连日拉升，利空则承压":"Read the tips & get in early — good news pumps for days, bad news drags.",
   "资产保险":"Asset Insurance","房地产保险":"Property Insurance","豪华品保险":"Luxury Insurance","飞机游艇保险":"Vehicle Insurance","企业保险":"Business Insurance",
   "已投保":"Insured","投保":"Insure","保费":"Premium","投保后，灾难事件不会损毁该类资产。":"Insured asset types are protected from disaster events.",
   "🎰 仅限虚拟游戏币娱乐 · 不涉及任何真实金钱或兑换 · 请理性游戏":"🎰 Virtual chips for fun only · NO real money or cash-out of any kind · please play responsibly",
@@ -694,7 +694,7 @@ function freshState(){
     cat:CATS[0].id, over:false, eventMul:1, evName:"", discounts:{},
     // 金融
     day:1, dayAcc:0, deposit:0, terms:[], loans:[], credit:5, creditPts:800,
-    stocks:{}, px:{}, pxPrev:{}, pxHist:{}, pxMom:{}, goldPrev:0, goldHist:[], insured:{}, chips:0, wagered:0, cstats:{plays:0,wins:0,biggest:0,net:0},
+    stocks:{}, px:{}, pxPrev:{}, pxHist:{}, pxMom:{}, pxHot:{}, pxCold:{}, stockNews:[], goldPrev:0, goldHist:[], insured:{}, chips:0, wagered:0, cstats:{plays:0,wins:0,biggest:0,net:0},
     collection:[], aucBids:0, aucWon:0, aucBiggest:0, aucSpent:0,
     mail:[], checkStreak:0, lastCheckin:0, giftLog:{}, giftsGot:0, birthday:12+Math.floor(Math.random()*28), bdayDone:false,
     mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
@@ -991,8 +991,20 @@ if(typeof window!=="undefined") window.__spend={ get S(){return S;}, newGame, bu
 <script>
 /*==================== 🏦 银河国际银行 · 金融 / 投资 / 娱乐城 ====================*/
 const STOCKS=[
-  {id:"tech",zh:"科技股",en:"TechCo",px:320},{id:"ener",zh:"能源股",en:"EnerCorp",px:145},
+  {id:"tech",zh:"科技股",en:"TechCo",px:320},{id:"ener",zh:"能源股",en:"EnerCorp",px:520},
+  {id:"oil",zh:"石油股",en:"OilCorp",px:680},
   {id:"realty",zh:"地产股",en:"RealtyX",px:88},{id:"ai",zh:"艾股 (AI)",en:"AI Labs",px:540},{id:"space",zh:"太空股",en:"SpaceInc",px:210},
+];
+const STOCK_NEWS=[
+  {id:"tech",up:1,zh:"🔬 科技突破，科技股有望爆发",en:"🔬 Tech breakthrough — TechCo set to surge"},
+  {id:"ener",up:1,zh:"⚡ 能源需求飙升，能源股看涨",en:"⚡ Energy demand soars — EnerCorp bullish"},
+  {id:"oil",up:1,zh:"🛢️ OPEC 宣布减产，油价与石油股大涨在即",en:"🛢️ OPEC cuts output — OilCorp poised to jump"},
+  {id:"oil",up:0,zh:"🛢️ 原油超量库存，石油股恐承压",en:"🛢️ Crude glut — OilCorp under pressure"},
+  {id:"realty",up:1,zh:"🏠 楼市回暖，地产股走强",en:"🏠 Housing recovers — RealtyX strengthens"},
+  {id:"ai",up:1,zh:"🤖 AI 热潮，艾股获资本疯狂追捧",en:"🤖 AI mania — AI Labs draws heavy capital"},
+  {id:"space",up:1,zh:"🚀 太空商业化提速，太空股前景看好",en:"🚀 Space race accelerates — SpaceInc outlook bright"},
+  {id:"tech",up:0,zh:"📉 科技股遭机构下调评级，短期承压",en:"📉 TechCo downgraded — short-term pressure"},
+  {id:"ai",up:0,zh:"📉 AI 监管收紧，艾股回调风险上升",en:"📉 AI rules tighten — AI Labs pullback risk"},
 ];
 const LOANS=[
   {id:"personal",zh:"消费贷款",en:"Personal Loan",max:10e6},{id:"biz",zh:"企业贷款",en:"Business Loan",max:500e6},
@@ -1049,6 +1061,11 @@ function seedHist(px){ const h=[]; let p=px; for(let i=0;i<14;i++){ h.unshift(Ma
 function financeReset(){ if(dayTimer) clearInterval(dayTimer); STOCKS.forEach(s=>{S.px[s.id]=s.px; S.pxPrev[s.id]=s.px; S.pxHist[s.id]=seedHist(s.px); S.pxMom[s.id]=0;}); S.goldPx=62+Math.random()*8; S.goldPrev=S.goldPx; S.goldHist=seedHist(S.goldPx); if(window.sigReset) sigReset();
   if(window.tradeReset) tradeReset(); if(window.worldReset) worldReset(); if(window.forbesReset) forbesReset();
   dayTimer=setInterval(()=>{ if(S&&!S.over) dayTick(); }, 7000); }
+function fireStockNews(){ if(!S)return; if(!S.pxHot)S.pxHot={}; if(!S.pxCold)S.pxCold={};
+  if(Math.random()<0.16){ const nw=STOCK_NEWS[Math.floor(Math.random()*STOCK_NEWS.length)];
+    if(nw.up){ S.pxHot[nw.id]=2+Math.floor(Math.random()*3); } else { S.pxCold[nw.id]=1+Math.floor(Math.random()*2); }
+    (S.stockNews=S.stockNews||[]).unshift({day:S.day, zh:nw.zh, en:nw.en, up:nw.up, id:nw.id}); if(S.stockNews.length>8) S.stockNews.pop();
+    toast(LANG==="en"?nw.en:nw.zh); } }
 function dayTick(){
   if(!S||S.over) return;
   S.day++;
@@ -1062,14 +1079,13 @@ function dayTick(){
   // 股市波动（温和 + 略微向上漂移，长期持有有回报，不再暴涨暴跌）
   if(!S.pxPrev) S.pxPrev={};
   // 一波波拉升：连涨天数越多当天涨得越猛（慢慢涨→快涨），但涨得越久越可能获利回吐(回调)——防止无限暴涨
-  if(!S.pxMom) S.pxMom={};
+  if(!S.pxMom) S.pxMom={}; if(!S.pxHot) S.pxHot={}; if(!S.pxCold) S.pxCold={};
   STOCKS.forEach(s=>{ let streak=S.pxMom[s.id]||0; S.pxPrev[s.id]=S.px[s.id];
-    if(Math.random() < 0.13 + streak*0.06){                 // 回调概率随连涨升高：拉升终会结束
-      S.px[s.id]=Math.max(1, S.px[s.id]*(1-(0.02+Math.random()*0.05))); S.pxMom[s.id]=0;
-    } else {                                                // 上涨：起步慢、随连涨加速
-      const move=0.006 + streak*0.006 + Math.random()*0.009;
-      S.px[s.id]=Math.max(1, S.px[s.id]*(1+move)); S.pxMom[s.id]=Math.min(streak+1,8);
-    } });
+    if((S.pxCold[s.id]||0)>0){ S.px[s.id]=Math.max(1, S.px[s.id]*(1-(0.03+Math.random()*0.05))); S.pxMom[s.id]=0; S.pxCold[s.id]--; }
+    else if((S.pxHot[s.id]||0)>0){ const move=0.02 + streak*0.006 + Math.random()*0.012; S.px[s.id]=Math.max(1, S.px[s.id]*(1+move)); S.pxMom[s.id]=Math.min(streak+1,8); S.pxHot[s.id]--; }
+    else if(Math.random() < 0.13 + streak*0.06){ S.px[s.id]=Math.max(1, S.px[s.id]*(1-(0.02+Math.random()*0.05))); S.pxMom[s.id]=0; }
+    else { const move=0.006 + streak*0.006 + Math.random()*0.009; S.px[s.id]=Math.max(1, S.px[s.id]*(1+move)); S.pxMom[s.id]=Math.min(streak+1,8); } });
+  fireStockNews();
   { S.goldPrev=S.goldPx; let gp=(S.goldPx||65)*(1+(Math.random()-0.49)*0.045); if(Math.random()<0.04) gp*= (Math.random()<0.5?1.1:0.9); S.goldPx=Math.max(25,Math.min(260,gp)); }
   // 偶发行情：大涨点燃新一波拉升，回调则打断连涨
   if(Math.random()<0.05){ const up=Math.random()<0.5; STOCKS.forEach(s=>{ S.px[s.id]*= up?1.08:0.9; S.pxMom[s.id]= up?2:0; });
@@ -1265,8 +1281,11 @@ function renderBank(){
   }
   else if(T==="stock"){
     h+=`<div class="note" style="text-align:left">${tr("股票每天随机涨跌，投资有风险。")}</div>`;
+    if(S.stockNews&&S.stockNews.length){ h+=`<div class="ballab" style="margin:2px 0 4px">📰 ${tr("股票内参")} · <span style="color:var(--muted);font-weight:600">${tr("看新闻抢先布局：利好会连日拉升，利空则承压")}</span></div>`;
+      S.stockNews.slice(0,4).forEach(nw=> h+=`<div class="newsrow" style="border-left-color:${nw.up?'#28c76f':'#ff5b52'}">${(LANG==="en"?nw.en:nw.zh)}</div>`); }
     STOCKS.forEach(st=>{ const have=S.stocks[st.id]||0; const pv=(S.pxPrev&&S.pxPrev[st.id])||S.px[st.id]; const ch=pv>0?(S.px[st.id]-pv)/pv*100:0;
-      h+=`<div class="frow"><div class="fl">${tr(st.zh)}<small>${tr("持股")} ${have} · ${tr("市值")} ${shortMoney(have*S.px[st.id])}</small></div>
+      const hot=(S.pxHot&&S.pxHot[st.id]>0)?" 🔥":((S.pxCold&&S.pxCold[st.id]>0)?" ❄️":"");
+      h+=`<div class="frow"><div class="fl">${tr(st.zh)}${hot}<small>${tr("持股")} ${have} · ${tr("市值")} ${shortMoney(have*S.px[st.id])}</small></div>
         <div style="text-align:right"><div class="fv">$${Math.round(S.px[st.id]).toLocaleString("en-US")} <span class="${ch>=0?'up':'down'}" style="font-size:11px">${ch>=0?'▲':'▼'}${Math.abs(ch).toFixed(1)}%</span></div></div></div>
         <div style="margin:3px 0 5px">${spark(S.pxHist&&S.pxHist[st.id],240,40)}</div>
         <div class="betrow"><input class="fin" style="margin:0;flex:1" id="stk_${st.id}" inputmode="decimal" placeholder="${tr("股数")}">
