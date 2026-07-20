@@ -538,6 +538,9 @@ const TR={
   "黄金":"Gold","黄金按克买卖，金价每日波动——低买高卖。":"Trade gold by the gram — price moves daily, buy low sell high.",
   "金价":"Gold price","每克":"per gram","克":"g","千克":"kg","吨":"t","均价":"Avg cost","持有":"Holdings","浮动盈亏":"Unrealized P/L",
   "克数 或 金额(带$)":"grams, or $amount","全仓买入":"Buy Max","全部卖出":"Sell All","按克数":"by grams",
+  // 股票：卖一半 / 做空 / 市场占有率
+  "卖一半":"Sell ½","做空":"Short","平仓":"Cover","平一半":"Cover ½","盈亏":"P/L","占":"own ","市场":" of market",
+  "已占领100%市场":"You own 100% of the market","做空已达上限":"Short limit reached","做空：赌它下跌":"Short = bet it drops",
   // 事业：打工 + 公司
   "事业":"Career","💼 事业":"💼 Career","打工":"Jobs","我的公司":"My Company","当前工作":"Current job","日薪":"Daily pay","上班":"Take job","辞职":"Quit",
   "无业":"Unemployed","累计工资":"Wages earned","不同城市工资不同——高消费城市薪水更高。":"Pay varies by city — pricier cities pay more.","当前城市薪资系数":"City pay ×",
@@ -711,7 +714,7 @@ function freshState(){
     cat:CATS[0].id, over:false, eventMul:1, evName:"", discounts:{},
     // 金融
     day:1, dayAcc:0, deposit:0, terms:[], loans:[], credit:5, creditPts:800,
-    stocks:{}, px:{}, pxPrev:{}, pxHist:{}, pxMom:{}, pxHot:{}, pxCold:{}, stockNews:[], goldPrev:0, goldHist:[], insured:{}, chips:0, wagered:0, cstats:{plays:0,wins:0,biggest:0,net:0},
+    stocks:{}, shortSh:{}, shortAvg:{}, px:{}, pxPrev:{}, pxHist:{}, pxMom:{}, pxHot:{}, pxCold:{}, stockNews:[], goldPrev:0, goldHist:[], insured:{}, chips:0, wagered:0, cstats:{plays:0,wins:0,biggest:0,net:0},
     collection:[], aucBids:0, aucWon:0, aucBiggest:0, aucSpent:0,
     mail:[], checkStreak:0, lastCheckin:0, giftLog:{}, giftsGot:0, birthday:12+Math.floor(Math.random()*28), bdayDone:false,
     mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
@@ -930,15 +933,8 @@ function buildQty(){
     el.textContent=q==="max"?tr("最大"):"×"+q; el.onclick=()=>{ QTY=q; buildQty(); renderItems(); }; r.appendChild(el); });
 }
 function buildOneClick(){
-  const box=byId("oneClick"); box.innerHTML="";
-  const defs=[
-    {k:"r100", ico:"🛒", zh:"随机100", fn:()=>buyRandom(100)},
-    {k:"r1000", ico:"🛍️", zh:"随机1000", fn:()=>buyRandom(1000)},
-    {k:"shop", ico:"🤑", zh:"购物狂", fn:()=>startAuto("shop"), toggle:true},
-    {k:"ai", ico:"🤖", zh:"AI自动", fn:()=>startAuto("ai"), toggle:true},
-  ];
-  defs.forEach(d=>{ const el=document.createElement("div"); el.className="oc"+(d.toggle&&shopMode===(d.k==="shop"?"shop":"ai")?" on":"");
-    el.innerHTML=`<div class="oi">${d.ico}</div><div class="on2">${tr(d.zh)}</div>`; el.onclick=d.fn; box.appendChild(el); });
+  // 一键消费（随机100/1000·购物狂·AI自动）已按需求移除，保留手动逐件购买
+  const box=byId("oneClick"); if(!box) return; box.innerHTML=""; box.style.display="none";
 }
 function buildModes(){
   const seg=byId("modeSeg"); if(!seg) return; seg.innerHTML="";
@@ -1009,10 +1005,12 @@ if(typeof window!=="undefined") window.__spend={ get S(){return S;}, newGame, bu
 <script>
 /*==================== 🏦 银河国际银行 · 金融 / 投资 / 娱乐城 ====================*/
 const STOCKS=[
-  {id:"tech",zh:"科技股",en:"TechCo",px:320},{id:"ener",zh:"能源股",en:"EnerCorp",px:520},
-  {id:"oil",zh:"石油股",en:"OilCorp",px:680},
-  {id:"realty",zh:"地产股",en:"RealtyX",px:88},{id:"ai",zh:"艾股 (AI)",en:"AI Labs",px:540},{id:"space",zh:"太空股",en:"SpaceInc",px:210},
+  {id:"tech",zh:"科技股",en:"TechCo",px:320,cap:3e9},{id:"ener",zh:"能源股",en:"EnerCorp",px:520,cap:2e9},
+  {id:"oil",zh:"石油股",en:"OilCorp",px:680,cap:1.5e9},
+  {id:"realty",zh:"地产股",en:"RealtyX",px:88,cap:8e9},{id:"ai",zh:"艾股 (AI)",en:"AI Labs",px:540,cap:2.5e9},{id:"space",zh:"太空股",en:"SpaceInc",px:210,cap:4e9},
 ];
+const STKBY=Object.fromEntries(STOCKS.map(s=>[s.id,s]));
+function stockCap(id){ const s=STKBY[id]; return s&&s.cap?s.cap:1e12; }
 const STOCK_NEWS=[
   {id:"tech",up:1,zh:"🔬 科技突破，科技股有望爆发",en:"🔬 Tech breakthrough — TechCo set to surge"},
   {id:"ener",up:1,zh:"⚡ 能源需求飙升，能源股看涨",en:"⚡ Energy demand soars — EnerCorp bullish"},
@@ -1060,6 +1058,8 @@ function setCasino(on){ try{localStorage.setItem("spendCasino",on?"1":"0");}catc
 function loansTotal(){ return S?S.loans.reduce((a,l)=>a+l.principal,0):0; }
 function termsTotal(){ return S?S.terms.reduce((a,t)=>a+t.amt,0):0; }
 function stockValue(){ if(!S)return 0; let v=0; for(const st of STOCKS) v+=(S.stocks[st.id]||0)*S.px[st.id]; return v; }
+function shortLiab(){ if(!S||!S.shortSh)return 0; let v=0; for(const st of STOCKS) v+=(S.shortSh[st.id]||0)*S.px[st.id]; return v; }
+function shortPL(id){ if(!S||!S.shortSh)return 0; return ((S.shortAvg&&S.shortAvg[id]||0)-S.px[id])*(S.shortSh[id]||0); }
 function assetIncome(){ if(!S)return 0; let s=0; for(const it of ALL){ const y=YIELD[it.cat.type]; if(y) s+=it.p*y*(S.owned[it.id]||0); }
   if(S.collection) for(const c of S.collection) s+=c.income||0;
   if(window.landIncome) s+=landIncome(); if(window.empIncome) s+=empIncome(); if(window.sigIncome) s+=sigIncome();
@@ -1068,7 +1068,7 @@ function depInterest(){ return S?S.deposit*ACTIVE_RATE*(window.vipDepMul?vipDepM
 function netWorth(){ if(!S)return 0; let a=0; for(const it of ALL) a+=it.p*(S.owned[it.id]||0)*0.5;
   if(S.collection) for(const c of S.collection) a+=c.price*0.5;
   if(window.landValue) a+=landValue(); if(window.empValue) a+=empValue(); if(window.sigValue) a+=sigValue();
-  return S.bal+S.deposit+termsTotal()+stockValue()+(S.gold||0)*(S.goldPx||0)+a-loansTotal(); }
+  return S.bal+S.deposit+termsTotal()+stockValue()-shortLiab()+(S.gold||0)*(S.goldPx||0)+a-loansTotal(); }
 function creditStars(){ const p=S.creditPts; return p>=800?5:p>=600?4:p>=400?3:p>=200?2:1; }
 function loanRate(){ return (0.10-(creditStars()-1)*0.012)*(window.vipLoanMul?vipLoanMul():1); }
 function creditLimit(){ return 100e9*(creditStars()/5)*(window.vipCreditMul?vipCreditMul():1); }
@@ -1164,10 +1164,33 @@ function doSellGold(mode){ if(!S)return; const have=S.gold||0; if(have<=0)return
   if(g<=0) g=have; g=Math.min(have,g); S.bal+=Math.round(g*px); S.gold=have-g; if(S.gold<=0) S.goldAvg=0; toast("🥇 "+tr("卖出")+" "+fmtGram(g)); refreshFin(); }
 function fmtGram(g){ g=Math.round(g); if(g>=1e6) return (g/1e6).toFixed(2).replace(/\.?0+$/,"")+" "+tr("吨"); if(g>=1000) return (g/1000).toFixed(2).replace(/\.?0+$/,"")+" "+tr("千克"); return g.toLocaleString("en-US")+" "+tr("克"); }
 /*-------- 股票 --------*/
-function doBuyStock(id){ const n=Math.max(1, Math.floor(parseAmt(byId("stk_"+id).value)||1)); const cost=Math.round(n*S.px[id]);
-  if(cost>S.bal){toast(tr("现金不足"));return;} S.bal-=cost; S.stocks[id]=(S.stocks[id]||0)+n; refreshFin(); }
-function doSellStock(id){ const have=S.stocks[id]||0; if(have<=0)return; const n=Math.min(have, Math.max(1,Math.floor(parseAmt(byId("stk_"+id).value)||have)));
+function doBuyStock(id){ let n=Math.max(1, Math.floor(parseAmt(byId("stk_"+id).value)||1));
+  const have=S.stocks[id]||0, room=stockCap(id)-have;
+  if(room<=0){ toast(tr("已占领100%市场")); return; }
+  if(n>room) n=room;
+  const cost=Math.round(n*S.px[id]);
+  if(cost>S.bal){ toast(tr("现金不足")); return; }
+  S.bal-=cost; S.stocks[id]=have+n; toast("📈 "+tr("买入")+" "+n+" "+tr(STKBY[id].zh)); refreshFin(); }
+function doSellStock(id,mode){ const have=S.stocks[id]||0; if(have<=0)return;
+  let n = mode==="half"?Math.max(1,Math.floor(have/2)) : mode==="all"?have : Math.min(have, Math.max(1,Math.floor(parseAmt(byId("stk_"+id).value)||have)));
+  n=Math.min(n,have);
   S.bal+=Math.round(n*S.px[id]); S.stocks[id]=have-n; refreshFin(); }
+/* 做空：开仓即按现价拿到现金，负债计入净资产(净值不变)，跌了平仓获利 */
+function doShortStock(id){ let n=Math.max(1, Math.floor(parseAmt(byId("stk_"+id).value)||1));
+  if(!S.shortSh) S.shortSh={}; if(!S.shortAvg) S.shortAvg={};
+  const cur=S.shortSh[id]||0, room=stockCap(id)-cur;
+  if(room<=0){ toast(tr("做空已达上限")); return; }
+  if(n>room) n=room;
+  const px=S.px[id], proceeds=Math.round(n*px);
+  S.shortAvg[id]=((S.shortAvg[id]||0)*cur + px*n)/(cur+n);
+  S.shortSh[id]=cur+n; S.bal+=proceeds; toast("📉 "+tr("做空")+" "+n+" "+tr(STKBY[id].zh)); refreshFin(); }
+function doCoverStock(id,mode){ const cur=(S.shortSh&&S.shortSh[id])||0; if(cur<=0)return;
+  let n = mode==="half"?Math.max(1,Math.floor(cur/2)) : mode==="all"?cur : Math.min(cur, Math.max(1,Math.floor(parseAmt(byId("stk_"+id).value)||cur)));
+  n=Math.min(n,cur);
+  const cost=Math.round(n*S.px[id]);
+  if(cost>S.bal){ toast(tr("现金不足")); return; }
+  S.bal-=cost; S.shortSh[id]=cur-n; if(S.shortSh[id]<=0){ S.shortSh[id]=0; if(S.shortAvg) S.shortAvg[id]=0; }
+  refreshFin(); }
 
 /*-------- 保险 --------*/
 function doInsure(i){ const ip=INSUR[i]; if(S.insured[ip.id])return; if(ip.prem>S.bal){toast(tr("现金不足"));return;} S.bal-=ip.prem; S.insured[ip.id]=true; refreshFin(); }
@@ -1305,11 +1328,20 @@ function renderBank(){
       S.stockNews.slice(0,4).forEach(nw=> h+=`<div class="newsrow" style="border-left-color:${nw.up?'#28c76f':'#ff5b52'}">${(LANG==="en"?nw.en:nw.zh)}</div>`); }
     STOCKS.forEach(st=>{ const have=S.stocks[st.id]||0; const pv=(S.pxPrev&&S.pxPrev[st.id])||S.px[st.id]; const ch=pv>0?(S.px[st.id]-pv)/pv*100:0;
       const hot=(S.pxHot&&S.pxHot[st.id]>0)?" 🔥":((S.pxCold&&S.pxCold[st.id]>0)?" ❄️":"");
-      h+=`<div class="frow"><div class="fl">${tr(st.zh)}${hot}<small>${tr("持股")} ${have} · ${tr("市值")} ${shortMoney(have*S.px[st.id])}</small></div>
+      const cap=stockCap(st.id), own=cap>0?have/cap*100:0, maxed=have>=cap;
+      const ownTxt=own>0?` · ${tr("占")}${own>=100?"100":own.toFixed(own>=1?1:2)}%${tr("市场")}${maxed?" 👑":""}`:"";
+      const sh=(S.shortSh&&S.shortSh[st.id])||0, spl=shortPL(st.id);
+      const shortTxt=sh>0?`<br>${tr("做空")} ${sh} · ${tr("盈亏")} <span class="${spl>=0?'up':'down'}">${spl>=0?'+':''}${shortMoney(spl)}</span>`:"";
+      h+=`<div class="frow"><div class="fl">${tr(st.zh)}${hot}<small>${tr("持股")} ${have}${ownTxt}${shortTxt}</small></div>
         <div style="text-align:right"><div class="fv">$${Math.round(S.px[st.id]).toLocaleString("en-US")} <span class="${ch>=0?'up':'down'}" style="font-size:11px">${ch>=0?'▲':'▼'}${Math.abs(ch).toFixed(1)}%</span></div></div></div>
         <div style="margin:3px 0 5px">${spark(S.pxHist&&S.pxHist[st.id],240,40)}</div>
         <div class="betrow"><input class="fin" style="margin:0;flex:1" id="stk_${st.id}" inputmode="decimal" placeholder="${tr("股数")}">
-        <button class="fbtn sm" onclick="doBuyStock('${st.id}')">${tr("买入")}</button><button class="fbtn gold sm" onclick="doSellStock('${st.id}')">${tr("卖出")}</button></div>`; });
+        <button class="fbtn sm${maxed?' dis':''}" onclick="doBuyStock('${st.id}')">${tr("买入")}</button>
+        <button class="fbtn gold sm" onclick="doSellStock('${st.id}')">${tr("卖出")}</button>
+        <button class="fbtn gold sm" onclick="doSellStock('${st.id}','half')">${tr("卖一半")}</button></div>
+        <div class="betrow" style="margin-top:4px">
+        <button class="fbtn red sm" onclick="doShortStock('${st.id}')">📉 ${tr("做空")}</button>
+        ${sh>0?`<button class="fbtn blue sm" onclick="doCoverStock('${st.id}')">${tr("平仓")}</button><button class="fbtn blue sm" onclick="doCoverStock('${st.id}','half')">${tr("平一半")}</button>`:`<span style="flex:1;font-size:10px;color:var(--muted);align-self:center">${tr("做空：赌它下跌")}</span>`}</div>`; });
   }
   else if(T==="insure"){
     h+=`<div class="note" style="text-align:left">${tr("投保后，灾难事件不会损毁该类资产。")}</div>`;
@@ -1983,7 +2015,9 @@ function loadGame(){
     S=Object.assign(freshState(), d.S);
     if(d.RIVALS&&d.RIVALS.length) RIVALS=d.RIVALS; else if(!RIVALS.length) forbesReset();
     MODE=d.MODE||"normal"; greedyMul=d.greedyMul||1;
-    if(!S.px||!Object.keys(S.px).length) STOCKS.forEach(x=>S.px[x.id]=x.px);
+    // 老存档缺少后加入的股票(如石油/能源)会导致价格为 undefined/NaN → 逐只补齐/修复
+    if(!S.px) S.px={}; if(!S.pxPrev) S.pxPrev={};
+    STOCKS.forEach(x=>{ if(!(S.px[x.id]>0)) S.px[x.id]=x.px; if(!(S.pxPrev[x.id]>0)) S.pxPrev[x.id]=S.px[x.id]; });
     if(!S.pxHist) S.pxHist={}; STOCKS.forEach(x=>{ if(!S.pxHist[x.id]||S.pxHist[x.id].length<2) S.pxHist[x.id]=(window.seedHist?seedHist(S.px[x.id]):[S.px[x.id]]); });
     if(!S.goldHist||S.goldHist.length<2) S.goldHist=(window.seedHist?seedHist(S.goldPx||65):[S.goldPx||65]);
     if(!S.mkt||!Object.keys(S.mkt).length) tradeReset();
@@ -2026,7 +2060,7 @@ function renderEmp(){ const lv=empLevels(), max=DIVS.length*DIV_MAX, pct=Math.ro
 /*==================== 🏁 多结局：更多获胜条件 ====================*/
 const WINS=[
   {id:"zero", ico:"💸", zh:"财富清零", en:"Spent It All", d:"把现金/存款/股票/贷款全部归零",
-    chk:()=>S.bal<=0 && S.deposit<=0 && (S.chips||0)<=0 && termsTotal()<=0 && stockValue()<=0 && loansTotal()<=0},
+    chk:()=>S.bal<=0 && S.deposit<=0 && (S.chips||0)<=0 && termsTotal()<=0 && stockValue()<=0 && shortLiab()<=0 && loansTotal()<=0},
   {id:"empire", ico:"🌟", zh:"财富帝国", en:"Wealth Empire", d:"12大商业部门全部升至满级",
     chk:()=>empDone()},
   {id:"forbes", ico:"🥇", zh:"世界首富", en:"World's Richest", d:"登顶福布斯财富榜",
