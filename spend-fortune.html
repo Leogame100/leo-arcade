@@ -320,6 +320,7 @@
       <button class="ib" onclick="openVip()" title="VIP"><i>🎫</i><b>VIP</b></button>
       <button class="ib" onclick="openEmpire()" title="财富帝国"><i>🌟</i><b data-i18n="帝国">帝国</b></button>
       <button class="ib" onclick="openSig()" title="招牌资产"><i>🚀</i><b data-i18n="招牌">招牌</b></button>
+      <button class="ib" onclick="openCareer()" title="事业"><i>💼</i><b data-i18n="事业">事业</b></button>
       <button class="ib" onclick="openAch()" title="成就"><i>🏅</i><b data-i18n="成就">成就</b></button>
       <button class="ib" onclick="openStart()" title="模式"><i>⚙️</i><b data-i18n="模式">模式</b></button>
     </div>
@@ -391,6 +392,8 @@
   <div class="overlay hidden" id="empScreen"><div class="sheet" id="empSheet"></div></div>
   <!-- 招牌资产 -->
   <div class="overlay hidden" id="sigScreen"><div class="sheet" id="sigSheet"></div></div>
+  <!-- 事业：打工 + 公司 -->
+  <div class="overlay hidden" id="careerScreen"><div class="sheet" id="careerSheet"></div></div>
 
 </div></div>
 
@@ -535,6 +538,16 @@ const TR={
   "黄金":"Gold","黄金按克买卖，金价每日波动——低买高卖。":"Trade gold by the gram — price moves daily, buy low sell high.",
   "金价":"Gold price","每克":"per gram","克":"g","千克":"kg","吨":"t","均价":"Avg cost","持有":"Holdings","浮动盈亏":"Unrealized P/L",
   "克数 或 金额(带$)":"grams, or $amount","全仓买入":"Buy Max","全部卖出":"Sell All","按克数":"by grams",
+  // 事业：打工 + 公司
+  "事业":"Career","💼 事业":"💼 Career","打工":"Jobs","我的公司":"My Company","当前工作":"Current job","日薪":"Daily pay","上班":"Take job","辞职":"Quit",
+  "无业":"Unemployed","累计工资":"Wages earned","不同城市工资不同——高消费城市薪水更高。":"Pay varies by city — pricier cities pay more.","当前城市薪资系数":"City pay ×",
+  "洗碗工":"Dishwasher","快递员":"Courier","服务员":"Waiter","网约车司机":"Rideshare Driver","教师":"Teacher","程序员":"Programmer","工程师":"Engineer",
+  "医生":"Doctor","律师":"Lawyer","飞行员":"Pilot","投行家":"Banker","明星":"Celebrity","总裁CEO":"CEO",
+  "工资越高，招到的人才越强、公司产出越高。低薪员工入不敷出。":"Higher wages attract stronger talent & more output. Cheap hires cost more than they make.",
+  "员工总数":"Employees","总技能":"Total skill","日营收":"Revenue/day","日薪支出":"Wages/day","公司日净利":"Net/day",
+  "实习生":"Intern","初级员工":"Junior","资深员工":"Senior","专家":"Expert","天才":"Genius","雇佣":"Hire","解雇":"Fire","技能":"Skill","产出":"Output",
+  "💼 已上班":"💼 Hired!","公司结算":"Company payday","好工作":"Good job","差工作":"Bad job",
+  "雇佣需先支付一天工资作为签约金；之后每天自动结算营收与工资。":"Hiring costs one day's wage upfront; revenue & wages settle automatically each day.",
   // 招牌资产
   "招牌":"Empire","招牌资产":"Signature Holdings","🚀 招牌资产":"🚀 Signature Holdings",
   "以下持股为虚构模拟、灵感取材，非真实持股，与相关公司或个人无任何关联。":"These stakes are a fictional simulation inspired by public figures — not real holdings, and unaffiliated with any company or person.",
@@ -586,6 +599,7 @@ function applyLang(){
   if(window.forbesApplyLang) forbesApplyLang();
   if(window.vipApplyLang) vipApplyLang();
   if(window.sigApplyLang) sigApplyLang();
+  if(window.careerApplyLang) careerApplyLang();
   if(window.empApplyLang) empApplyLang();
 }
 function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("spendLang",LANG);}catch(e){} applyLang(); }
@@ -617,8 +631,11 @@ const CATS=[
     {zh:"看场电影",en:"Movie Night",ico:"🎬",p:15},{zh:"游乐园一日",en:"Theme Park Day",ico:"🎢",p:80},
     {zh:"演唱会VIP",en:"Concert VIP",ico:"🎤",p:1000},{zh:"赌场一晚",en:"Casino Night",ico:"🎰",p:100*K},{zh:"私人音乐会",en:"Private Concert",ico:"🎸",p:5*M}]},
   {id:"lux", zh:"奢侈品", en:"Luxury", ico:"💎", type:"luxury", items:[
-    {zh:"名表",en:"Luxury Watch",ico:"⌚",p:50*K},{zh:"钻戒",en:"Diamond Ring",ico:"💍",p:300*K},
-    {zh:"黄金雕像",en:"Gold Statue",ico:"🗿",p:8*M},{zh:"钻石皇冠",en:"Diamond Crown",ico:"👑",p:30*M}]},
+    {zh:"Auréa 墨镜",en:"Auréa Shades",ico:"🕶️",p:8*K},{zh:"Solière 高跟鞋",en:"Solière Heels",ico:"👠",p:25*K},
+    {zh:"Vœuxclér 香槟",en:"Vœuxclér Champagne",ico:"🍾",p:30*K},{zh:"Valdoria 大衣",en:"Valdoria Coat",ico:"🧥",p:45*K},
+    {zh:"Chronïs 名表",en:"Chronïs Watch",ico:"⌚",p:80*K},{zh:"Lumièra 手袋",en:"Lumièra Handbag",ico:"👜",p:120*K},
+    {zh:"Étoile 钻戒",en:"Étoile Diamond Ring",ico:"💍",p:400*K},{zh:"Régentia 项链",en:"Régentia Necklace",ico:"📿",p:2*M},
+    {zh:"Aurélian 黄金雕像",en:"Aurélian Gold Statue",ico:"🗿",p:8*M},{zh:"Impéria 钻石皇冠",en:"Impéria Diamond Crown",ico:"👑",p:30*M}]},
   {id:"art", zh:"世界名画", en:"Masterpieces", ico:"🖼️", type:"luxury", items:[
     {zh:"蒙娜丽莎",en:"Mona Lisa",ico:"🖼️",p:8*B},{zh:"最后的晚餐",en:"The Last Supper",ico:"🍽️",p:2.5*B},{zh:"星月夜",en:"The Starry Night",ico:"🌌",p:2*B},
     {zh:"维纳斯的诞生",en:"Birth of Venus",ico:"🐚",p:1.5*B},{zh:"向日葵",en:"Sunflowers",ico:"🌻",p:1.4*B},{zh:"呐喊",en:"The Scream",ico:"😱",p:1.3*B},
@@ -700,6 +717,7 @@ function freshState(){
     mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
     shopLevel:1, listings:[], shopSold:0, casDayNet:0, gold:0, goldAvg:0, goldPx:65, sig:{}, sigHist:{},
     city:"", land:{}, traveled:0, donated:0, emp:{}, duelW:0, duelL:0, duelBest:0, beatTop:false, duelMsg:null,
+    job:"", emps:{}, jobEarned:0,
     incomePeak:0, netPeak:START_BAL, won:false, ending:"" };
 }
 function newGame(){
@@ -1044,7 +1062,8 @@ function termsTotal(){ return S?S.terms.reduce((a,t)=>a+t.amt,0):0; }
 function stockValue(){ if(!S)return 0; let v=0; for(const st of STOCKS) v+=(S.stocks[st.id]||0)*S.px[st.id]; return v; }
 function assetIncome(){ if(!S)return 0; let s=0; for(const it of ALL){ const y=YIELD[it.cat.type]; if(y) s+=it.p*y*(S.owned[it.id]||0); }
   if(S.collection) for(const c of S.collection) s+=c.income||0;
-  if(window.landIncome) s+=landIncome(); if(window.empIncome) s+=empIncome(); if(window.sigIncome) s+=sigIncome(); return s; }
+  if(window.landIncome) s+=landIncome(); if(window.empIncome) s+=empIncome(); if(window.sigIncome) s+=sigIncome();
+  if(window.careerIncome) s+=careerIncome(); return s; }
 function depInterest(){ return S?S.deposit*ACTIVE_RATE*(window.vipDepMul?vipDepMul():1)/12:0; }
 function netWorth(){ if(!S)return 0; let a=0; for(const it of ALL) a+=it.p*(S.owned[it.id]||0)*0.5;
   if(S.collection) for(const c of S.collection) a+=c.price*0.5;
@@ -1106,6 +1125,7 @@ function dayTick(){
   if(window.shopDayTick) shopDayTick();
   if(window.forbesDayTick) forbesDayTick();
   if(window.sigDayTick) sigDayTick();
+  if(window.careerDayTick) careerDayTick();
   if(window.vipDayTick) vipDayTick();
   if((S.casDayNet||0)<0 && window.casCashback){ const back=Math.round(-S.casDayNet*casCashback()); if(back>0){ S.chips+=back; if(!byId("bankScreen").classList.contains("hidden")) renderBank(); } }
   S.casDayNet=0;
@@ -1716,24 +1736,24 @@ function shopHtml(){ const lv=shopLv();
 <script>
 /*==================== 🌍 世界地图 + ✈️ 飞机旅行 ====================*/
 const CITIES=[
-  {id:"lib",zh:"新自由城",en:"New Liberty",flag:"🗽",cont:"北美",buyLo:"tech",sellHi:"luxury",land:2e9,tier:2},
-  {id:"map",zh:"黄金枫叶城",en:"Maple Gold",flag:"🍁",cont:"北美",buyLo:"food",sellHi:"house",land:800e6,tier:2},
-  {id:"rain",zh:"雨林港",en:"Rainforest Port",flag:"🌴",cont:"南美",buyLo:"food",sellHi:"science",land:300e6,tier:3},
-  {id:"tango",zh:"探戈湾",en:"Tango Bay",flag:"💃",cont:"南美",buyLo:"car",sellHi:"fun",land:400e6,tier:3},
-  {id:"fog",zh:"雾都",en:"Fog City",flag:"🌫️",cont:"欧洲",buyLo:"building",sellHi:"science",land:3e9,tier:2},
-  {id:"rom",zh:"浪漫花都",en:"Romance Capital",flag:"🗼",cont:"欧洲",buyLo:"food",sellHi:"luxury",land:2.5e9,tier:2},
-  {id:"alp",zh:"阿尔卑斯堡",en:"Alpine Keep",flag:"🏔️",cont:"欧洲",buyLo:"ship",sellHi:"luxury",land:1.5e9,tier:3},
-  {id:"fjord",zh:"北境峡湾",en:"Nordic Fjord",flag:"🛶",cont:"欧洲",buyLo:"ship",sellHi:"food",land:900e6,tier:3},
-  {id:"sand",zh:"黄金沙城",en:"Golden Sands",flag:"🕌",cont:"中东",buyLo:"plane",sellHi:"luxury",land:5e9,tier:3},
-  {id:"dome",zh:"琉璃穹顶",en:"Glass Dome",flag:"🔮",cont:"中东",buyLo:"science",sellHi:"building",land:2e9,tier:3},
-  {id:"saku",zh:"樱花都",en:"Sakura Metropolis",flag:"🗾",cont:"亚洲",buyLo:"tech",sellHi:"fun",land:2e9,tier:1},
-  {id:"shen",zh:"深港湾",en:"Shenzhen Bay",flag:"🏙️",cont:"亚洲",buyLo:"tech",sellHi:"building",land:1.5e9,tier:1},
-  {id:"lion",zh:"狮城港",en:"Lion Port",flag:"🦁",cont:"亚洲",buyLo:"ship",sellHi:"luxury",land:2.5e9,tier:1},
-  {id:"mum",zh:"孟买之门",en:"Mumbai Gate",flag:"🛕",cont:"亚洲",buyLo:"food",sellHi:"car",land:500e6,tier:2},
-  {id:"pyr",zh:"金字塔城",en:"Pyramid City",flag:"🔺",cont:"非洲",buyLo:"building",sellHi:"science",land:400e6,tier:3},
-  {id:"cape",zh:"彩虹角",en:"Cape Rainbow",flag:"🌈",cont:"非洲",buyLo:"science",sellHi:"ship",land:350e6,tier:4},
-  {id:"sun",zh:"阳光海岸城",en:"Sunshine Coast",flag:"🏖️",cont:"大洋洲",buyLo:"house",sellHi:"plane",land:1e9,tier:4},
-  {id:"glac",zh:"冰川之心",en:"Glacier Heart",flag:"🧊",cont:"大洋洲",buyLo:"food",sellHi:"ship",land:600e6,tier:4},
+  {id:"lib",zh:"新自由城",en:"New Liberty",flag:"🗽",cont:"北美",buyLo:"tech",sellHi:"luxury",land:2e9,tier:2,wage:1.6},
+  {id:"map",zh:"黄金枫叶城",en:"Maple Gold",flag:"🍁",cont:"北美",buyLo:"food",sellHi:"house",land:800e6,tier:2,wage:1.2},
+  {id:"rain",zh:"雨林港",en:"Rainforest Port",flag:"🌴",cont:"南美",buyLo:"food",sellHi:"science",land:300e6,tier:3,wage:0.7},
+  {id:"tango",zh:"探戈湾",en:"Tango Bay",flag:"💃",cont:"南美",buyLo:"car",sellHi:"fun",land:400e6,tier:3,wage:0.8},
+  {id:"fog",zh:"雾都",en:"Fog City",flag:"🌫️",cont:"欧洲",buyLo:"building",sellHi:"science",land:3e9,tier:2,wage:1.4},
+  {id:"rom",zh:"浪漫花都",en:"Romance Capital",flag:"🗼",cont:"欧洲",buyLo:"food",sellHi:"luxury",land:2.5e9,tier:2,wage:1.3},
+  {id:"alp",zh:"阿尔卑斯堡",en:"Alpine Keep",flag:"🏔️",cont:"欧洲",buyLo:"ship",sellHi:"luxury",land:1.5e9,tier:3,wage:1.5},
+  {id:"fjord",zh:"北境峡湾",en:"Nordic Fjord",flag:"🛶",cont:"欧洲",buyLo:"ship",sellHi:"food",land:900e6,tier:3,wage:1.3},
+  {id:"sand",zh:"黄金沙城",en:"Golden Sands",flag:"🕌",cont:"中东",buyLo:"plane",sellHi:"luxury",land:5e9,tier:3,wage:1.7},
+  {id:"dome",zh:"琉璃穹顶",en:"Glass Dome",flag:"🔮",cont:"中东",buyLo:"science",sellHi:"building",land:2e9,tier:3,wage:1.5},
+  {id:"saku",zh:"樱花都",en:"Sakura Metropolis",flag:"🗾",cont:"亚洲",buyLo:"tech",sellHi:"fun",land:2e9,tier:1,wage:1.4},
+  {id:"shen",zh:"深港湾",en:"Shenzhen Bay",flag:"🏙️",cont:"亚洲",buyLo:"tech",sellHi:"building",land:1.5e9,tier:1,wage:1.1},
+  {id:"lion",zh:"狮城港",en:"Lion Port",flag:"🦁",cont:"亚洲",buyLo:"ship",sellHi:"luxury",land:2.5e9,tier:1,wage:1.6},
+  {id:"mum",zh:"孟买之门",en:"Mumbai Gate",flag:"🛕",cont:"亚洲",buyLo:"food",sellHi:"car",land:500e6,tier:2,wage:0.6},
+  {id:"pyr",zh:"金字塔城",en:"Pyramid City",flag:"🔺",cont:"非洲",buyLo:"building",sellHi:"science",land:400e6,tier:3,wage:0.7},
+  {id:"cape",zh:"彩虹角",en:"Cape Rainbow",flag:"🌈",cont:"非洲",buyLo:"science",sellHi:"ship",land:350e6,tier:4,wage:0.75},
+  {id:"sun",zh:"阳光海岸城",en:"Sunshine Coast",flag:"🏖️",cont:"大洋洲",buyLo:"house",sellHi:"plane",land:1e9,tier:4,wage:1.2},
+  {id:"glac",zh:"冰川之心",en:"Glacier Heart",flag:"🧊",cont:"大洋洲",buyLo:"food",sellHi:"ship",land:600e6,tier:4,wage:1.0},
 ];
 const CBY=Object.fromEntries(CITIES.map(c=>[c.id,c]));
 const TICKETS=[0,5e6,30e6,150e6,800e6];
@@ -2061,6 +2081,85 @@ function renderSig(){
     <button class="fbtn gold" style="width:100%" onclick="liquidateAll()">💰 ${tr("变现全部招牌资产")}</button>
     <button class="btn ghost" style="padding:9px;margin-top:8px" onclick="byId('sigScreen').classList.add('hidden')">${tr("关闭")}</button>`;
   byId("sigSheet").innerHTML=h;
+}
+
+/*==================== 💼 事业：打工 + 公司 ====================*/
+const JOBS=[
+  {id:"dish",zh:"洗碗工",en:"Dishwasher",ico:"🍽️",pay:800,tag:"bad"},
+  {id:"courier",zh:"快递员",en:"Courier",ico:"📦",pay:2500,tag:"bad"},
+  {id:"waiter",zh:"服务员",en:"Waiter",ico:"🧑‍🍳",pay:3500,tag:"bad"},
+  {id:"driver",zh:"网约车司机",en:"Rideshare Driver",ico:"🚕",pay:5000},
+  {id:"teacher",zh:"教师",en:"Teacher",ico:"🧑‍🏫",pay:9000},
+  {id:"coder",zh:"程序员",en:"Programmer",ico:"💻",pay:20000},
+  {id:"engineer",zh:"工程师",en:"Engineer",ico:"🔧",pay:26000},
+  {id:"doctor",zh:"医生",en:"Doctor",ico:"🧑‍⚕️",pay:45000},
+  {id:"lawyer",zh:"律师",en:"Lawyer",ico:"⚖️",pay:60000},
+  {id:"pilot",zh:"飞行员",en:"Pilot",ico:"✈️",pay:80000},
+  {id:"banker",zh:"投行家",en:"Banker",ico:"🏦",pay:180000,tag:"good"},
+  {id:"star",zh:"明星",en:"Celebrity",ico:"🌟",pay:900000,tag:"good"},
+  {id:"ceo",zh:"总裁CEO",en:"CEO",ico:"💼",pay:3000000,tag:"good"},
+];
+const JBY=Object.fromEntries(JOBS.map(x=>[x.id,x]));
+const EMPS=[
+  {id:"intern",zh:"实习生",en:"Intern",ico:"🧑‍🎓",wage:8000,out:4000,skill:1},
+  {id:"junior",zh:"初级员工",en:"Junior",ico:"🧑‍💻",wage:25000,out:22000,skill:2},
+  {id:"senior",zh:"资深员工",en:"Senior",ico:"👨‍💼",wage:70000,out:80000,skill:3},
+  {id:"expert",zh:"专家",en:"Expert",ico:"🧠",wage:180000,out:230000,skill:4},
+  {id:"genius",zh:"天才",en:"Genius",ico:"🦾",wage:600000,out:820000,skill:5},
+];
+const EBY=Object.fromEntries(EMPS.map(x=>[x.id,x]));
+if(typeof window!=="undefined" && window.careerView===undefined) window.careerView="job";
+function cityWage(){ const c=(window.curCity?curCity():null); return c&&c.wage?c.wage:1; }
+function jobSalary(){ if(!S||!S.job)return 0; const j=JBY[S.job]; return j?Math.round(j.pay*cityWage()):0; }
+function empCount(){ if(!S||!S.emps)return 0; let n=0; for(const e of EMPS) n+=S.emps[e.id]||0; return n; }
+function empSkill(){ if(!S||!S.emps)return 0; let n=0; for(const e of EMPS) n+=(S.emps[e.id]||0)*e.skill; return n; }
+function empRevenue(){ if(!S||!S.emps)return 0; let s=0; for(const e of EMPS) s+=(S.emps[e.id]||0)*e.out; return s; }
+function empWages(){ if(!S||!S.emps)return 0; let s=0; for(const e of EMPS) s+=(S.emps[e.id]||0)*e.wage; return s; }
+function empNet(){ return empRevenue()-empWages(); }
+function careerIncome(){ return jobSalary()+empNet(); }
+function careerDayTick(){ if(!S)return; if(S.job) S.jobEarned=(S.jobEarned||0)+jobSalary(); refreshCareer(); }
+function takeJob(id){ if(!S||!JBY[id])return; S.job=id; toast(tr("💼 已上班")+" "+JBY[id].ico+" "+nm(JBY[id])); markDirty(); refreshCareer(); }
+function quitJob(){ if(!S)return; S.job=""; markDirty(); refreshCareer(); }
+function hireEmp(id,n){ if(!S||!EBY[id])return; if(!S.emps)S.emps={}; const cost=EBY[id].wage*n; if(S.bal<cost){ toast(tr("余额不足")); return; } S.bal-=cost; S.emps[id]=(S.emps[id]||0)+n; toast("🧑‍💼 +"+n+" "+EBY[id].ico+" "+nm(EBY[id])); markDirty(); if(window.checkWins)checkWins(); refreshCareer(); }
+function fireEmp(id,n){ if(!S||!S.emps)return; S.emps[id]=Math.max(0,(S.emps[id]||0)-n); markDirty(); refreshCareer(); }
+function setCareerView(v){ window.careerView=v; renderCareer(); }
+function openCareer(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} byId("careerScreen").classList.remove("hidden"); renderCareer(); }
+function refreshCareer(){ markDirty(); if(byId("careerScreen") && !byId("careerScreen").classList.contains("hidden")) renderCareer(); }
+function careerApplyLang(){ if(byId("careerScreen") && !byId("careerScreen").classList.contains("hidden")) renderCareer(); }
+function renderCareer(){
+  const view=window.careerView||"job", cw=cityWage(), cy=(window.curCity?curCity():null);
+  let h=`<h2>💼 <span>${tr("💼 事业")}</span></h2>
+    <div class="tabs" style="padding:0 0 8px">
+      <button class="tab${view==="job"?" on":""}" onclick="setCareerView('job')">🧑‍🔧 ${tr("打工")}</button>
+      <button class="tab${view==="company"?" on":""}" onclick="setCareerView('company')">🏢 ${tr("我的公司")}</button>
+    </div>`;
+  if(view==="job"){
+    h+=`<div class="casnote">${tr("不同城市工资不同——高消费城市薪水更高。")} ${cy?("<b>"+cy.flag+" "+(LANG==="en"?cy.en:cy.zh)+" · "+tr("当前城市薪资系数")+" "+cw.toFixed(2)+"</b>"):""}</div>`;
+    const cur=S.job?JBY[S.job]:null;
+    h+=`<div class="frow"><div class="fl">${tr("当前工作")}<small>${tr("累计工资")} ${shortMoney(S.jobEarned||0)}</small></div>
+      <div class="fv">${cur?(cur.ico+" "+nm(cur)+" · +"+shortMoney(jobSalary())+"/"+(LANG==="en"?"d":"天")):tr("无业")}</div></div>`;
+    if(cur) h+=`<button class="fbtn red sm" style="margin:-2px 0 8px auto;display:block" onclick="quitJob()">${tr("辞职")}</button>`;
+    JOBS.forEach(j=>{ const on=S.job===j.id, badge=j.tag==="good"?`<span style="color:#7CFF9B">👍 ${tr("好工作")}</span>`:j.tag==="bad"?`<span style="color:#ff8f8f">👎 ${tr("差工作")}</span>`:"";
+      h+=`<div class="divrow${on?" owned":""}"><div class="di">${j.ico}</div><div class="dt"><div class="dn">${nm(j)} ${badge}</div>
+        <div class="dd">${tr("日薪")} ${shortMoney(Math.round(j.pay*cw))} <small style="opacity:.6">(基 ${shortMoney(j.pay)}×${cw.toFixed(2)})</small></div></div>
+        ${on?`<span class="dlv">✔ ${LANG==="en"?"working":"在职"}</span>`:`<button class="fbtn sm" onclick="takeJob('${j.id}')">${tr("上班")}</button>`}</div>`; });
+  } else {
+    const net=empNet();
+    h+=`<div class="casnote">${tr("工资越高，招到的人才越强、公司产出越高。低薪员工入不敷出。")}</div>
+      <div class="frow"><div class="fl">${tr("员工总数")}<small>${tr("总技能")} ⭐${empSkill()}</small></div><div class="fv">${empCount()}</div></div>
+      <div class="frow"><div class="fl">${tr("日营收")} / ${tr("日薪支出")}</div><div class="fv" style="color:var(--green)">+${shortMoney(empRevenue())} <span style="color:var(--red)">-${shortMoney(empWages())}</span></div></div>
+      <div class="frow"><div class="fl">${tr("公司日净利")}</div><div class="fv" style="color:${net>=0?"var(--green)":"var(--red)"}">${net>=0?"+":""}${shortMoney(net)}/${LANG==="en"?"d":"天"}</div></div>`;
+    EMPS.forEach(e=>{ const cnt=(S.emps&&S.emps[e.id])||0, mgn=e.out-e.wage;
+      h+=`<div class="divrow${cnt>0?" owned":""}"><div class="di">${e.ico}</div><div class="dt">
+        <div class="dn">${nm(e)} ${"⭐".repeat(e.skill)}${cnt>0?` <span class="dlv">×${cnt}</span>`:""}</div>
+        <div class="dd">${tr("日薪")} ${shortMoney(e.wage)} · ${tr("产出")} ${shortMoney(e.out)} · <span style="color:${mgn>=0?"#7CFF9B":"#ff8f8f"}">${mgn>=0?"+":""}${shortMoney(mgn)}/${LANG==="en"?"d":"天"}</span></div></div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div style="display:flex;gap:3px"><button class="fbtn sm" onclick="hireEmp('${e.id}',1)">+1</button><button class="fbtn sm" onclick="hireEmp('${e.id}',10)">+10</button></div>
+          ${cnt>0?`<button class="fbtn red sm" onclick="fireEmp('${e.id}',1)">${tr("解雇")} -1</button>`:""}</div></div>`; });
+    h+=`<div class="note">${tr("雇佣需先支付一天工资作为签约金；之后每天自动结算营收与工资。")}</div>`;
+  }
+  h+=`<button class="btn ghost" style="padding:9px;margin-top:8px;width:100%" onclick="byId('careerScreen').classList.add('hidden')">${tr("关闭")}</button>`;
+  byId("careerSheet").innerHTML=h;
 }
 </script>
 </body>
