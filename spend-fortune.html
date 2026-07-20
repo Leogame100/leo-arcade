@@ -555,6 +555,9 @@ const TR={
   "太饿了！工资停发，快吃东西恢复":"Starving! No pay until you eat.",
   "😵 太饿了！没法好好工作，工资停发，快去吃东西":"😵 Starving! You can't work — wages stop until you eat.",
   "🍽️ 没有食物了，先去超市或快餐买点吃的":"🍽️ No food left — buy some from the Supermarket or Fast Food shop.",
+  // 工作经验 + 全球排名
+  "工作经验":"Job XP","每天上班积累，解锁更好的工作":"gained daily — unlocks better jobs","经验不足！先在差工作攒够经验":"Not enough XP — grind bad jobs to earn it first",
+  "80亿人":"8 billion people","富豪榜":"Rich List",
   // 从零开始模式
   "白手起家：$0 起步，靠打工·投资·创业登顶福布斯首富即获胜。":"Rags to riches: start at $0 — work, invest & build your way to Forbes #1 to win.",
   "从零白手起家登顶福布斯财富榜":"Climb from $0 to #1 on the Forbes list",
@@ -731,7 +734,7 @@ function freshState(){
     mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
     shopLevel:1, listings:[], shopSold:0, casDayNet:0, gold:0, goldAvg:0, goldPx:65, sig:{}, sigHist:{},
     city:"", land:{}, traveled:0, donated:0, emp:{}, duelW:0, duelL:0, duelBest:0, beatTop:false, duelMsg:null,
-    job:"", emps:{}, jobEarned:0, hunger:100,
+    job:"", emps:{}, jobEarned:0, hunger:100, exp:0,
     incomePeak:0, netPeak:startBal(), won:false, ending:"" };
 }
 function newGame(){
@@ -1858,8 +1861,8 @@ const FORBES_CATS=[
   {id:"charity",zh:"慈善排行",en:"Charity",val:()=>S.donated||0},
 ];
 function forbesReset(){ RIVALS=[]; const used=new Set();
-  for(let k=0;k<100;k++){ let i,j,key,g=0; do{ i=Math.floor(Math.random()*RN1.length); j=Math.floor(Math.random()*RN2.length); key=i+"_"+j; }while(used.has(key)&&g++<80); used.add(key);
-    const net=Math.round(2e12*Math.pow(0.955,k)*(0.85+Math.random()*0.3));
+  for(let k=0;k<300;k++){ let i,j,key,g=0; do{ i=Math.floor(Math.random()*RN1.length); j=Math.floor(Math.random()*RN2.length); key=i+"_"+j; }while(used.has(key)&&g++<120); used.add(key);
+    const net=Math.round(2e12*Math.pow(0.976,k)*(0.85+Math.random()*0.3));
     RIVALS.push({ zh:RN1[i]+RN2[j], en:EN1[i]+" "+EN2[j], ico:apick(RICO), net,
       f:{spent:0.1+Math.random()*0.4, coll:0.02+Math.random()*0.18, estate:0.1+Math.random()*0.35, comp:0.05+Math.random()*0.28, auc:0.01+Math.random()*0.15, charity:0.004+Math.random()*0.1} }); }
 }
@@ -1892,6 +1895,17 @@ function scoreEstate(){ let s=0; for(const it of ALL){ const t=it.cat.type; if(t
 function scoreComp(){ let s=0; for(const it of ALL) if(it.cat.type==="science") s+=it.p*(S.owned[it.id]||0); if(S.collection) for(const c of S.collection) if(c.cat==="biz") s+=c.price; return s; }
 function rivalVal(r,cat){ return cat==="net"?r.net:r.net*r.f[cat]; }
 function pRank(cat){ const pv=FORBES_CATS.find(c=>c.id===cat).val(); let cnt=0; for(const r of RIVALS) if(rivalVal(r,cat)>pv) cnt++; return cnt+1; }
+/* 全球 80 亿人财富分布：把净资产映射到全球排名（越有钱名次越靠前）。
+   锚点贴近现实（约 5600 万百万富翁、约 2600 位亿万富翁），从零开始时你排在 80 亿名附近，赚钱后名次飞速上升。 */
+const POP=8e9;
+const RANK_ANCHORS=[[0,POP],[100,7.6e9],[1e3,7e9],[1e4,4e9],[1e5,5e8],[1e6,5.6e7],[1e7,3e6],[1e8,1.5e5],[1e9,2600],[1e12,30],[2.5e12,1]];
+function globalRank(w){ if(!(w>0)) return POP; const A=RANK_ANCHORS;
+  if(w>=A[A.length-1][0]) return 1;
+  for(let i=0;i<A.length-1;i++){ const w0=A[i][0],r0=A[i][1],w1=A[i+1][0],r1=A[i+1][1];
+    if(w>=w0 && w<=w1){ const lw0=Math.log(Math.max(1,w0)),lw1=Math.log(w1),lw=Math.log(Math.max(1,w));
+      const t=Math.max(0,Math.min(1,(lw-lw0)/(lw1-lw0)));
+      return Math.max(1,Math.min(POP,Math.round(Math.exp(Math.log(r0)+(Math.log(r1)-Math.log(r0))*t)))); } }
+  return 1; }
 /*-------- 慈善 --------*/
 function donate(amt){ if(!S)return; amt=Math.round(amt); if(amt<=0)return; if(amt>S.bal){toast(tr("现金不足"));return;} S.bal-=amt; S.donated+=amt; toast("❤️ "+tr("捐赠")+" "+shortMoney(amt)); markDirty(); checkAch(); refreshForbes(); }
 function donateCustom(){ donate(parseAmt(byId("donIn").value)); }
@@ -1905,7 +1919,10 @@ function renderForbes(){ const cat=forbesCat, cObj=FORBES_CATS.find(c=>c.id===ca
   let h=`<h2>🏆 <span>${tr("🏆 福布斯全球富豪榜")}</span></h2><div class="ftabs">`;
   FORBES_CATS.forEach(c=> h+=`<div class="ftab${cat===c.id?" on":""}" onclick="forbesGo('${c.id}')">${tr(c.zh)}</div>`);
   h+=`</div>
-    <div class="myrank"><div class="rk">#${rank}</div><div class="rl">${tr("全球排名")} · ${tr("共")} ${total} ${LANG==="en"?"":tr("名富豪")}</div><div class="rv">${tr("你的数值")}：${shortMoney(pv)}</div></div>`;
+    ${(()=>{ const isNet=cat==="net"; const gRank=isNet?globalRank(pv):0;
+      return `<div class="myrank"><div class="rk">#${isNet?gRank.toLocaleString("en-US"):rank}</div>
+      <div class="rl">${isNet?("🌍 "+tr("全球排名")+" · "+tr("共")+" "+tr("80亿人")):(tr("全球排名")+" · "+tr("共")+" "+total+" "+(LANG==="en"?"":tr("名富豪")))}</div>
+      <div class="rv">${isNet?("🏆 "+tr("富豪榜")+" #"+rank+" · "):""}${tr("你的数值")}：${shortMoney(pv)}</div></div>`; })()}`;
   if(cat==="net"){
     const m=S.duelMsg;
     h+=`<div class="duel"><div class="dh">⚔️ ${tr("⚔️ 富豪对赌")}</div><div class="ds">${tr("和富豪比点数，赢者通吃你押上的筹码。50/50 纯赌运，敢押上全部身家吗？")}</div>`;
@@ -1929,8 +1946,8 @@ function renderForbes(){ const cat=forbesCat, cObj=FORBES_CATS.find(c=>c.id===ca
   rows.push({ico:"🧑‍💼",name:tr("你"),val:pv,me:true});
   rows.sort((a,b)=>b.val-a.val);
   const meIdx=rows.findIndex(r=>r.me);
-  const show=[]; for(let i=0;i<Math.min(13,rows.length);i++) show.push(i);
-  if(meIdx>12){ show.push(-1); [meIdx-1,meIdx,meIdx+1].forEach(i=>{ if(i>=0&&i<rows.length&&!show.includes(i)) show.push(i); }); }
+  const show=[]; for(let i=0;i<Math.min(30,rows.length);i++) show.push(i);
+  if(meIdx>29){ show.push(-1); [meIdx-1,meIdx,meIdx+1].forEach(i=>{ if(i>=0&&i<rows.length&&!show.includes(i)) show.push(i); }); }
   show.forEach(i=>{ if(i===-1){ h+=`<div style="text-align:center;color:var(--muted);font-size:12px;margin:2px 0">···</div>`; return; }
     const r=rows[i], rk=i+1, medal=rk<=3?["top1","top2","top3"][rk-1]:"";
     h+=`<div class="frank${r.me?" me":""}"><div class="fr ${medal}">${rk<=3?["🥇","🥈","🥉"][rk-1]:rk}</div><div class="fi">${r.ico}</div><div class="fn">${r.name}</div><div class="fnv">${shortMoney(r.val)}</div></div>`; });
@@ -2112,7 +2129,7 @@ const SIG=[
   {id:"boring",zh:"无聊公司",en:"Boring Co.",ico:"🕳️",stakeZ:"控股",base:6e9,inc:0.0003,vol:0.05,g:"linear-gradient(135deg,#3a2a1a,#160f08)"},
 ];
 const SBY=Object.fromEntries(SIG.map(x=>[x.id,x]));
-function sigReset(){ if(!S.sig) S.sig={}; SIG.forEach(x=>{ S.sig[x.id]=x.base; }); }
+function sigReset(){ if(!S.sig) S.sig={}; SIG.forEach(x=>{ S.sig[x.id]= (MODE==="zero"?0:x.base); }); }  // 从零开始不赠送招牌资产，真正 $0 起步
 function sigDayTick(){ if(!S||!S.sig)return; SIG.forEach(x=>{ const v=S.sig[x.id]; if(v>0){ S.sig[x.id]=Math.max(0, v*(1+(x.inc>0?0.0012:0)+(Math.random()-0.5)*x.vol)); } }); }
 function sigValue(){ if(!S||!S.sig)return 0; let s=0; for(const x of SIG) s+=S.sig[x.id]||0; return s; }
 function sigIncome(){ if(!S||!S.sig)return 0; let s=0; for(const x of SIG) s+=(S.sig[x.id]||0)*x.inc; return s; }
@@ -2137,20 +2154,20 @@ function renderSig(){
 }
 
 /*==================== 💼 事业：打工 + 公司 ====================*/
-const JOBS=[
-  {id:"dish",zh:"洗碗工",en:"Dishwasher",ico:"🍽️",pay:800,tag:"bad"},
-  {id:"courier",zh:"快递员",en:"Courier",ico:"📦",pay:2500,tag:"bad"},
-  {id:"waiter",zh:"服务员",en:"Waiter",ico:"🧑‍🍳",pay:3500,tag:"bad"},
-  {id:"driver",zh:"网约车司机",en:"Rideshare Driver",ico:"🚕",pay:5000},
-  {id:"teacher",zh:"教师",en:"Teacher",ico:"🧑‍🏫",pay:9000},
-  {id:"coder",zh:"程序员",en:"Programmer",ico:"💻",pay:20000},
-  {id:"engineer",zh:"工程师",en:"Engineer",ico:"🔧",pay:26000},
-  {id:"doctor",zh:"医生",en:"Doctor",ico:"🧑‍⚕️",pay:45000},
-  {id:"lawyer",zh:"律师",en:"Lawyer",ico:"⚖️",pay:60000},
-  {id:"pilot",zh:"飞行员",en:"Pilot",ico:"✈️",pay:80000},
-  {id:"banker",zh:"投行家",en:"Banker",ico:"🏦",pay:180000,tag:"good"},
-  {id:"star",zh:"明星",en:"Celebrity",ico:"🌟",pay:900000,tag:"good"},
-  {id:"ceo",zh:"总裁CEO",en:"CEO",ico:"💼",pay:3000000,tag:"good"},
+const JOBS=[   // req = 需要的工作经验(天)；差工作无门槛，好工作要先攒经验
+  {id:"dish",zh:"洗碗工",en:"Dishwasher",ico:"🍽️",pay:800,tag:"bad",req:0},
+  {id:"courier",zh:"快递员",en:"Courier",ico:"📦",pay:2500,tag:"bad",req:0},
+  {id:"waiter",zh:"服务员",en:"Waiter",ico:"🧑‍🍳",pay:3500,tag:"bad",req:0},
+  {id:"driver",zh:"网约车司机",en:"Rideshare Driver",ico:"🚕",pay:5000,req:3},
+  {id:"teacher",zh:"教师",en:"Teacher",ico:"🧑‍🏫",pay:9000,req:6},
+  {id:"coder",zh:"程序员",en:"Programmer",ico:"💻",pay:20000,req:10},
+  {id:"engineer",zh:"工程师",en:"Engineer",ico:"🔧",pay:26000,req:15},
+  {id:"doctor",zh:"医生",en:"Doctor",ico:"🧑‍⚕️",pay:45000,req:22},
+  {id:"lawyer",zh:"律师",en:"Lawyer",ico:"⚖️",pay:60000,req:30},
+  {id:"pilot",zh:"飞行员",en:"Pilot",ico:"✈️",pay:80000,req:42},
+  {id:"banker",zh:"投行家",en:"Banker",ico:"🏦",pay:180000,tag:"good",req:60},
+  {id:"star",zh:"明星",en:"Celebrity",ico:"🌟",pay:900000,tag:"good",req:85},
+  {id:"ceo",zh:"总裁CEO",en:"CEO",ico:"💼",pay:3000000,tag:"good",req:120},
 ];
 const JBY=Object.fromEntries(JOBS.map(x=>[x.id,x]));
 const EMPS=[
@@ -2164,6 +2181,7 @@ const EBY=Object.fromEntries(EMPS.map(x=>[x.id,x]));
 if(typeof window!=="undefined" && window.careerView===undefined) window.careerView="job";
 function cityWage(){ const c=(window.curCity?curCity():null); return c&&c.wage?c.wage:1; }
 const HUNGER_RATE=12;   // 上班每天消耗的饥饿值
+const EXP_RATE=1;       // 上班每天积累的工作经验
 function jobSalary(){ if(!S||!S.job)return 0; if((S.hunger==null?100:S.hunger)<=0) return 0; const j=JBY[S.job]; return j?Math.round(j.pay*cityWage()):0; }
 function empCount(){ if(!S||!S.emps)return 0; let n=0; for(const e of EMPS) n+=S.emps[e.id]||0; return n; }
 function empSkill(){ if(!S||!S.emps)return 0; let n=0; for(const e of EMPS) n+=(S.emps[e.id]||0)*e.skill; return n; }
@@ -2173,7 +2191,9 @@ function empNet(){ return empRevenue()-empWages(); }
 function careerIncome(){ return jobSalary()+empNet(); }
 function careerDayTick(){ if(!S)return;
   if(S.job){                                                  // 只有上班才会饿
-    S.jobEarned=(S.jobEarned||0)+jobSalary();                 // 记账与当天已发工资一致（此刻尚未扣饥饿）
+    const sal=jobSalary();
+    S.jobEarned=(S.jobEarned||0)+sal;                         // 记账与当天已发工资一致（此刻尚未扣饥饿）
+    if(sal>0) S.exp=(S.exp||0)+EXP_RATE;                      // 上班(没饿晕)才长经验：在差工作攒经验解锁好工作
     const before=(S.hunger==null?100:S.hunger);
     S.hunger=Math.max(0, before-HUNGER_RATE);
     if(before>0 && S.hunger<=0) toast(tr("😵 太饿了！没法好好工作，工资停发，快去吃东西"));
@@ -2184,7 +2204,9 @@ function eatAny(){ if(!S)return; let best=null, bestSat=-1;   // 吃掉库存里
   for(const it of ALL){ if(it.cat.type==="food" && (S.owned[it.id]||0)>0){ const s=FOOD_SAT[it.cat.id]||20; if(s>bestSat){ bestSat=s; best=it; } } }
   if(!best){ toast(tr("🍽️ 没有食物了，先去超市或快餐买点吃的")); return; }
   eatFood(best.id); }
-function takeJob(id){ if(!S||!JBY[id])return; S.job=id; toast(tr("💼 已上班")+" "+JBY[id].ico+" "+nm(JBY[id])); markDirty(); refreshCareer(); }
+function takeJob(id){ if(!S||!JBY[id])return; const j=JBY[id];
+  if((S.exp||0) < (j.req||0)){ toast(tr("经验不足！先在差工作攒够经验")+" ("+Math.floor(S.exp||0)+"/"+j.req+")"); return; }
+  S.job=id; toast(tr("💼 已上班")+" "+j.ico+" "+nm(j)); markDirty(); refreshCareer(); }
 function quitJob(){ if(!S)return; S.job=""; markDirty(); refreshCareer(); }
 function hireEmp(id,n){ if(!S||!EBY[id])return; if(!S.emps)S.emps={}; const cost=EBY[id].wage*n; if(S.bal<cost){ toast(tr("余额不足")); return; } S.bal-=cost; S.emps[id]=(S.emps[id]||0)+n; toast("🧑‍💼 +"+n+" "+EBY[id].ico+" "+nm(EBY[id])); markDirty(); if(window.checkWins)checkWins(); refreshCareer(); }
 function fireEmp(id,n){ if(!S||!S.emps)return; S.emps[id]=Math.max(0,(S.emps[id]||0)-n); markDirty(); refreshCareer(); }
@@ -2213,10 +2235,14 @@ function renderCareer(){
       <div style="height:9px;background:#0c1a13;border-radius:6px;overflow:hidden"><div style="height:100%;width:${hg}%;background:${hungerColor(hg)};transition:width .3s"></div></div>
       <button class="fbtn sm" style="margin-top:7px;width:100%" onclick="eatAny()">🍽️ ${tr("吃东西")}</button>
       ${hg<=0?`<div class="note" style="color:var(--red);margin-top:5px">${tr("太饿了！工资停发，快吃东西恢复")}</div>`:""}</div>`;
-    JOBS.forEach(j=>{ const on=S.job===j.id, badge=j.tag==="good"?`<span style="color:#7CFF9B">👍 ${tr("好工作")}</span>`:j.tag==="bad"?`<span style="color:#ff8f8f">👎 ${tr("差工作")}</span>`:"";
-      h+=`<div class="divrow${on?" owned":""}"><div class="di">${j.ico}</div><div class="dt"><div class="dn">${nm(j)} ${badge}</div>
-        <div class="dd">${tr("日薪")} ${shortMoney(Math.round(j.pay*cw))} <small style="opacity:.6">(基 ${shortMoney(j.pay)}×${cw.toFixed(2)})</small></div></div>
-        ${on?`<span class="dlv">✔ ${LANG==="en"?"working":"在职"}</span>`:`<button class="fbtn sm" onclick="takeJob('${j.id}')">${tr("上班")}</button>`}</div>`; });
+    const xp=Math.floor(S.exp||0);
+    h+=`<div class="frow"><div class="fl">🎓 ${tr("工作经验")} <small>${tr("每天上班积累，解锁更好的工作")}</small></div><div class="fv">${xp} ${LANG==="en"?"XP":"点"}</div></div>`;
+    JOBS.forEach(j=>{ const on=S.job===j.id, req=j.req||0, locked=xp<req;
+      const badge=j.tag==="good"?`<span style="color:#7CFF9B">👍 ${tr("好工作")}</span>`:j.tag==="bad"?`<span style="color:#ff8f8f">👎 ${tr("差工作")}</span>`:"";
+      const reqTxt=req>0?` · <span style="color:${locked?'#ff8f8f':'#7CFF9B'}">🎓 ${LANG==="en"?req+" XP":"需"+req+"经验"}</span>`:"";
+      h+=`<div class="divrow${on?" owned":""}" style="${locked?'opacity:.6':''}"><div class="di">${j.ico}</div><div class="dt"><div class="dn">${nm(j)} ${badge}</div>
+        <div class="dd">${tr("日薪")} ${shortMoney(Math.round(j.pay*cw))} <small style="opacity:.6">(×${cw.toFixed(2)})</small>${reqTxt}</div></div>
+        ${on?`<span class="dlv">✔ ${LANG==="en"?"working":"在职"}</span>`:locked?`<span class="dlv" style="color:var(--muted)">🔒 ${req}</span>`:`<button class="fbtn sm" onclick="takeJob('${j.id}')">${tr("上班")}</button>`}</div>`; });
   } else {
     const net=empNet();
     h+=`<div class="casnote">${tr("工资越高，招到的人才越强、公司产出越高。低薪员工入不敷出。")}</div>
