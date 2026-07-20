@@ -259,6 +259,14 @@
   .divrow .dlv{font-size:10px;color:var(--gold);font-weight:800;}
   .museum{background:linear-gradient(180deg,#1a2436,#101728);border:1px solid #3a5f9e;border-radius:12px;padding:11px;margin-bottom:10px;text-align:center;}
   .museum .mg{font-size:34px;font-weight:900;} .museum .ms{font-size:11px;color:#bcd;margin-top:2px;}
+  /* 招牌资产卡片（可视化） */
+  .sigcard{position:relative;overflow:hidden;border-radius:14px;padding:13px;margin-bottom:9px;color:#fff;box-shadow:0 5px 16px rgba(0,0,0,.5);}
+  .sigcard .sgico{position:absolute;right:8px;top:2px;font-size:62px;opacity:.22;line-height:1;}
+  .sigcard .sgn{font-weight:900;font-size:16px;} .sigcard .sgstake{font-size:11px;opacity:.85;margin-top:1px;}
+  .sigcard .sgv{font-size:20px;font-weight:900;margin-top:8px;font-variant-numeric:tabular-nums;}
+  .sigcard .sgrow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;}
+  .sigcard .sgbtn{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:8px;padding:5px 12px;font-weight:800;font-size:12px;cursor:pointer;}
+  .sigcard .sgbtn:active{transform:scale(.95);} .sigcard.sold{opacity:.45;}
 </style>
 </head>
 <body>
@@ -309,6 +317,7 @@
       <button class="ib" onclick="openForbes()" title="福布斯"><i>🏆</i><b data-i18n="富豪榜">富豪榜</b></button>
       <button class="ib" onclick="openVip()" title="VIP"><i>🎫</i><b>VIP</b></button>
       <button class="ib" onclick="openEmpire()" title="财富帝国"><i>🌟</i><b data-i18n="帝国">帝国</b></button>
+      <button class="ib" onclick="openSig()" title="招牌资产"><i>🚀</i><b data-i18n="招牌">招牌</b></button>
       <button class="ib" onclick="openAch()" title="成就"><i>🏅</i><b data-i18n="成就">成就</b></button>
       <button class="ib" onclick="openStart()" title="模式"><i>⚙️</i><b data-i18n="模式">模式</b></button>
     </div>
@@ -378,6 +387,8 @@
   <div class="overlay hidden" id="vipScreen"><div class="sheet" id="vipSheet"></div></div>
   <!-- 财富帝国 -->
   <div class="overlay hidden" id="empScreen"><div class="sheet" id="empSheet"></div></div>
+  <!-- 招牌资产 -->
+  <div class="overlay hidden" id="sigScreen"><div class="sheet" id="sigSheet"></div></div>
 
 </div></div>
 
@@ -522,6 +533,13 @@ const TR={
   "黄金":"Gold","黄金按克买卖，金价每日波动——低买高卖。":"Trade gold by the gram — price moves daily, buy low sell high.",
   "金价":"Gold price","每克":"per gram","克":"g","千克":"kg","吨":"t","均价":"Avg cost","持有":"Holdings","浮动盈亏":"Unrealized P/L",
   "克数 或 金额(带$)":"grams, or $amount","全仓买入":"Buy Max","全部卖出":"Sell All","按克数":"by grams",
+  // 招牌资产
+  "招牌":"Empire","招牌资产":"Signature Holdings","🚀 招牌资产":"🚀 Signature Holdings",
+  "以下持股为虚构模拟、灵感取材，非真实持股，与相关公司或个人无任何关联。":"These stakes are a fictional simulation inspired by public figures — not real holdings, and unaffiliated with any company or person.",
+  "特斯拉":"Tesla","比特币":"Bitcoin","狗狗币":"Dogecoin","X（原推特）":"X (formerly Twitter)","无聊公司":"Boring Co.",
+  "约38%股份(含期权)":"~38% stake (with options)","约11%流通股":"~11% of shares","控股":"Controlling stake","加密持仓":"Crypto holding",
+  "招牌总市值":"Signature value","变现":"Liquidate","已变现":"Liquidated","变现全部招牌资产":"Liquidate all",
+  "变现即卖出该资产换成现金(不可撤销)":"Liquidating sells the asset for cash (irreversible)","招牌帝国日分红":"Signature dividends/day",
   // VIP 黑卡
   "VIP黑卡会员":"VIP Black Card","🎫 VIP 黑卡会员":"🎫 VIP Black Card","会员等级":"Membership","累计消费":"Total spent","距下一级":"To next tier","已是最高等级":"Max tier",
   "普通会员":"Member","银卡":"Silver","金卡":"Gold","铂金卡":"Platinum","钻石卡":"Diamond","黑卡":"Black Card","至尊黑卡":"Supreme Black",
@@ -565,6 +583,7 @@ function applyLang(){
   if(window.worldApplyLang) worldApplyLang();
   if(window.forbesApplyLang) forbesApplyLang();
   if(window.vipApplyLang) vipApplyLang();
+  if(window.sigApplyLang) sigApplyLang();
   if(window.empApplyLang) empApplyLang();
 }
 function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("spendLang",LANG);}catch(e){} applyLang(); }
@@ -657,7 +676,7 @@ const ACHS=[
   {id:"forbes1", ico:"🥇", zh:"福布斯首富", en:"World's Richest", d:"登顶福布斯财富榜", chk:s=>typeof forbesTop1==="function"&&netWorth()>=forbesTop1()},
   {id:"empire", ico:"🌟", zh:"财富帝国", en:"Wealth Empire", d:"收购全部12大部门并升至满级", chk:s=>typeof empDone==="function"&&empDone()},
 ];
-const START_BAL=400*B;
+const START_BAL=1.3e12;   // $1.3 万亿
 
 /*==================== 状态 ====================*/
 const byId=id=>document.getElementById(id);
@@ -672,7 +691,7 @@ function freshState(){
     collection:[], aucBids:0, aucWon:0, aucBiggest:0, aucSpent:0,
     mail:[], checkStreak:0, lastCheckin:0, giftLog:{}, giftsGot:0, birthday:12+Math.floor(Math.random()*28), bdayDone:false,
     mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
-    shopLevel:1, listings:[], shopSold:0, casDayNet:0, gold:0, goldAvg:0, goldPx:65,
+    shopLevel:1, listings:[], shopSold:0, casDayNet:0, gold:0, goldAvg:0, goldPx:65, sig:{}, sigHist:{},
     city:"", land:{}, traveled:0, donated:0, emp:{}, duelW:0, duelL:0, duelBest:0, beatTop:false, duelMsg:null,
     incomePeak:0, netPeak:START_BAL, won:false, ending:"" };
 }
@@ -1005,11 +1024,11 @@ function termsTotal(){ return S?S.terms.reduce((a,t)=>a+t.amt,0):0; }
 function stockValue(){ if(!S)return 0; let v=0; for(const st of STOCKS) v+=(S.stocks[st.id]||0)*S.px[st.id]; return v; }
 function assetIncome(){ if(!S)return 0; let s=0; for(const it of ALL){ const y=YIELD[it.cat.type]; if(y) s+=it.p*y*(S.owned[it.id]||0); }
   if(S.collection) for(const c of S.collection) s+=c.income||0;
-  if(window.landIncome) s+=landIncome(); if(window.empIncome) s+=empIncome(); return s; }
+  if(window.landIncome) s+=landIncome(); if(window.empIncome) s+=empIncome(); if(window.sigIncome) s+=sigIncome(); return s; }
 function depInterest(){ return S?S.deposit*ACTIVE_RATE*(window.vipDepMul?vipDepMul():1)/12:0; }
 function netWorth(){ if(!S)return 0; let a=0; for(const it of ALL) a+=it.p*(S.owned[it.id]||0)*0.5;
   if(S.collection) for(const c of S.collection) a+=c.price*0.5;
-  if(window.landValue) a+=landValue(); if(window.empValue) a+=empValue();
+  if(window.landValue) a+=landValue(); if(window.empValue) a+=empValue(); if(window.sigValue) a+=sigValue();
   return S.bal+S.deposit+termsTotal()+stockValue()+(S.gold||0)*(S.goldPx||0)+a-loansTotal(); }
 function creditStars(){ const p=S.creditPts; return p>=800?5:p>=600?4:p>=400?3:p>=200?2:1; }
 function loanRate(){ return (0.10-(creditStars()-1)*0.012)*(window.vipLoanMul?vipLoanMul():1); }
@@ -1019,7 +1038,7 @@ function vipTier(){ let t=VIPS[0]; for(const v of VIPS) if(S.wagered>=v.min) t=v
 /*-------- 每日结算 --------*/
 function stopDayTimer(){ if(dayTimer){ clearInterval(dayTimer); dayTimer=null; } }
 function seedHist(px){ const h=[]; let p=px; for(let i=0;i<14;i++){ h.unshift(Math.max(1,p)); p=p*(1-(Math.random()-0.5)*0.035); } return h; }
-function financeReset(){ if(dayTimer) clearInterval(dayTimer); STOCKS.forEach(s=>{S.px[s.id]=s.px; S.pxPrev[s.id]=s.px; S.pxHist[s.id]=seedHist(s.px);}); S.goldPx=62+Math.random()*8; S.goldPrev=S.goldPx; S.goldHist=seedHist(S.goldPx);
+function financeReset(){ if(dayTimer) clearInterval(dayTimer); STOCKS.forEach(s=>{S.px[s.id]=s.px; S.pxPrev[s.id]=s.px; S.pxHist[s.id]=seedHist(s.px);}); S.goldPx=62+Math.random()*8; S.goldPrev=S.goldPx; S.goldHist=seedHist(S.goldPx); if(window.sigReset) sigReset();
   if(window.tradeReset) tradeReset(); if(window.worldReset) worldReset(); if(window.forbesReset) forbesReset();
   dayTimer=setInterval(()=>{ if(S&&!S.over) dayTick(); }, 7000); }
 function dayTick(){
@@ -1054,6 +1073,7 @@ function dayTick(){
   if(window.tradeDayTick) tradeDayTick();
   if(window.shopDayTick) shopDayTick();
   if(window.forbesDayTick) forbesDayTick();
+  if(window.sigDayTick) sigDayTick();
   if(window.vipDayTick) vipDayTick();
   if((S.casDayNet||0)<0 && window.casCashback){ const back=Math.round(-S.casDayNet*casCashback()); if(back>0){ S.chips+=back; if(!byId("bankScreen").classList.contains("hidden")) renderBank(); } }
   S.casDayNet=0;
@@ -1970,6 +1990,43 @@ function saveEnding(id){ try{ const a=gotEndings(); if(a.indexOf(id)<0){ a.push(
 window.WINS=WINS;
 function checkWins(){ if(!S||S.over) return; for(const w of WINS){ let ok=false; try{ ok=!!w.chk(); }catch(e){} if(ok){ endRun(w.id); return; } } }
 syncContBtn();
+</script>
+
+<script>
+/*==================== 🚀 招牌资产（灵感取材·虚构模拟） ====================*/
+const SIG=[
+  {id:"spacex",zh:"SpaceX",en:"SpaceX",ico:"🚀",stakeZ:"约38%股份(含期权)",base:180e9,inc:0.0006,vol:0.035,g:"linear-gradient(135deg,#1c2e6a,#080f28)"},
+  {id:"tesla",zh:"特斯拉",en:"Tesla",ico:"🚗",stakeZ:"约11%流通股",base:130e9,inc:0.0005,vol:0.05,g:"linear-gradient(135deg,#6a1a1a,#280808)"},
+  {id:"btc",zh:"比特币",en:"Bitcoin",ico:"₿",stakeZ:"加密持仓",base:15e9,inc:0,vol:0.10,g:"linear-gradient(135deg,#6a5210,#281d05)"},
+  {id:"doge",zh:"狗狗币",en:"Dogecoin",ico:"🐕",stakeZ:"加密持仓",base:5e9,inc:0,vol:0.16,g:"linear-gradient(135deg,#6a5810,#282005)"},
+  {id:"x",zh:"X（原推特）",en:"X",ico:"🐦",stakeZ:"控股",base:24e9,inc:0.0004,vol:0.06,g:"linear-gradient(135deg,#1a1a1a,#000000)"},
+  {id:"neuralink",zh:"Neuralink",en:"Neuralink",ico:"🧠",stakeZ:"控股",base:9e9,inc:0.0003,vol:0.06,g:"linear-gradient(135deg,#3a1a5a,#160824)"},
+  {id:"boring",zh:"无聊公司",en:"Boring Co.",ico:"🕳️",stakeZ:"控股",base:6e9,inc:0.0003,vol:0.05,g:"linear-gradient(135deg,#3a2a1a,#160f08)"},
+];
+const SBY=Object.fromEntries(SIG.map(x=>[x.id,x]));
+function sigReset(){ if(!S.sig) S.sig={}; SIG.forEach(x=>{ S.sig[x.id]=x.base; }); }
+function sigDayTick(){ if(!S||!S.sig)return; SIG.forEach(x=>{ const v=S.sig[x.id]; if(v>0){ S.sig[x.id]=Math.max(0, v*(1+(x.inc>0?0.0012:0)+(Math.random()-0.5)*x.vol)); } }); }
+function sigValue(){ if(!S||!S.sig)return 0; let s=0; for(const x of SIG) s+=S.sig[x.id]||0; return s; }
+function sigIncome(){ if(!S||!S.sig)return 0; let s=0; for(const x of SIG) s+=(S.sig[x.id]||0)*x.inc; return s; }
+function liquidate(id){ if(!S)return; const v=S.sig[id]||0; if(v<=0)return; S.bal+=Math.round(v); S.sig[id]=0; toast("💰 "+tr("已变现")+" "+SBY[id].ico+" +"+shortMoney(v)); markDirty(); checkAch(); if(window.checkWins)checkWins(); refreshSig(); }
+function liquidateAll(){ if(!S)return; let tot=0; SIG.forEach(x=>{ tot+=S.sig[x.id]||0; S.sig[x.id]=0; }); if(tot<=0)return; S.bal+=Math.round(tot); toast("💰 +"+shortMoney(tot)); markDirty(); checkAch(); if(window.checkWins)checkWins(); refreshSig(); }
+function openSig(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} if(!S.sig||!Object.keys(S.sig).length) sigReset(); byId("sigScreen").classList.remove("hidden"); renderSig(); }
+function refreshSig(){ markDirty(); if(!byId("sigScreen").classList.contains("hidden")) renderSig(); }
+function sigApplyLang(){ if(!byId("sigScreen").classList.contains("hidden")) renderSig(); }
+function renderSig(){
+  let h=`<h2>🚀 <span>${tr("🚀 招牌资产")}</span></h2>
+    <div class="casnote">${tr("以下持股为虚构模拟、灵感取材，非真实持股，与相关公司或个人无任何关联。")}</div>
+    <div class="frow" style="margin-bottom:9px"><div class="fl">${tr("招牌总市值")}<small>${tr("招牌帝国日分红")} +${shortMoney(sigIncome())}</small></div><div class="fv">${shortMoney(sigValue())}</div></div>`;
+  SIG.forEach(x=>{ const v=(S.sig&&S.sig[x.id])||0, sold=v<=0;
+    h+=`<div class="sigcard${sold?" sold":""}" style="background:${x.g}"><div class="sgico">${x.ico}</div>
+      <div class="sgn">${x.ico} ${LANG==="en"?x.en:x.zh}</div><div class="sgstake">${tr(x.stakeZ)}</div>
+      <div class="sgv">${sold?tr("已变现"):shortMoney(v)}</div>
+      ${sold?"":`<div class="sgrow"><span style="font-size:11px;opacity:.8">${x.inc>0?("📈 +"+shortMoney(v*x.inc)+"/"+(LANG==="en"?"d":"天")):("🎲 "+(LANG==="en"?"volatile":"高波动"))}</span><button class="sgbtn" onclick="liquidate('${x.id}')">💰 ${tr("变现")}</button></div>`}</div>`; });
+  h+=`<div class="note">${tr("变现即卖出该资产换成现金(不可撤销)")}</div>
+    <button class="fbtn gold" style="width:100%" onclick="liquidateAll()">💰 ${tr("变现全部招牌资产")}</button>
+    <button class="btn ghost" style="padding:9px;margin-top:8px" onclick="byId('sigScreen').classList.add('hidden')">${tr("关闭")}</button>`;
+  byId("sigSheet").innerHTML=h;
+}
 </script>
 </body>
 </html>
