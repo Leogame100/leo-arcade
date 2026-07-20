@@ -550,6 +550,11 @@ const TR={
   "员工总数":"Employees","总技能":"Total skill","日营收":"Revenue/day","日薪支出":"Wages/day","公司日净利":"Net/day",
   "实习生":"Intern","初级员工":"Junior","资深员工":"Senior","专家":"Expert","天才":"Genius","雇佣":"Hire","解雇":"Fire","技能":"Skill","产出":"Output",
   "💼 已上班":"💼 Hired!","公司结算":"Company payday","好工作":"Good job","差工作":"Bad job",
+  // 饥饿值
+  "饥饿值":"Hunger","吃东西":"Eat","上班会消耗，饿了就吃":"drains while working — eat to refill","没上班不会饿":"no job = no hunger",
+  "太饿了！工资停发，快吃东西恢复":"Starving! No pay until you eat.",
+  "😵 太饿了！没法好好工作，工资停发，快去吃东西":"😵 Starving! You can't work — wages stop until you eat.",
+  "🍽️ 没有食物了，先去超市或快餐买点吃的":"🍽️ No food left — buy some from the Supermarket or Fast Food shop.",
   // 从零开始模式
   "白手起家：$0 起步，靠打工·投资·创业登顶福布斯首富即获胜。":"Rags to riches: start at $0 — work, invest & build your way to Forbes #1 to win.",
   "从零白手起家登顶福布斯财富榜":"Climb from $0 to #1 on the Forbes list",
@@ -726,7 +731,7 @@ function freshState(){
     mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
     shopLevel:1, listings:[], shopSold:0, casDayNet:0, gold:0, goldAvg:0, goldPx:65, sig:{}, sigHist:{},
     city:"", land:{}, traveled:0, donated:0, emp:{}, duelW:0, duelL:0, duelBest:0, beatTop:false, duelMsg:null,
-    job:"", emps:{}, jobEarned:0,
+    job:"", emps:{}, jobEarned:0, hunger:100,
     incomePeak:0, netPeak:startBal(), won:false, ending:"" };
 }
 function newGame(){
@@ -1695,8 +1700,10 @@ function sellItem(id,qty){ const it=ALL.find(x=>x.id===id); if(!it)return; const
 function sellAllType(id){ const it=ALL.find(x=>x.id===id); sellItem(id, S.owned[id]||0); }
 function sellColl(idx){ const c=S.collection[idx]; if(!c)return; const net=Math.round(c.price*mktOf(c.cat||"col")*(1-feeRate()));
   S.collection.splice(idx,1); S.bal+=net; S.sold+=net; toast("💰 +"+shortMoney(net)); checkAch(); refreshTrade(); }
+const FOOD_SAT={drink:8, fast:22, cuisine:45, dessert:18, grocery:30};   // 各类食物恢复的饥饿值
 function eatFood(id){ const have=S.owned[id]||0; if(have<=0)return; const it=ALL.find(x=>x.id===id); if(!it)return; S.owned[id]=have-1; countTypeAdj(it.cat,-1); S.meals++;
-  toast(it.ico+" "+tr("好吃！")+" "+tr("恢复心情")+"+10 · "+tr("饱食")+"+20"); checkAch(); refreshTrade(); }
+  const sat=FOOD_SAT[it.cat.id]||20; S.hunger=Math.min(100,(S.hunger==null?100:S.hunger)+sat);
+  toast(it.ico+" "+tr("好吃！")+" "+tr("饱食")+"+"+sat); checkAch(); refreshTrade(); if(window.refreshCareer) refreshCareer(); }
 /*-------- UI --------*/
 function openTrade(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} tradeView="inv"; byId("tradeScreen").classList.remove("hidden"); renderTrade(); }
 function tradeGo(v){ tradeView=v; renderTrade(); }
@@ -2156,14 +2163,27 @@ const EMPS=[
 const EBY=Object.fromEntries(EMPS.map(x=>[x.id,x]));
 if(typeof window!=="undefined" && window.careerView===undefined) window.careerView="job";
 function cityWage(){ const c=(window.curCity?curCity():null); return c&&c.wage?c.wage:1; }
-function jobSalary(){ if(!S||!S.job)return 0; const j=JBY[S.job]; return j?Math.round(j.pay*cityWage()):0; }
+const HUNGER_RATE=12;   // 上班每天消耗的饥饿值
+function jobSalary(){ if(!S||!S.job)return 0; if((S.hunger==null?100:S.hunger)<=0) return 0; const j=JBY[S.job]; return j?Math.round(j.pay*cityWage()):0; }
 function empCount(){ if(!S||!S.emps)return 0; let n=0; for(const e of EMPS) n+=S.emps[e.id]||0; return n; }
 function empSkill(){ if(!S||!S.emps)return 0; let n=0; for(const e of EMPS) n+=(S.emps[e.id]||0)*e.skill; return n; }
 function empRevenue(){ if(!S||!S.emps)return 0; let s=0; for(const e of EMPS) s+=(S.emps[e.id]||0)*e.out; return s; }
 function empWages(){ if(!S||!S.emps)return 0; let s=0; for(const e of EMPS) s+=(S.emps[e.id]||0)*e.wage; return s; }
 function empNet(){ return empRevenue()-empWages(); }
 function careerIncome(){ return jobSalary()+empNet(); }
-function careerDayTick(){ if(!S)return; if(S.job) S.jobEarned=(S.jobEarned||0)+jobSalary(); refreshCareer(); }
+function careerDayTick(){ if(!S)return;
+  if(S.job){                                                  // 只有上班才会饿
+    S.jobEarned=(S.jobEarned||0)+jobSalary();                 // 记账与当天已发工资一致（此刻尚未扣饥饿）
+    const before=(S.hunger==null?100:S.hunger);
+    S.hunger=Math.max(0, before-HUNGER_RATE);
+    if(before>0 && S.hunger<=0) toast(tr("😵 太饿了！没法好好工作，工资停发，快去吃东西"));
+  }
+  refreshCareer(); }
+function hungerColor(h){ return h>50?"var(--green)":(h>=20?"var(--gold)":"var(--red)"); }
+function eatAny(){ if(!S)return; let best=null, bestSat=-1;   // 吃掉库存里回复最多的一份食物
+  for(const it of ALL){ if(it.cat.type==="food" && (S.owned[it.id]||0)>0){ const s=FOOD_SAT[it.cat.id]||20; if(s>bestSat){ bestSat=s; best=it; } } }
+  if(!best){ toast(tr("🍽️ 没有食物了，先去超市或快餐买点吃的")); return; }
+  eatFood(best.id); }
 function takeJob(id){ if(!S||!JBY[id])return; S.job=id; toast(tr("💼 已上班")+" "+JBY[id].ico+" "+nm(JBY[id])); markDirty(); refreshCareer(); }
 function quitJob(){ if(!S)return; S.job=""; markDirty(); refreshCareer(); }
 function hireEmp(id,n){ if(!S||!EBY[id])return; if(!S.emps)S.emps={}; const cost=EBY[id].wage*n; if(S.bal<cost){ toast(tr("余额不足")); return; } S.bal-=cost; S.emps[id]=(S.emps[id]||0)+n; toast("🧑‍💼 +"+n+" "+EBY[id].ico+" "+nm(EBY[id])); markDirty(); if(window.checkWins)checkWins(); refreshCareer(); }
@@ -2185,6 +2205,14 @@ function renderCareer(){
     h+=`<div class="frow"><div class="fl">${tr("当前工作")}<small>${tr("累计工资")} ${shortMoney(S.jobEarned||0)}</small></div>
       <div class="fv">${cur?(cur.ico+" "+nm(cur)+" · +"+shortMoney(jobSalary())+"/"+(LANG==="en"?"d":"天")):tr("无业")}</div></div>`;
     if(cur) h+=`<button class="fbtn red sm" style="margin:-2px 0 8px auto;display:block" onclick="quitJob()">${tr("辞职")}</button>`;
+    const hg=(S.hunger==null?100:S.hunger);
+    h+=`<div class="frow" style="display:block">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <div class="fl">🍔 ${tr("饥饿值")} <small>${cur?tr("上班会消耗，饿了就吃"):tr("没上班不会饿")}</small></div>
+        <div class="fv" style="color:${hungerColor(hg)}">${Math.round(hg)}/100</div></div>
+      <div style="height:9px;background:#0c1a13;border-radius:6px;overflow:hidden"><div style="height:100%;width:${hg}%;background:${hungerColor(hg)};transition:width .3s"></div></div>
+      <button class="fbtn sm" style="margin-top:7px;width:100%" onclick="eatAny()">🍽️ ${tr("吃东西")}</button>
+      ${hg<=0?`<div class="note" style="color:var(--red);margin-top:5px">${tr("太饿了！工资停发，快吃东西恢复")}</div>`:""}</div>`;
     JOBS.forEach(j=>{ const on=S.job===j.id, badge=j.tag==="good"?`<span style="color:#7CFF9B">👍 ${tr("好工作")}</span>`:j.tag==="bad"?`<span style="color:#ff8f8f">👎 ${tr("差工作")}</span>`:"";
       h+=`<div class="divrow${on?" owned":""}"><div class="di">${j.ico}</div><div class="dt"><div class="dn">${nm(j)} ${badge}</div>
         <div class="dd">${tr("日薪")} ${shortMoney(Math.round(j.pay*cw))} <small style="opacity:.6">(基 ${shortMoney(j.pay)}×${cw.toFixed(2)})</small></div></div>
