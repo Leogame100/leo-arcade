@@ -694,7 +694,7 @@ function freshState(){
     cat:CATS[0].id, over:false, eventMul:1, evName:"", discounts:{},
     // 金融
     day:1, dayAcc:0, deposit:0, terms:[], loans:[], credit:5, creditPts:800,
-    stocks:{}, px:{}, pxPrev:{}, pxHist:{}, goldPrev:0, goldHist:[], insured:{}, chips:0, wagered:0, cstats:{plays:0,wins:0,biggest:0,net:0},
+    stocks:{}, px:{}, pxPrev:{}, pxHist:{}, pxMom:{}, goldPrev:0, goldHist:[], insured:{}, chips:0, wagered:0, cstats:{plays:0,wins:0,biggest:0,net:0},
     collection:[], aucBids:0, aucWon:0, aucBiggest:0, aucSpent:0,
     mail:[], checkStreak:0, lastCheckin:0, giftLog:{}, giftsGot:0, birthday:12+Math.floor(Math.random()*28), bdayDone:false,
     mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
@@ -1046,7 +1046,7 @@ function vipTier(){ let t=VIPS[0]; for(const v of VIPS) if(S.wagered>=v.min) t=v
 /*-------- 每日结算 --------*/
 function stopDayTimer(){ if(dayTimer){ clearInterval(dayTimer); dayTimer=null; } }
 function seedHist(px){ const h=[]; let p=px; for(let i=0;i<14;i++){ h.unshift(Math.max(1,p)); p=p*(1-(Math.random()-0.5)*0.035); } return h; }
-function financeReset(){ if(dayTimer) clearInterval(dayTimer); STOCKS.forEach(s=>{S.px[s.id]=s.px; S.pxPrev[s.id]=s.px; S.pxHist[s.id]=seedHist(s.px);}); S.goldPx=62+Math.random()*8; S.goldPrev=S.goldPx; S.goldHist=seedHist(S.goldPx); if(window.sigReset) sigReset();
+function financeReset(){ if(dayTimer) clearInterval(dayTimer); STOCKS.forEach(s=>{S.px[s.id]=s.px; S.pxPrev[s.id]=s.px; S.pxHist[s.id]=seedHist(s.px); S.pxMom[s.id]=0;}); S.goldPx=62+Math.random()*8; S.goldPrev=S.goldPx; S.goldHist=seedHist(S.goldPx); if(window.sigReset) sigReset();
   if(window.tradeReset) tradeReset(); if(window.worldReset) worldReset(); if(window.forbesReset) forbesReset();
   dayTimer=setInterval(()=>{ if(S&&!S.over) dayTick(); }, 7000); }
 function dayTick(){
@@ -1061,10 +1061,18 @@ function dayTick(){
   const inc=assetIncome(); S.bal+=inc; S.incomePeak=Math.max(S.incomePeak,inc);
   // 股市波动（温和 + 略微向上漂移，长期持有有回报，不再暴涨暴跌）
   if(!S.pxPrev) S.pxPrev={};
-  STOCKS.forEach(s=>{ S.pxPrev[s.id]=S.px[s.id]; S.px[s.id]=Math.max(1, S.px[s.id]*(1+(Math.random()-0.45)*0.05)); });
+  // 一波波拉升：连涨天数越多当天涨得越猛（慢慢涨→快涨），但涨得越久越可能获利回吐(回调)——防止无限暴涨
+  if(!S.pxMom) S.pxMom={};
+  STOCKS.forEach(s=>{ let streak=S.pxMom[s.id]||0; S.pxPrev[s.id]=S.px[s.id];
+    if(Math.random() < 0.13 + streak*0.06){                 // 回调概率随连涨升高：拉升终会结束
+      S.px[s.id]=Math.max(1, S.px[s.id]*(1-(0.02+Math.random()*0.05))); S.pxMom[s.id]=0;
+    } else {                                                // 上涨：起步慢、随连涨加速
+      const move=0.006 + streak*0.006 + Math.random()*0.009;
+      S.px[s.id]=Math.max(1, S.px[s.id]*(1+move)); S.pxMom[s.id]=Math.min(streak+1,8);
+    } });
   { S.goldPrev=S.goldPx; let gp=(S.goldPx||65)*(1+(Math.random()-0.49)*0.045); if(Math.random()<0.04) gp*= (Math.random()<0.5?1.1:0.9); S.goldPx=Math.max(25,Math.min(260,gp)); }
-  // 偶发行情（较少、幅度较小、略偏上涨）
-  if(Math.random()<0.05){ const up=Math.random()<0.55; STOCKS.forEach(s=>S.px[s.id]*= up?1.12:0.90);
+  // 偶发行情：大涨点燃新一波拉升，回调则打断连涨
+  if(Math.random()<0.05){ const up=Math.random()<0.5; STOCKS.forEach(s=>{ S.px[s.id]*= up?1.08:0.9; S.pxMom[s.id]= up?2:0; });
     toast(up?tr("📈 股市大涨！"):tr("📉 股市回调")); }
   if(!S.pxHist) S.pxHist={}; STOCKS.forEach(s=>{ (S.pxHist[s.id]=S.pxHist[s.id]||[]).push(S.px[s.id]); if(S.pxHist[s.id].length>48)S.pxHist[s.id].shift(); });
   (S.goldHist=S.goldHist||[]).push(S.goldPx); if(S.goldHist.length>48)S.goldHist.shift();
