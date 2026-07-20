@@ -106,6 +106,13 @@
   .mode{background:#12241c;border:2px solid var(--line);border-radius:12px;padding:11px 12px;cursor:pointer;transition:border-color .1s;}
   .mode.on{border-color:var(--gold);background:#1a2e1f;}
   .mode .mn{font-weight:900;font-size:15px;} .mode .md{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.5;}
+  .mode.big{padding:17px 15px;border-color:var(--gold);background:linear-gradient(135deg,#2b2410,#1a2e1f);box-shadow:0 0 0 1px var(--gold),0 5px 16px rgba(232,184,58,.28);}
+  .mode.big .mn{font-size:20px;} .mode.big .md{font-size:12.5px;}
+  .modetag{display:inline-block;background:var(--gold);color:#3a2a00;font-size:10px;font-weight:900;padding:1px 7px;border-radius:8px;vertical-align:middle;margin-left:5px;}
+  .hotbadge{position:absolute;top:-6px;right:-4px;min-width:16px;height:16px;background:var(--red);color:#fff;border-radius:9px;font-size:10px;font-weight:900;line-height:16px;text-align:center;padding:0 3px;box-shadow:0 0 0 2px #0f1e17;animation:hotpulse 1s infinite;}
+  .ib .hotbadge{top:-5px;right:-3px;min-width:14px;height:14px;line-height:14px;font-size:9px;}
+  @keyframes hotpulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.28);opacity:.65;}}
+  @media (prefers-reduced-motion:reduce){ .hotbadge{animation:none;} }
   .btn{display:block;width:100%;background:var(--green);color:#04140b;border:none;border-radius:13px;padding:13px;font-size:17px;font-weight:900;cursor:pointer;margin-top:8px;}
   .btn.ghost{background:#1c3327;color:var(--ink);} .btn:active{transform:scale(.98);}
   .achrow{display:flex;align-items:center;gap:11px;background:#12241c;border:1px solid var(--line);border-radius:11px;padding:9px 11px;margin-bottom:7px;}
@@ -310,7 +317,7 @@
   <div class="dock">
     <div class="oneclick" id="oneClick"></div>
     <div class="iconbar">
-      <button class="ib" onclick="openBank()" title="银行"><i>🏦</i><b data-i18n="银行">银行</b></button>
+      <button class="ib" onclick="openBank()" title="银行"><i>🏦</i><b data-i18n="银行">银行</b><span class="hotbadge" id="bankHot" style="display:none">!</span></button>
       <button class="ib" onclick="openGoldTab()" title="黄金"><i>🥇</i><b data-i18n="黄金">黄金</b></button>
       <button class="ib" onclick="openAuction()" title="拍卖"><i>🔨</i><b data-i18n="拍卖">拍卖</b></button>
       <button class="ib" onclick="openGifts()" title="礼物"><i>🎁</i><b data-i18n="礼物">礼物</b><span class="gbadge" id="giftBadge"></span></button>
@@ -320,7 +327,7 @@
       <button class="ib" onclick="openVip()" title="VIP"><i>🎫</i><b>VIP</b></button>
       <button class="ib" onclick="openEmpire()" title="财富帝国"><i>🌟</i><b data-i18n="帝国">帝国</b></button>
       <button class="ib" onclick="openSig()" title="招牌资产"><i>🚀</i><b data-i18n="招牌">招牌</b></button>
-      <button class="ib" onclick="openCareer()" title="事业"><i>💼</i><b data-i18n="事业">事业</b></button>
+      <button class="ib" onclick="openCareer()" title="事业"><i>💼</i><b data-i18n="事业">事业</b><span class="hotbadge" id="careerHot" style="display:none">!</span></button>
       <button class="ib" onclick="openAch()" title="成就"><i>🏅</i><b data-i18n="成就">成就</b></button>
       <button class="ib" onclick="openStart()" title="模式"><i>⚙️</i><b data-i18n="模式">模式</b></button>
     </div>
@@ -558,6 +565,12 @@ const TR={
   // 工作经验 + 全球排名
   "工作经验":"Job XP","每天上班积累，解锁更好的工作":"gained daily — unlocks better jobs","经验不足！先在差工作攒够经验":"Not enough XP — grind bad jobs to earn it first",
   "80亿人":"8 billion people","富豪榜":"Rich List",
+  // 人情世故 + 升职 + 推荐
+  "推荐":"Best","职级":"Rank","升职":"Promote","需人情":"needs favor","人情世故":"Connections","人情":"favor","请领导吃饭攒人情，升职靠它":"Treat your boss to earn favor — promotions need it",
+  "已是最高职位":"Top rank reached","升职成功！":"Promoted!","先找份工作再升职":"Get a job before promoting","人情不够，先多请领导吃饭":"Not enough favor — treat your boss more",
+  "先找份工作，才有领导可请":"Get a job first — then you'll have a boss to treat",
+  "初级":"Junior","熟练":"Skilled","资深":"Senior","主管":"Manager","总监":"Director",
+  "请领导吃快餐":"Treat: fast food","请领导吃大餐":"Treat: fancy dinner","高档宴请领导":"Luxury banquet","送领导大礼":"Lavish gift",
   // 从零开始模式
   "白手起家：$0 起步，靠打工·投资·创业登顶福布斯首富即获胜。":"Rags to riches: start at $0 — work, invest & build your way to Forbes #1 to win.",
   "从零白手起家登顶福布斯财富榜":"Climb from $0 to #1 on the Forbes list",
@@ -689,8 +702,8 @@ CATS.forEach((c,ci)=>c.items.forEach((it,ii)=>{ it.id=c.id+"_"+ii; it.cat=c; }))
 const ALL=CATS.flatMap(c=>c.items);
 
 const MODES=[
-  {id:"normal", zh:"普通模式", en:"Normal", d:"正常价格购物。"},
   {id:"zero", zh:"从零开始", en:"From Zero", d:"白手起家：$0 起步，靠打工·投资·创业登顶福布斯首富即获胜。"},
+  {id:"normal", zh:"普通模式", en:"Normal", d:"正常价格购物。"},
   {id:"discount", zh:"折扣模式", en:"Discount", d:"商品随机打折，可以买到更多东西。"},
   {id:"greedy", zh:"疯狂贪婪模式", en:"Greedy Inflation", d:"价格随购买持续上涨，考验消费策略。"},
   {id:"events", zh:"随机事件模式", en:"Random Events", d:"每隔一段时间触发事件：黑五五折、全球缺货、限时拍卖、神秘宝箱。"},
@@ -734,7 +747,7 @@ function freshState(){
     mkt:{}, mktPrev:{}, sold:0, meals:0, news:[],
     shopLevel:1, listings:[], shopSold:0, casDayNet:0, gold:0, goldAvg:0, goldPx:65, sig:{}, sigHist:{},
     city:"", land:{}, traveled:0, donated:0, emp:{}, duelW:0, duelL:0, duelBest:0, beatTop:false, duelMsg:null,
-    job:"", emps:{}, jobEarned:0, hunger:100, exp:0,
+    job:"", emps:{}, jobEarned:0, hunger:100, exp:0, favor:0, jobLv:{},
     incomePeak:0, netPeak:startBal(), won:false, ending:"" };
 }
 function newGame(){
@@ -905,6 +918,7 @@ function renderHud(){
   // 从零开始模式：进度条改为「冲榜首」进度（净资产 / 首富身家）
   { let frac; if(MODE==="zero"){ const top=(typeof forbesTop1==="function"?forbesTop1():START_BAL); frac=netWorth()/(isFinite(top)&&top>0?top:START_BAL); } else frac=S.bal/START_BAL;
     byId("balBar").style.width=Math.max(0,Math.min(100,frac*100))+"%"; }
+  if(window.updateHotBadges) updateHotBadges();
   if(window.financeHud) financeHud();
 }
 function buildTabs(){
@@ -955,10 +969,17 @@ function buildOneClick(){
 }
 function buildModes(){
   const seg=byId("modeSeg"); if(!seg) return; seg.innerHTML="";
-  MODES.forEach(m=>{ const el=document.createElement("div"); el.className="mode"+(MODE===m.id?" on":"");
-    el.innerHTML=`<div class="mn">${nm(m)}</div><div class="md">${tr(m.d)}</div>`;
+  MODES.forEach(m=>{ const el=document.createElement("div"); el.className="mode"+(m.id==="zero"?" big":"")+(MODE===m.id?" on":"");
+    const tag=m.id==="zero"?`<span class="modetag">🔥 ${tr("推荐")}</span>`:"";
+    el.innerHTML=`<div class="mn">${nm(m)} ${tag}</div><div class="md">${tr(m.d)}</div>`;
     el.onclick=()=>{ MODE=m.id; buildModes(); }; seg.appendChild(el); });
 }
+// 「重要」提示徽标：银行/事业 按钮上闪红点，玩家打开过一次后消失
+function updateHotBadges(){ try{
+  const bh=byId("bankHot"); if(bh) bh.style.display=localStorage.getItem("spendSeenBank")?"none":"block";
+  const ch=byId("careerHot"); if(ch) ch.style.display=localStorage.getItem("spendSeenCareer")?"none":"block";
+}catch(e){} }
+function clearHot(key,id){ try{ localStorage.setItem(key,"1"); }catch(e){} const el=byId(id); if(el) el.style.display="none"; }
 
 /*==================== 覆盖层 ====================*/
 function openStart(){ stopAuto(); buildModes(); if(window.syncContBtn) syncContBtn(); byId("startScreen").classList.remove("hidden"); }
@@ -1279,7 +1300,7 @@ function financeHud(){ if(!S)return; const nv=byId("netVal"),iv=byId("incVal"),d
 
 /*==================== 面板 UI ====================*/
 function bankOpen(){ return !byId("bankScreen").classList.contains("hidden"); }
-function openBank(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} bankTab="deposit"; byId("bankScreen").classList.remove("hidden"); renderBank(); }
+function openBank(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} clearHot("spendSeenBank","bankHot"); bankTab="deposit"; byId("bankScreen").classList.remove("hidden"); renderBank(); }
 function bankTabTo(t){ bankTab=t; if(t!=="casino") casGame="menu"; renderBank(); }
 function openGoldTab(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} bankTab="gold"; byId("bankScreen").classList.remove("hidden"); renderBank(); }
 function refreshFin(){ markDirty(); renderBank(); financeHud(); }
@@ -2178,11 +2199,37 @@ const EMPS=[
   {id:"genius",zh:"天才",en:"Genius",ico:"🦾",wage:600000,out:820000,skill:5},
 ];
 const EBY=Object.fromEntries(EMPS.map(x=>[x.id,x]));
+// 每个工作可升级的高级职位（类似羊圈帝国的升级：越高级工资倍率越大）
+const JOB_RANKS=[
+  {zh:"初级",en:"Junior",mult:1},{zh:"熟练",en:"Skilled",mult:1.6},{zh:"资深",en:"Senior",mult:2.5},{zh:"主管",en:"Manager",mult:4},{zh:"总监",en:"Director",mult:6.5},
+];
+const PROMO_FAV=[20,45,90,160];   // 升到 Lv2/3/4/5 各需的人情
+// 人情世故：请领导吃饭 / 送礼 攒人情，升职靠它
+const TREATS=[
+  {zh:"请领导吃快餐",en:"Fast-food treat",ico:"🍔",cost:500,fav:5},
+  {zh:"请领导吃大餐",en:"Fancy dinner",ico:"🍽️",cost:5000,fav:20},
+  {zh:"高档宴请领导",en:"Luxury banquet",ico:"🥂",cost:50000,fav:60},
+  {zh:"送领导大礼",en:"Lavish gift",ico:"🎁",cost:500000,fav:150},
+];
 if(typeof window!=="undefined" && window.careerView===undefined) window.careerView="job";
 function cityWage(){ const c=(window.curCity?curCity():null); return c&&c.wage?c.wage:1; }
 const HUNGER_RATE=12;   // 上班每天消耗的饥饿值
 const EXP_RATE=1;       // 上班每天积累的工作经验
-function jobSalary(){ if(!S||!S.job)return 0; if((S.hunger==null?100:S.hunger)<=0) return 0; const j=JBY[S.job]; return j?Math.round(j.pay*cityWage()):0; }
+function jobLevel(id){ return (S&&S.jobLv&&S.jobLv[id])||1; }
+function jobRank(id){ return JOB_RANKS[jobLevel(id)-1]||JOB_RANKS[0]; }
+function jobMult(id){ return jobRank(id).mult; }
+function jobSalary(){ if(!S||!S.job)return 0; if((S.hunger==null?100:S.hunger)<=0) return 0; const j=JBY[S.job]; return j?Math.round(j.pay*cityWage()*jobMult(S.job)):0; }
+function treatBoss(i){ if(!S)return; const t=TREATS[i]; if(!t)return;
+  if(!S.job){ toast(tr("先找份工作，才有领导可请")); return; }
+  if(S.bal<t.cost){ toast(tr("现金不足")); return; }
+  S.bal-=t.cost; S.spent+=t.cost; S.favor=(S.favor||0)+t.fav;   // 花钱攒人情，也算挥霍消费
+  toast(t.ico+" "+tr("人情")+" +"+t.fav); markDirty(); checkAch(); refreshCareer(); }
+function promote(){ if(!S||!S.job){ toast(tr("先找份工作再升职")); return; }
+  const L=jobLevel(S.job); if(L>=JOB_RANKS.length){ toast(tr("已是最高职位")); return; }
+  const cost=PROMO_FAV[L-1];
+  if((S.favor||0)<cost){ toast(tr("人情不够，先多请领导吃饭")+" ("+Math.floor(S.favor||0)+"/"+cost+")"); return; }
+  S.favor-=cost; if(!S.jobLv)S.jobLv={}; S.jobLv[S.job]=L+1;
+  toast("🎉 "+tr("升职成功！")+" "+JBY[S.job].ico+" "+nm(JBY[S.job])+" · "+nm(JOB_RANKS[L])); markDirty(); refreshCareer(); }
 function empCount(){ if(!S||!S.emps)return 0; let n=0; for(const e of EMPS) n+=S.emps[e.id]||0; return n; }
 function empSkill(){ if(!S||!S.emps)return 0; let n=0; for(const e of EMPS) n+=(S.emps[e.id]||0)*e.skill; return n; }
 function empRevenue(){ if(!S||!S.emps)return 0; let s=0; for(const e of EMPS) s+=(S.emps[e.id]||0)*e.out; return s; }
@@ -2211,7 +2258,7 @@ function quitJob(){ if(!S)return; S.job=""; markDirty(); refreshCareer(); }
 function hireEmp(id,n){ if(!S||!EBY[id])return; if(!S.emps)S.emps={}; const cost=EBY[id].wage*n; if(S.bal<cost){ toast(tr("余额不足")); return; } S.bal-=cost; S.emps[id]=(S.emps[id]||0)+n; toast("🧑‍💼 +"+n+" "+EBY[id].ico+" "+nm(EBY[id])); markDirty(); if(window.checkWins)checkWins(); refreshCareer(); }
 function fireEmp(id,n){ if(!S||!S.emps)return; S.emps[id]=Math.max(0,(S.emps[id]||0)-n); markDirty(); refreshCareer(); }
 function setCareerView(v){ window.careerView=v; renderCareer(); }
-function openCareer(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} byId("careerScreen").classList.remove("hidden"); renderCareer(); }
+function openCareer(){ if(!S){toast(LANG==="en"?"Start a game first":"请先开始游戏");return;} clearHot("spendSeenCareer","careerHot"); byId("careerScreen").classList.remove("hidden"); renderCareer(); }
 function refreshCareer(){ markDirty(); if(byId("careerScreen") && !byId("careerScreen").classList.contains("hidden")) renderCareer(); }
 function careerApplyLang(){ if(byId("careerScreen") && !byId("careerScreen").classList.contains("hidden")) renderCareer(); }
 function renderCareer(){
@@ -2225,8 +2272,23 @@ function renderCareer(){
     h+=`<div class="casnote">${tr("不同城市工资不同——高消费城市薪水更高。")} ${cy?("<b>"+cy.flag+" "+(LANG==="en"?cy.en:cy.zh)+" · "+tr("当前城市薪资系数")+" "+cw.toFixed(2)+"</b>"):""}</div>`;
     const cur=S.job?JBY[S.job]:null;
     h+=`<div class="frow"><div class="fl">${tr("当前工作")}<small>${tr("累计工资")} ${shortMoney(S.jobEarned||0)}</small></div>
-      <div class="fv">${cur?(cur.ico+" "+nm(cur)+" · +"+shortMoney(jobSalary())+"/"+(LANG==="en"?"d":"天")):tr("无业")}</div></div>`;
-    if(cur) h+=`<button class="fbtn red sm" style="margin:-2px 0 8px auto;display:block" onclick="quitJob()">${tr("辞职")}</button>`;
+      <div class="fv">${cur?(cur.ico+" "+nm(cur)+" · "+nm(jobRank(cur.id))+" · +"+shortMoney(jobSalary())+"/"+(LANG==="en"?"d":"天")):tr("无业")}</div></div>`;
+    if(cur){
+      const L=jobLevel(cur.id), maxed=L>=JOB_RANKS.length;
+      h+=`<div class="frow" style="display:block">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="fl">🎖️ ${tr("职级")} <b style="color:var(--gold)">${nm(jobRank(cur.id))}</b> <small>Lv${L}/${JOB_RANKS.length} · ×${jobMult(cur.id)}</small></div>
+          <button class="fbtn red sm" onclick="quitJob()">${tr("辞职")}</button></div>
+        ${maxed
+          ? `<div class="note" style="color:var(--gold);margin-top:6px">👑 ${tr("已是最高职位")}</div>`
+          : `<button class="fbtn gold sm" style="width:100%;margin-top:7px" onclick="promote()">⬆️ ${tr("升职")} → ${nm(JOB_RANKS[L])} · ${tr("需人情")} ${PROMO_FAV[L-1]}</button>`}</div>`;
+    }
+    // 人情世故：请领导吃饭攒人情
+    h+=`<div class="frow" style="display:block">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="fl">🤝 ${tr("人情世故")} <small>${tr("请领导吃饭攒人情，升职靠它")}</small></div>
+        <div class="fv" style="color:var(--gold)">${Math.floor(S.favor||0)} ${tr("人情")}</div></div>
+      <div class="fgrid2">${TREATS.map((t,i)=>`<button class="fbtn sm" onclick="treatBoss(${i})">${t.ico} ${nm(t)}<br><small style="opacity:.7">${shortMoney(t.cost)} → +${t.fav}</small></button>`).join("")}</div></div>`;
     const hg=(S.hunger==null?100:S.hunger);
     h+=`<div class="frow" style="display:block">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
