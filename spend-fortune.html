@@ -550,6 +550,10 @@ const TR={
   "员工总数":"Employees","总技能":"Total skill","日营收":"Revenue/day","日薪支出":"Wages/day","公司日净利":"Net/day",
   "实习生":"Intern","初级员工":"Junior","资深员工":"Senior","专家":"Expert","天才":"Genius","雇佣":"Hire","解雇":"Fire","技能":"Skill","产出":"Output",
   "💼 已上班":"💼 Hired!","公司结算":"Company payday","好工作":"Good job","差工作":"Bad job",
+  // 从零开始模式
+  "白手起家：$0 起步，靠打工·投资·创业登顶福布斯首富即获胜。":"Rags to riches: start at $0 — work, invest & build your way to Forbes #1 to win.",
+  "从零白手起家登顶福布斯财富榜":"Climb from $0 to #1 on the Forbes list",
+  "💼 白手起家：先去「事业」找份工作赚第一桶金，再投资冲榜首！":"💼 Rags to riches: open Career, grab a job for your first paycheck, then invest your way to #1!",
   "雇佣需先支付一天工资作为签约金；之后每天自动结算营收与工资。":"Hiring costs one day's wage upfront; revenue & wages settle automatically each day.",
   // 招牌资产
   "招牌":"Empire","招牌资产":"Signature Holdings","🚀 招牌资产":"🚀 Signature Holdings",
@@ -678,6 +682,7 @@ const ALL=CATS.flatMap(c=>c.items);
 
 const MODES=[
   {id:"normal", zh:"普通模式", en:"Normal", d:"正常价格购物。"},
+  {id:"zero", zh:"从零开始", en:"From Zero", d:"白手起家：$0 起步，靠打工·投资·创业登顶福布斯首富即获胜。"},
   {id:"discount", zh:"折扣模式", en:"Discount", d:"商品随机打折，可以买到更多东西。"},
   {id:"greedy", zh:"疯狂贪婪模式", en:"Greedy Inflation", d:"价格随购买持续上涨，考验消费策略。"},
   {id:"events", zh:"随机事件模式", en:"Random Events", d:"每隔一段时间触发事件：黑五五折、全球缺货、限时拍卖、神秘宝箱。"},
@@ -692,7 +697,7 @@ const ACHS=[
   {id:"plane", ico:"✈️", zh:"飞机收藏家", en:"Plane Collector", d:"拥有100架飞机", chk:s=>s.planes>=100},
   {id:"b10", ico:"🔥", zh:"挥霍大师", en:"Big Spender", d:"花费100亿美元", chk:s=>s.spent>=1e10},
   {id:"b100", ico:"👑", zh:"全球首富消费者", en:"Ultra Consumer", d:"花费1000亿美元", chk:s=>s.spent>=1e11},
-  {id:"zero", ico:"🎯", zh:"财富清零", en:"Wealth Zero", d:"把全部资金花光", chk:s=>s.bal<=0},
+  {id:"zero", ico:"🎯", zh:"财富清零", en:"Wealth Zero", d:"把全部资金花光", chk:s=>s.bal<=0 && MODE!=="zero"},
   {id:"auc1", ico:"🔨", zh:"第一次举牌", en:"First Bid", d:"参与一次拍卖竞价", chk:s=>(s.aucBids||0)>=1},
   {id:"aucCur", ico:"🏛️", zh:"世界收藏馆", en:"World Curator", d:"竞得100件拍品", chk:s=>(s.collection?s.collection.length:0)>=100},
   {id:"aucLeg", ico:"👑", zh:"拍卖传奇", en:"Auction Legend", d:"单件拍品成交超$100B", chk:s=>(s.aucBiggest||0)>=100e9},
@@ -708,8 +713,9 @@ const START_BAL=1.3e12;   // $1.3 万亿
 /*==================== 状态 ====================*/
 const byId=id=>document.getElementById(id);
 let S=null, MODE="normal", QTY=1, dirty=false, autoTimer=null, eventTimer=null, greedyMul=1;
+function startBal(){ return MODE==="zero" ? 0 : START_BAL; }   // 从零开始模式 $0 起步
 function freshState(){
-  return { bal:START_BAL, spent:0, items:0, clicks:0, t0:0,
+  return { bal:startBal(), spent:0, items:0, clicks:0, t0:0,
     owned:{}, fav:{}, cars:0, planes:0, houses:0, buildings:0,
     cat:CATS[0].id, over:false, eventMul:1, evName:"", discounts:{},
     // 金融
@@ -721,7 +727,7 @@ function freshState(){
     shopLevel:1, listings:[], shopSold:0, casDayNet:0, gold:0, goldAvg:0, goldPx:65, sig:{}, sigHist:{},
     city:"", land:{}, traveled:0, donated:0, emp:{}, duelW:0, duelL:0, duelBest:0, beatTop:false, duelMsg:null,
     job:"", emps:{}, jobEarned:0,
-    incomePeak:0, netPeak:START_BAL, won:false, ending:"" };
+    incomePeak:0, netPeak:startBal(), won:false, ending:"" };
 }
 function newGame(){
   stopAuto(); clearInterval(eventTimer); eventTimer=null; greedyMul=1;
@@ -730,6 +736,7 @@ function newGame(){
   if(MODE==="events"||MODE==="chaos"){ eventTimer=setInterval(tickEvent, 1000); }
   if(window.financeReset) financeReset();
   closeOv("startScreen"); buildTabs(); buildOneClick(); buildQty(); renderItems(); renderHud();
+  if(MODE==="zero") setTimeout(()=>toast(tr("💼 白手起家：先去「事业」找份工作赚第一桶金，再投资冲榜首！")), 400);
 }
 
 /*==================== 价格 ====================*/
@@ -887,7 +894,9 @@ function renderHud(){
   byId("balShort").textContent=S.bal>0?("≈ "+shortMoney(S.bal)):"—";
   byId("spentVal").textContent=shortMoney(S.spent);
   byId("itemsVal").textContent=S.items.toLocaleString("en-US");
-  byId("balBar").style.width=Math.max(0,Math.min(100,S.bal/START_BAL*100))+"%";
+  // 从零开始模式：进度条改为「冲榜首」进度（净资产 / 首富身家）
+  { let frac; if(MODE==="zero"){ const top=(typeof forbesTop1==="function"?forbesTop1():START_BAL); frac=netWorth()/(isFinite(top)&&top>0?top:START_BAL); } else frac=S.bal/START_BAL;
+    byId("balBar").style.width=Math.max(0,Math.min(100,frac*100))+"%"; }
   if(window.financeHud) financeHud();
 }
 function buildTabs(){
@@ -2059,11 +2068,11 @@ function renderEmp(){ const lv=empLevels(), max=DIVS.length*DIV_MAX, pct=Math.ro
 }
 /*==================== 🏁 多结局：更多获胜条件 ====================*/
 const WINS=[
-  {id:"zero", ico:"💸", zh:"财富清零", en:"Spent It All", d:"把现金/存款/股票/贷款全部归零",
+  {id:"zero", ico:"💸", zh:"财富清零", en:"Spent It All", d:"把现金/存款/股票/贷款全部归零", notMode:"zero",
     chk:()=>S.bal<=0 && S.deposit<=0 && (S.chips||0)<=0 && termsTotal()<=0 && stockValue()<=0 && shortLiab()<=0 && loansTotal()<=0},
   {id:"empire", ico:"🌟", zh:"财富帝国", en:"Wealth Empire", d:"12大商业部门全部升至满级",
     chk:()=>empDone()},
-  {id:"forbes", ico:"🥇", zh:"世界首富", en:"World's Richest", d:"登顶福布斯财富榜",
+  {id:"forbes", ico:"🥇", zh:"世界首富", en:"World's Richest", d:"从零白手起家登顶福布斯财富榜", mode:"zero",
     chk:()=>RIVALS.length>0 && netWorth()>=forbesTop1()},
   {id:"museum", ico:"🦖", zh:"收藏之王", en:"Master Curator", d:"收藏馆评分达到 S 级",
     chk:()=>museumGrade()==="S"},
@@ -2077,7 +2086,10 @@ const WINS=[
 function gotEndings(){ try{ return JSON.parse(localStorage.getItem("spendEndings")||"[]"); }catch(e){ return []; } }
 function saveEnding(id){ try{ const a=gotEndings(); if(a.indexOf(id)<0){ a.push(id); localStorage.setItem("spendEndings",JSON.stringify(a)); } }catch(e){} }
 window.WINS=WINS;
-function checkWins(){ if(!S||S.over) return; for(const w of WINS){ let ok=false; try{ ok=!!w.chk(); }catch(e){} if(ok){ endRun(w.id); return; } } }
+function checkWins(){ if(!S||S.over) return; for(const w of WINS){
+    if(w.mode && MODE!==w.mode) continue;        // 该结局仅限指定模式（如「世界首富」仅从零开始）
+    if(w.notMode && MODE===w.notMode) continue;  // 该模式下禁用此结局（如从零开始禁用「财富清零」）
+    let ok=false; try{ ok=!!w.chk(); }catch(e){} if(ok){ endRun(w.id); return; } } }
 syncContBtn();
 </script>
 
