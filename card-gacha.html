@@ -232,6 +232,14 @@ const TR = {
   "挂单已被抢走":"Listing already taken","卖家拒绝了你的出价":"Seller rejected your bid","开价越低越快成交":"lower ask = faster sale",
   "出价越高越容易成交；出价≥要价必成交。可淘到你缺的卡。":"Higher bid = higher chance; bid ≥ ask always closes. Hunt cards you're missing.",
   "市场为拟真玩家经济：AI 交易者挂单、价格实时波动。点券为虚拟货币，不涉及真钱。":"A living player-style economy: AI traders list cards, prices float live. Credits are virtual — no real money.",
+  // 真人市场
+  "真人":"Players","刷新":"Refresh","同步中…":"syncing…","在线":"online","离线":"offline","真人挂单":"Player listings","先到先得":"first come first served",
+  "我在卖":"I'm selling","等买家…":"waiting for a buyer…","买下":"Buy","上架":"List","上架我的重复卡":"List my duplicates","参考价":"ref.",
+  "给自己起个市场昵称（公开可见）":"Pick a market nickname (public)","已上架真人市场":"Listed on the player market","上架失败":"Listing failed","撤单失败":"Cancel failed","交易失败":"Trade failed",
+  "连接失败，稍后再试":"Connection failed — try again","这是你自己的挂单":"That's your own listing","手慢了，已被抢走":"Too slow — already taken","卖出到账":"Sale paid out","暂时没有别人的挂单，去上架你的卡吧！":"No player listings yet — post yours!",
+  "连不上真人市场。":"Can't reach the player market.","提示：在 GitHub Pages 链接上可用；claude.ai 合集页因安全限制会连不上，会自动用 AI 市场。":"Note: works on the GitHub Pages link; the claude.ai hub blocks it for security, so it falls back to the AI market.",
+  "真人市场：挂单同步到公共数据库，真实玩家买走后你上线领款。点券为虚拟货币，不涉及真钱。":"Player market: listings sync to a shared database; when a real player buys, you collect on next login. Credits are virtual — no real money.",
+  "买入/卖出为 AI 拟真市场（即时成交、价格波动）。点券为虚拟货币，不涉及真钱。":"Buy/Sell is an AI-simulated market (instant, floating prices). Credits are virtual — no real money.",
 };
 function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
 function nm(o){ return o ? (LANG==="en" ? (o.en||o.zh) : o.zh) : ""; }
@@ -373,7 +381,7 @@ const HARD_PITY=70;   // 连续 70 抽未出 SSR+ 则保底
 function fresh(){ return {
   credits:800, lifeCredits:0, owned:{}, variant:{}, pity:0, drawn:0, medals:[],
   lastClaim:0, lastFree:0, dblNext:0, halfPrice:0, freeDraws:0, bestRar:"",
-  mkt:{}, mktPrev:{}, buyList:[], sellList:[], tradeLog:[], mktProfit:0 }; }
+  mkt:{}, mktPrev:{}, buyList:[], sellList:[], tradeLog:[], mktProfit:0, myGlobal:[] }; }
 function save(){ try{ localStorage.setItem("gachaSave", JSON.stringify(S)); }catch(e){} }
 function load(){ try{ const d=JSON.parse(localStorage.getItem("gachaSave")); if(d&&d.owned){ S=Object.assign(fresh(), d); return true; } }catch(e){} return false; }
 
@@ -664,7 +672,7 @@ function cancelListing(lid){ if(!S.sellList)return; const i=S.sellList.findIndex
 
 let mktView="buy";
 function openMarket(){ if(!S)return; RARITIES.forEach(r=>mktIndex(r.id)); if(!S.buyList||!S.buyList.length) refillBuyList(); byId("mktOv").classList.remove("hidden"); renderMarket(); }
-function setMktView(v){ mktView=v; renderMarket(); }
+function setMktView(v){ mktView=v; renderMarket(); if(v==="global") globalRefresh(); }
 function refreshMarket(){ if(!byId("mktOv").classList.contains("hidden")) renderMarket(); }
 function vBadge(v){ return v>0?VARIANTS[v].b:""; }
 function feedLine(o){ const c=CBY[o.cardId], nmc=c?(c.ico+" "+nm(c)):"?";
@@ -682,6 +690,7 @@ function renderMarket(){
   h+=`<div class="tabs" style="padding-bottom:8px">
       <div class="tab${mktView==='buy'?' on':''}" onclick="setMktView('buy')">🛒 ${tr("买入")}</div>
       <div class="tab${mktView==='sell'?' on':''}" onclick="setMktView('sell')">💰 ${tr("卖出换点券")}</div>
+      <div class="tab${mktView==='global'?' on':''}" onclick="setMktView('global')">🌐 ${tr("真人")}</div>
     </div>`;
   if(mktView==="buy"){
     h+=`<div class="note" style="text-align:left;margin:0 0 8px">${tr("出价越高越容易成交；出价≥要价必成交。可淘到你缺的卡。")}</div>`;
@@ -691,7 +700,7 @@ function renderMarket(){
           <div class="mkd">👤 ${L.trader} · ${tr("要价")} <b style="color:var(--gold)">${L.ask}</b></div></div>
         <input class="minp" id="bid_${L.tid}" inputmode="numeric" placeholder="${L.ask}">
         <button class="mbtn buy" onclick="buyBid('${L.tid}', byId('bid_${L.tid}').value)">${tr("出价")}</button></div>`; });
-  } else {
+  } else if(mktView==="sell"){
     h+=`<div class="frow" style="display:flex;justify-content:space-between;align-items:center;background:#12152a;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px">
       <div style="font-size:12px;font-weight:800">📈 ${tr("累计交易收入")}</div><div style="font-weight:900;color:var(--gold)">${fmt(S.mktProfit||0)} 💰</div></div>`;
     // 我的挂单
@@ -711,12 +720,112 @@ function renderMarket(){
         <input class="minp" id="ask_${c.id}" inputmode="numeric" placeholder="${mp}">
         <button class="mbtn" onclick="listCard('${c.id}', byId('ask_${c.id}').value)">${tr("挂单")}</button>
         <button class="mbtn buy" onclick="quickSell('${c.id}')">${tr("秒卖")}</button></div>`; });
+  } else if(mktView==="global"){
+    h+=`<div class="frow" style="display:flex;justify-content:space-between;align-items:center;background:#12152a;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px">
+      <div style="font-size:12px">👤 <b onclick="setGName()" style="cursor:pointer;border-bottom:1px dashed var(--muted)">${gname()}</b>
+        <span style="font-size:10px;color:${globalOnline?'var(--green)':'var(--muted)'}"> ${globalBusy?tr("同步中…"):(globalOnline?"● "+tr("在线"):(globalTried?"○ "+tr("离线"):""))}</span></div>
+      <button class="mbtn buy" onclick="globalRefresh()">🔄 ${tr("刷新")}</button></div>`;
+    if(globalOnline===false){
+      h+=`<div class="note" style="text-align:left;line-height:1.7">🌐 ${tr("连不上真人市场。")}<br>${tr("提示：在 GitHub Pages 链接上可用；claude.ai 合集页因安全限制会连不上，会自动用 AI 市场。")}</div>`;
+    } else {
+      // 我的真人挂单
+      const mine=(S.myGlobal||[]);
+      if(mine.length){ h+=`<div class="note" style="text-align:left;margin:0 0 5px">📤 ${tr("我在卖")}</div>`;
+        mine.forEach(m=>{ const c=CBY[m.cardId]; if(!c)return; h+=`<div class="mkrow r-${c.r}"><div class="mkico">${c.ico}</div>
+          <div class="mkt"><div class="mkn">${nm(c)}</div><div class="mkd">${tr("开价")} <b style="color:var(--gold)">${m.ask}</b> · ${tr("等买家…")}</div></div>
+          <button class="mbtn gray" onclick="cancelGlobal('${m.id}')">${tr("撤单")}</button></div>`; }); }
+      // 别人的挂单
+      const others=(globalCache||[]).filter(L=>L.pid!==gpid());
+      h+=`<div class="note" style="text-align:left;margin:8px 0 5px">🌐 ${tr("真人挂单")} (${others.length}) · ${tr("先到先得")}</div>`;
+      if(!others.length) h+=`<div class="note">${tr("暂时没有别人的挂单，去上架你的卡吧！")}</div>`;
+      others.slice(0,40).forEach(L=>{ const c=CBY[L.cardId]; if(!c)return; const own=S.owned[L.cardId]||0;
+        h+=`<div class="mkrow r-${c.r}"><div class="mkico">${c.ico}${vBadge(L.v)}</div>
+          <div class="mkt"><div class="mkn"><span class="rtag" style="background:${RAR[c.r].col}">${c.r}</span> ${nm(c)} ${own?`<span style="color:var(--muted);font-size:9px">×${own}</span>`:`<span style="color:var(--green);font-size:9px">${tr("缺")}</span>`}</div>
+            <div class="mkd">👤 ${L.seller} · ${tr("要价")} <b style="color:var(--gold)">${L.ask}</b></div></div>
+          <button class="mbtn buy" onclick="buyGlobal('${L.id}', ${L.ask})">${tr("买下")}</button></div>`; });
+      // 上架重复卡到真人市场
+      const dups=CARDS.filter(c=>(S.owned[c.id]||0)>1);
+      h+=`<div class="note" style="text-align:left;margin:9px 0 5px">📦 ${tr("上架我的重复卡")}</div>`;
+      if(!dups.length) h+=`<div class="note">${tr("暂无重复卡——多抽几次吧")}</div>`;
+      dups.slice(0,40).forEach(c=>{ const mp=cardMarketPrice(c.id,0), own=S.owned[c.id];
+        h+=`<div class="mkrow r-${c.r}"><div class="mkico">${c.ico}</div>
+          <div class="mkt"><div class="mkn"><span class="rtag" style="background:${RAR[c.r].col}">${c.r}</span> ${nm(c)} <span style="color:var(--muted);font-size:9px">×${own}</span></div>
+            <div class="mkd">${tr("参考价")} ${mp}</div></div>
+          <input class="minp" id="gask_${c.id}" inputmode="numeric" placeholder="${mp}">
+          <button class="mbtn" onclick="postGlobal('${c.id}', byId('gask_${c.id}').value)">${tr("上架")}</button></div>`; });
+    }
   }
   // 实时成交动态
-  if(S.tradeLog&&S.tradeLog.length){ h+=`<div class="feed">${S.tradeLog.slice(0,12).map(feedLine).join("")}</div>`; }
-  h+=`<div class="disc">${tr("市场为拟真玩家经济：AI 交易者挂单、价格实时波动。点券为虚拟货币，不涉及真钱。")}</div>`;
+  if(mktView!=="global" && S.tradeLog&&S.tradeLog.length){ h+=`<div class="feed">${S.tradeLog.slice(0,12).map(feedLine).join("")}</div>`; }
+  h+=`<div class="disc">${mktView==="global"
+      ? tr("真人市场：挂单同步到公共数据库，真实玩家买走后你上线领款。点券为虚拟货币，不涉及真钱。")
+      : tr("买入/卖出为 AI 拟真市场（即时成交、价格波动）。点券为虚拟货币，不涉及真钱。")}</div>`;
   byId("mktSheet").innerHTML=h;
 }
+
+/*==================== 🌐 真人市场（jsonblob 共享单）====================
+   真·玩家间联动：所有人的挂单同步到一个公共数据库，别人可买走，卖家上线领款。
+   用 If-Match(ETag) 原子写入，避免同一挂单被两人同时买走。离线/被 CSP 拦截时自动回退到 AI 市场。 */
+const GBLOB="019fbfae-b779-7f4f-ae2d-d9e6c795459d";
+const GURL="https://jsonblob.com/api/jsonBlob/"+GBLOB;
+function gpid(){ try{ let p=localStorage.getItem("gachaPid"); if(!p){ p="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,8); localStorage.setItem("gachaPid",p);} return p; }catch(e){ return "p0"; } }
+function gname(){ try{ let n=localStorage.getItem("gachaName"); if(!n){ n="玩家"+Math.floor(1000+Math.random()*9000); localStorage.setItem("gachaName",n);} return n; }catch(e){ return "玩家"; } }
+function setGName(){ const cur=gname(); const v=prompt(tr("给自己起个市场昵称（公开可见）"), cur); if(v==null)return; const nm=String(v).slice(0,16).trim()||cur; try{ localStorage.setItem("gachaName",nm); }catch(e){} refreshMarket(); }
+// —— 纯函数：对共享数据的变换（可离线单测）——
+function normalizeBlob(b){ if(!b||typeof b!=="object") b={}; if(!Array.isArray(b.listings)) b.listings=[]; if(!b.sales||typeof b.sales!=="object") b.sales={}; if(!(b.ver>0)) b.ver=0; return b; }
+function blobPrune(b){ const cutoff=Date.now()-3*864e5; b.listings=b.listings.filter(L=>(L.ts||0)>=cutoff).slice(-200); return b; }
+function blobAdd(b, L){ b=normalizeBlob(b); b.listings.push(L); b.ver++; return blobPrune(b); }
+function blobBuy(b, id, buyerPid){ b=normalizeBlob(b); const i=b.listings.findIndex(x=>x.id===id);
+  if(i<0) return {blob:b, listing:null, gone:true};
+  const L=b.listings[i]; if(L.pid===buyerPid) return {blob:b, listing:null, own:true};
+  b.listings.splice(i,1); if(!Array.isArray(b.sales[L.pid])) b.sales[L.pid]=[]; b.sales[L.pid].push({amt:L.ask, cardId:L.cardId, ts:Date.now()}); b.ver++;
+  return {blob:b, listing:L}; }
+function blobCancel(b, id, pid){ b=normalizeBlob(b); const i=b.listings.findIndex(x=>x.id===id&&x.pid===pid); if(i<0) return {blob:b, listing:null}; const L=b.listings.splice(i,1)[0]; b.ver++; return {blob:b, listing:L}; }
+function blobCollect(b, pid){ b=normalizeBlob(b); const arr=b.sales[pid]||[]; const total=arr.reduce((s,x)=>s+(x.amt||0),0); const items=arr.slice(); if(arr.length){ delete b.sales[pid]; b.ver++; } return {blob:b, total, items}; }
+// —— 网络 I/O（带 If-Match 原子写入 + 重试）——
+let globalOnline=null, globalBusy=false, globalCache=[], globalTried=false;
+function gGet(){ return fetch(GURL,{headers:{Accept:"application/json"},cache:"no-store"})
+  .then(async r=>{ if(!r.ok) return null; const etag=r.headers.get("ETag"); let data=null; try{ data=await r.json(); }catch(e){ data={}; } return {data, etag}; })
+  .catch(()=>null); }
+function gPutCAS(obj, etag){ const h={"Content-Type":"application/json",Accept:"application/json"}; if(etag) h["If-Match"]=etag;
+  return fetch(GURL,{method:"PUT",headers:h,body:JSON.stringify(obj)}).then(r=> r.ok?true:(r.status===412?"conflict":false)).catch(()=>false); }
+function gWait(ms){ return new Promise(r=>{ try{ setTimeout(r,ms); }catch(e){ r(); } }); }
+async function gMutate(apply){ for(let a=0;a<6;a++){ const got=await gGet(); if(!got) return {ok:false, offline:true};
+    const res=apply(normalizeBlob(got.data)); if(!res) return {ok:false, aborted:true};
+    const st=await gPutCAS(res.blob, got.etag); if(st===true) return Object.assign({ok:true}, res);
+    if(st==="conflict"){ await gWait(140+a*120); continue; }   // 退避重试：给 jsonblob 读写一致性留时间，也化解并发抢单
+    return {ok:false, error:true}; }
+  return {ok:false, error:true, retries:true}; }
+function setBusy(v){ globalBusy=v; if(mktView==="global") refreshMarket(); }
+// —— 动作 ——
+async function postGlobal(cardId, askStr){ if(!S) return; if((S.owned[cardId]||0)<=1){ toast(tr("至少保留一张")); return; }
+  let ask=Math.round(parseFloat(askStr)); if(!(ask>0)) ask=cardMarketPrice(cardId,0); const c=CBY[cardId];
+  const L={id:"g"+rid4()+gpid().slice(-4), pid:gpid(), seller:gname(), cardId, r:c.r, v:0, ask, ts:Date.now()};
+  S.owned[cardId]--; if(!S.myGlobal)S.myGlobal=[]; S.myGlobal.push({id:L.id, cardId, ask, ts:L.ts}); afterState();   // 本地托管
+  setBusy(true); const res=await gMutate(b=>({blob:blobAdd(b,L)})); setBusy(false);
+  if(!res.ok){ S.owned[cardId]=(S.owned[cardId]||0)+1; const i=(S.myGlobal||[]).findIndex(x=>x.id===L.id); if(i>=0)S.myGlobal.splice(i,1); afterState(); toast(res.offline?tr("连接失败，稍后再试"):tr("上架失败")); return; }
+  toast("📤 "+tr("已上架真人市场")); globalRefresh(); }
+async function buyGlobal(id, ask){ if(!S) return; if(ask && S.credits<ask){ toast(tr("点券不足")); return; }
+  setBusy(true); let info=null;
+  const res=await gMutate(b=>{ const r=blobBuy(b, id, gpid()); if(r.own){ info={own:1}; return null; } if(r.gone){ info={gone:1}; return null; } if(r.listing.ask>S.credits){ info={poor:1}; return null; } info=r.listing; return {blob:r.blob}; });
+  setBusy(false);
+  if(!res.ok){ if(info&&info.own) toast(tr("这是你自己的挂单")); else if(info&&info.gone){ toast(tr("手慢了，已被抢走")); globalRefresh(); } else if(info&&info.poor) toast(tr("点券不足")); else toast(res.offline?tr("连接失败，稍后再试"):tr("交易失败")); return; }
+  const L=info; S.credits-=L.ask; S.owned[L.cardId]=(S.owned[L.cardId]||0)+1; if((L.v||0)>(S.variant[L.cardId]||0))S.variant[L.cardId]=L.v||0;
+  pushLog({kind:"bought",cardId:L.cardId,v:L.v,amt:L.ask,real:1}); toast("✅ "+tr("成交")+" -"+L.ask); afterState(); globalRefresh(); }
+async function cancelGlobal(id){ if(!S) return; setBusy(true);
+  const res=await gMutate(b=>{ const r=blobCancel(b, id, gpid()); return {blob:r.blob, listing:r.listing}; }); setBusy(false);
+  if(res.ok){ const mi=(S.myGlobal||[]).findIndex(x=>x.id===id); if(mi>=0){ const m=S.myGlobal[mi]; if(res.listing) S.owned[m.cardId]=(S.owned[m.cardId]||0)+1; S.myGlobal.splice(mi,1); } toast(tr("已撤单")); afterState(); globalRefresh(); }
+  else toast(res.offline?tr("连接失败，稍后再试"):tr("撤单失败")); }
+async function globalRefresh(){ if(!S||globalBusy) return; setBusy(true); globalTried=true;
+  const col=await gMutate(b=>{ const r=blobCollect(b, gpid()); if(r.total<=0) return null; return {blob:r.blob, total:r.total, items:r.items}; });
+  if(col.ok && col.total>0){ addCredits(col.total); S.mktProfit=(S.mktProfit||0)+col.total;
+    col.items.forEach(x=>{ pushLog({kind:"sold",cardId:x.cardId,v:0,amt:x.amt,real:1}); const mi=(S.myGlobal||[]).findIndex(m=>m.cardId===x.cardId); if(mi>=0)S.myGlobal.splice(mi,1); });
+    toast("💰 "+tr("卖出到账")+" +"+col.total); }
+  const got=await gGet(); setBusy(false);
+  if(!got){ globalOnline=false; refreshMarket(); return; }
+  globalOnline=true; const blob=normalizeBlob(got.data);
+  (S.myGlobal||[]).slice().forEach(m=>{ if(!blob.listings.find(L=>L.id===m.id)){ S.owned[m.cardId]=(S.owned[m.cardId]||0)+1; const i=S.myGlobal.findIndex(x=>x.id===m.id); if(i>=0)S.myGlobal.splice(i,1); } });
+  globalCache=blob.listings; afterState(); refreshMarket(); }
 
 /*==================== 启动 ====================*/
 function init(){ if(!load()){ S=fresh(); save(); } applyLang(); renderHud();
@@ -728,5 +837,6 @@ init();
 
 // 暴露给测试
 if(typeof window!=="undefined") window.__gacha={ get S(){return S;}, CARDS, RARITIES, drawOne, drawSingle, drawTen, pointLevel, uniqueOwned, fresh,
-  marketPrice, cardMarketPrice, mktTick, buyBid, quickSell, listCard, cancelListing, refillBuyList };
+  marketPrice, cardMarketPrice, mktTick, buyBid, quickSell, listCard, cancelListing, refillBuyList,
+  normalizeBlob, blobPrune, blobAdd, blobBuy, blobCancel, blobCollect };
 </script>
