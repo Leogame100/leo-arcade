@@ -50,6 +50,8 @@
   .spend-prev{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:radial-gradient(320px 170px at 50% 0%,#123626,#0a1410);}
   .spend-prev .bal{font-family:ui-monospace,monospace;font-weight:800;color:#28c76f;font-size:15px;text-shadow:0 0 12px rgba(40,199,111,.45);}
   .spend-prev .goods{font-size:18px;letter-spacing:3px;} .spend-prev .goods2{font-size:14px;letter-spacing:3px;opacity:.85;}
+  .gacha-prev{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:5px;background:radial-gradient(320px 170px at 50% 0%,#2a1c4a,#0e1124);}
+  .gacha-prev .gc{width:26px;height:38px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 3px 8px rgba(0,0,0,.5);}
   .cabmeta{display:flex;align-items:center;justify-content:space-between;gap:10px;}
   .cabname{font-weight:800;font-size:17px;} .cabtag{color:var(--muted);font-size:12px;margin-top:2px;}
   .badge{font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;padding:4px 8px;border-radius:6px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;}
@@ -116,13 +118,24 @@
       <div class="cabmeta"><div><div class="cabname" data-i18n="spendName">挥霍巨富</div><div class="cabtag" data-i18n="spendTag">财富模拟 · 疯狂购物 · 看你多快花光 4000 亿</div></div><div class="badge" data-i18n="spendBadge">模拟 / 放置</div></div>
       <div class="play" data-i18n="play">▶ 开始游戏</div>
     </a>
+    <a class="cab" href="card-gacha.html">
+      <div class="screen"><div class="gacha-prev">
+        <div class="gc" style="background:linear-gradient(180deg,#3a4160,#222840);border:1.5px solid #c7ccd6;transform:rotate(-12deg)">🍎</div>
+        <div class="gc" style="background:linear-gradient(180deg,#243a6a,#16233f);border:1.5px solid #4a90ff;transform:rotate(-4deg) translateY(-4px)">🐉</div>
+        <div class="gc" style="background:linear-gradient(180deg,#4a2a1a,#2a1810);border:1.5px solid #ffcf3a;transform:translateY(-8px)">🔥</div>
+        <div class="gc" style="background:linear-gradient(180deg,#3a1a4a,#22102e);border:1.5px solid #ff7ac2;transform:rotate(6deg) translateY(-4px)">🦄</div>
+        <div class="gc" style="background:linear-gradient(180deg,#0e2a30,#08181c);border:1.5px solid #7fefff;transform:rotate(12deg)">✨</div>
+      </div><div class="glow"></div></div>
+      <div class="cabmeta"><div><div class="cabname" data-i18n="gachaName">欧皇卡牌 512</div><div class="cabtag" data-i18n="gachaTag">512张卡抽卡收藏 · 8稀有度 · 点券等级</div></div><div class="badge" data-i18n="gachaBadge">抽卡 / 收藏</div></div>
+      <div class="play" data-i18n="play">▶ 开始游戏</div>
+    </a>
   </div>
   <div class="foot" data-i18n="foot">进度存档保存在你自己的浏览器里。想开启全球实时排行榜，请在 brick-breaker.html 顶部 NET_CONFIG 填入 Firebase 数据库网址。</div>
 </div>
 <script>
   const I18N={
     kicker:{zh:"Insert Coin · 街机厅",en:"Insert Coin · Arcade"},
-    sub:{zh:"六款自制游戏 · 点一款开始玩 · 手机 / 电脑都能玩",en:"6 handmade games · tap one to play · phone & PC"},
+    sub:{zh:"七款自制游戏 · 点一款开始玩 · 手机 / 电脑都能玩",en:"7 handmade games · tap one to play · phone & PC"},
     clayName:{zh:"橡皮泥：战争塑形前线",en:"Clay War: Shaping Frontline"},
     clayTag:{zh:"15 色橡皮泥 · 塔防军团 · 天赋 & 科技树",en:"15 clay colors · tower-defense army · talents & tech"},
     clayBadge:{zh:"策略 / 塔防",en:"Strategy / TD"},
@@ -141,6 +154,9 @@
     spendName:{zh:"挥霍巨富",en:"Spend the Fortune"},
     spendTag:{zh:"财富模拟 · 疯狂购物 · 看你多快花光 4000 亿",en:"Wealth sim · shop like crazy · spend $400B fast"},
     spendBadge:{zh:"模拟 / 放置",en:"Sim / Idle"},
+    gachaName:{zh:"欧皇卡牌 512",en:"Lucky Gacha 512"},
+    gachaTag:{zh:"512张卡抽卡收藏 · 8稀有度 · 点券等级",en:"512-card gacha · 8 rarities · credits levels"},
+    gachaBadge:{zh:"抽卡 / 收藏",en:"Gacha / Collect"},
     play:{zh:"▶ 开始游戏",en:"▶ Play"},
     foot:{zh:"进度存档保存在你自己的浏览器里。想开启全球实时排行榜，请在 brick-breaker.html 顶部 NET_CONFIG 填入 Firebase 数据库网址。",
           en:"Progress is saved in your own browser. Global live leaderboard is built in for Brick Breaker on this hosted site."},

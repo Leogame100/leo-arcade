@@ -1,0 +1,591 @@
+<!-- 《欧皇卡牌 512 / Lucky Gacha 512》 —— 抽卡收藏 TCG · 点券等级系统 · 中/EN · 纯虚拟娱乐，不涉及真钱 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="robots" content="noindex,nofollow">
+<title>欧皇卡牌 512 · Lucky Gacha</title>
+<style>
+  :root{
+    --bg:#0b0d18; --bg2:#12152a; --panel:#171b34; --line:#2a3260; --ink:#eef1ff; --muted:#8b93bf;
+    --gold:#ffcf3a; --gold-d:#a9791a; --green:#28c76f; --red:#ff5b6e; --blue:#4a90ff; --mag:#ff5c8a; --cyan:#4fe3d1;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{background:radial-gradient(1000px 600px at 50% -8%,#1c2246,#0b0d18 60%),var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
+    overflow-x:hidden;-webkit-user-select:none;user-select:none;}
+  #app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:8px 10px 10px;}
+  .hud{background:linear-gradient(180deg,var(--panel),#10132a);border:1px solid var(--line);border-radius:14px;padding:9px 11px;margin-bottom:8px;}
+  .hrow{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .cred{font-family:ui-monospace,monospace;font-weight:900;font-size:22px;color:var(--gold);display:flex;align-items:center;gap:5px;text-shadow:0 0 14px rgba(255,207,58,.35);}
+  .cred small{font-size:11px;color:var(--muted);font-weight:700;}
+  .lvbadge{display:flex;align-items:center;gap:6px;background:#0e1226;border:1px solid var(--line);border-radius:10px;padding:5px 9px;cursor:pointer;}
+  .lvbadge .lvi{font-size:18px;} .lvbadge .lvt{font-size:12px;font-weight:800;} .lvbadge .lvn{font-size:9px;color:var(--muted);}
+  .pbar{height:7px;background:#0c0f22;border-radius:5px;overflow:hidden;margin-top:7px;}
+  .pbar>div{height:100%;background:linear-gradient(90deg,var(--gold),#ff9f43);transition:width .4s;}
+  .pmeta{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:3px;}
+
+  .banner{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);
+    background:linear-gradient(135deg,#2a1c4a,#141733 60%,#0e1a2e);min-height:150px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;padding:16px 12px;text-align:center;margin-bottom:9px;}
+  .banner::before{content:"";position:absolute;inset:0;background:
+    radial-gradient(200px 120px at 20% 15%,rgba(255,92,138,.28),transparent),
+    radial-gradient(220px 130px at 85% 85%,rgba(79,227,209,.22),transparent),
+    repeating-linear-gradient(115deg,rgba(255,255,255,.03) 0 8px,transparent 8px 18px);pointer-events:none;}
+  .banner h1{margin:0;font-size:23px;font-weight:900;letter-spacing:1px;position:relative;background:linear-gradient(90deg,#ffe08a,#ff7ac2,#4fe3d1);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .banner .bsub{position:relative;color:#c9d0ff;font-size:12px;margin-top:5px;opacity:.9;}
+  .banner .bemo{position:relative;font-size:26px;letter-spacing:4px;margin-top:9px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));}
+
+  .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+  .draw{border:none;border-radius:14px;padding:14px 8px;font-weight:900;font-size:16px;cursor:pointer;color:#1a1020;position:relative;overflow:hidden;
+    background:linear-gradient(180deg,#ffe08a,#ffb53a);box-shadow:0 5px 0 #b47d17,0 8px 18px rgba(255,181,58,.3);}
+  .draw.ten{background:linear-gradient(180deg,#ff9ecb,#ff5c8a);box-shadow:0 5px 0 #b02f5a,0 8px 18px rgba(255,92,138,.3);color:#fff;}
+  .draw:active{transform:translateY(3px);box-shadow:0 2px 0 #b47d17;}
+  .draw .dc{display:block;font-size:11px;font-weight:800;opacity:.85;margin-top:2px;}
+  .draw:disabled{filter:grayscale(.6) brightness(.7);box-shadow:none;cursor:not-allowed;}
+  .subbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px;}
+  .sbtn{border:1px solid var(--line);background:#141833;color:var(--ink);border-radius:12px;padding:10px 6px;font-weight:800;font-size:13px;cursor:pointer;position:relative;}
+  .sbtn:active{transform:scale(.97);} .sbtn.hot{border-color:var(--green);color:#bfffd6;}
+  .sbtn small{display:block;font-size:9px;color:var(--muted);font-weight:700;margin-top:1px;}
+  .cd{color:var(--muted);}
+
+  .dock{display:flex;gap:5px;margin-top:auto;padding-top:8px;}
+  .ib{flex:1;background:#141833;border:1px solid var(--line);border-radius:11px;padding:8px 2px;cursor:pointer;color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;}
+  .ib:active{transform:scale(.94);} .ib i{font-size:18px;font-style:normal;} .ib b{font-size:9px;font-weight:800;}
+  .ib .bdg{position:absolute;top:-5px;right:-3px;min-width:15px;height:15px;line-height:15px;background:var(--red);color:#fff;
+    border-radius:8px;font-size:9px;font-weight:900;text-align:center;padding:0 3px;box-shadow:0 0 0 2px #0b0d18;}
+  .ib .bdg.pulse{animation:pulse 1s infinite;} @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.25);}}
+
+  /* overlay */
+  .ov{position:fixed;inset:0;background:rgba(6,8,18,.82);backdrop-filter:blur(3px);z-index:40;display:flex;align-items:flex-end;justify-content:center;padding:0;}
+  .ov.hidden{display:none;}
+  .sheet{width:100%;max-width:520px;max-height:92vh;overflow-y:auto;background:linear-gradient(180deg,#151934,#0e1124);
+    border:1px solid var(--line);border-radius:18px 18px 0 0;padding:15px 14px calc(15px + env(safe-area-inset-bottom));}
+  .sheet h2{margin:0 0 10px;font-size:18px;display:flex;align-items:center;gap:8px;}
+  .x{margin-left:auto;background:#222a4a;border:none;color:var(--ink);border-radius:9px;padding:6px 12px;font-weight:800;cursor:pointer;font-size:13px;}
+  .note{font-size:10px;color:var(--muted);text-align:center;line-height:1.6;margin-top:8px;}
+
+  /* rarity themes */
+  .r-N{--rc:#c7ccd6;} .r-R{--rc:#4a90ff;} .r-SR{--rc:#a45cff;} .r-SSR{--rc:#ffcf3a;}
+  .r-UR{--rc:#ff7ac2;} .r-MR{--rc:#ff4d4d;} .r-GR{--rc:#ffd700;} .r-OR{--rc:#7fefff;}
+  .rtag{display:inline-block;font-weight:900;font-size:10px;padding:1px 6px;border-radius:6px;color:#0b0d18;background:var(--rc);}
+
+  /* result cards */
+  .rgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;}
+  .rgrid.one{grid-template-columns:1fr;max-width:220px;margin:0 auto;}
+  .card{position:relative;border-radius:11px;padding:8px 4px 6px;text-align:center;background:linear-gradient(180deg,#1c2140,#12152a);
+    border:2px solid var(--rc);box-shadow:0 0 0 1px rgba(0,0,0,.3),0 0 14px -2px var(--rc);overflow:hidden;animation:pop .35s backwards;}
+  .rgrid.one .card{padding:20px 10px 14px;}
+  @keyframes pop{0%{transform:scale(.4) rotate(-8deg);opacity:0;}70%{transform:scale(1.08);}100%{transform:scale(1);opacity:1;}}
+  .card .cico{font-size:26px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6));}
+  .rgrid.one .card .cico{font-size:58px;}
+  .card .cno{font-size:8px;color:var(--muted);font-family:ui-monospace,monospace;margin-top:3px;}
+  .card .cnm{font-size:9px;font-weight:800;margin-top:1px;line-height:1.15;min-height:22px;display:flex;align-items:center;justify-content:center;}
+  .rgrid.one .card .cnm{font-size:15px;min-height:0;margin-top:6px;}
+  .card .crt{margin-top:3px;}
+  .card .cnew{position:absolute;top:2px;left:2px;background:var(--red);color:#fff;font-size:8px;font-weight:900;padding:1px 4px;border-radius:5px;transform:rotate(-8deg);}
+  .card .cdup{position:absolute;top:2px;right:2px;background:#0c0f22;color:var(--gold);font-size:8px;font-weight:900;padding:1px 4px;border-radius:5px;}
+  .card .cvar{position:absolute;bottom:2px;right:3px;font-size:11px;}
+  .card.foil{box-shadow:0 0 0 1px #fff6,0 0 16px -1px var(--rc);}
+  .card.foil::after,.card.rainbow::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.5) 48%,transparent 62%);
+    background-size:250% 250%;animation:shine 2.2s infinite;}
+  .card.rainbow{border-image:linear-gradient(120deg,#ff5c8a,#ffcf3a,#4fe3d1,#a45cff,#ff5c8a) 1;}
+  .card.rainbow::after{background:linear-gradient(120deg,rgba(255,92,138,.35),rgba(255,207,58,.35),rgba(79,227,209,.35),rgba(164,92,255,.35));background-size:300% 300%;animation:rbw 3s linear infinite;}
+  @keyframes shine{0%{background-position:120% 0;}100%{background-position:-40% 0;}}
+  @keyframes rbw{0%{background-position:0 0;}100%{background-position:300% 0;}}
+  .card.big-hit{animation:pop .35s backwards, glowpulse 1.2s .35s infinite;}
+  @keyframes glowpulse{0%,100%{box-shadow:0 0 0 1px rgba(0,0,0,.3),0 0 14px -2px var(--rc);}50%{box-shadow:0 0 0 2px var(--rc),0 0 26px 2px var(--rc);}}
+  .rsum{text-align:center;font-size:12px;color:var(--muted);margin:10px 0 4px;}
+
+  /* 图鉴 */
+  .tabs{display:flex;gap:5px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;} .tabs::-webkit-scrollbar{display:none;}
+  .tab{flex:0 0 auto;background:#141833;border:1px solid var(--line);border-radius:14px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;}
+  .tab.on{background:var(--gold);color:#1a1020;border-color:var(--gold);}
+  .dexgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
+  .dex{position:relative;border-radius:9px;padding:7px 3px 5px;text-align:center;border:1.5px solid var(--line);background:#10132a;min-height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .dex.have{border-color:var(--rc);box-shadow:0 0 9px -3px var(--rc);}
+  .dex.have.foilv{box-shadow:0 0 12px -1px var(--rc);}
+  .dex .dico{font-size:22px;} .dex.miss .dico{filter:grayscale(1) brightness(.4);opacity:.55;}
+  .dex .dno{font-size:7px;color:var(--muted);font-family:ui-monospace,monospace;margin-top:2px;}
+  .dex .dnm{font-size:8px;font-weight:700;line-height:1.1;margin-top:1px;}
+  .dex .dcnt{position:absolute;top:1px;right:2px;font-size:8px;font-weight:900;color:var(--gold);}
+  .dex .dvar{position:absolute;top:1px;left:2px;font-size:10px;}
+  .dex.miss .dnm,.dex.miss .dno{opacity:.5;}
+
+  .ladder .lrow{display:flex;align-items:center;gap:9px;background:#12152a;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:5px;}
+  .ladder .lrow.cur{border-color:var(--gold);background:#1c1a0e;}
+  .ladder .lrow.done{opacity:.85;} .ladder .li{font-size:20px;} .ladder .lt{flex:1;} .ladder .ln{font-weight:800;font-size:13px;}
+  .ladder .ld{font-size:10px;color:var(--muted);margin-top:1px;} .ladder .lv{font-size:11px;font-weight:800;color:var(--gold);}
+  .mrow{display:flex;align-items:center;gap:10px;background:#12152a;border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:6px;}
+  .mrow .mi{font-size:26px;} .mrow .mt{flex:1;} .mrow .mn{font-weight:800;font-size:14px;} .mrow .md{font-size:11px;color:var(--muted);margin-top:1px;}
+  .cbtn{border:none;border-radius:9px;padding:8px 12px;font-weight:800;font-size:12px;cursor:pointer;background:var(--green);color:#04140b;}
+  .cbtn.dis{background:#2a3250;color:var(--muted);cursor:default;} .cbtn.locked{background:#2a3250;color:var(--muted);cursor:default;}
+
+  .toast{position:fixed;left:50%;top:14%;transform:translateX(-50%);background:#161b36;border:1px solid var(--line);
+    color:var(--ink);padding:9px 15px;border-radius:11px;font-size:13px;font-weight:700;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.5);
+    opacity:0;transition:opacity .2s, transform .2s;pointer-events:none;max-width:88%;text-align:center;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(4px);}
+  .fgrid2{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .disc{font-size:9px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.5;}
+</style>
+
+<div id="app">
+  <div class="hud">
+    <div class="hrow">
+      <div class="cred">💰 <span id="credVal">0</span><small id="credLbl">点券</small></div>
+      <div class="lvbadge" id="lvBadge" onclick="openLevels()">
+        <span class="lvi" id="lvIco">⚪</span>
+        <div><div class="lvt" id="lvTitle">新人</div><div class="lvn" id="lvNum">Lv1</div></div>
+      </div>
+    </div>
+    <div class="pbar"><div id="lvBar" style="width:0%"></div></div>
+    <div class="pmeta"><span id="lvCur">Lv1</span><span id="lvNext">→ 500</span></div>
+  </div>
+
+  <div class="banner">
+    <h1 data-i18n="欧皇卡牌 512">欧皇卡牌 512</h1>
+    <div class="bsub" data-i18n="512 张卡 · 8 稀有度 · 抽卡收藏冲创世">512 张卡 · 8 稀有度 · 抽卡收藏冲创世</div>
+    <div class="bemo">🎴 ✨ 🌈 👑 🃏</div>
+  </div>
+
+  <div class="btns">
+    <button class="draw" id="d1" onclick="drawSingle()">🎴 <span data-i18n="单抽">单抽</span><span class="dc" id="c1">100</span></button>
+    <button class="draw ten" id="d10" onclick="drawTen()">🎴×10 <span data-i18n="十连">十连</span><span class="dc" id="c10">900</span></button>
+  </div>
+  <div class="subbtns">
+    <button class="sbtn" id="claimBtn" onclick="claimFree()">🎁 <span data-i18n="领点券">领点券</span><small id="claimSub"></small></button>
+    <button class="sbtn" id="freeBtn" onclick="freeDraw()">🎟️ <span data-i18n="免费抽">免费抽</span><small id="freeSub"></small></button>
+  </div>
+
+  <div class="dock">
+    <button class="ib" onclick="openDex()"><i>📖</i><b data-i18n="图鉴">图鉴</b><span class="bdg" id="dexBadge" style="display:none"></span></button>
+    <button class="ib" onclick="openLevels()"><i>💰</i><b data-i18n="等级">等级</b></button>
+    <button class="ib" onclick="openMedals()"><i>🏅</i><b data-i18n="勋章">勋章</b><span class="bdg pulse" id="medBadge" style="display:none">!</span></button>
+    <button class="ib" onclick="openHelp()"><i>❓</i><b data-i18n="玩法">玩法</b></button>
+    <button class="ib" onclick="toggleLang()"><i>🌐</i><b id="langLbl">EN</b></button>
+    <button class="ib" onclick="goHome()"><i>🏠</i><b data-i18n="返回">返回</b></button>
+  </div>
+</div>
+
+<!-- overlays -->
+<div class="ov hidden" id="resultOv"><div class="sheet" id="resultSheet"></div></div>
+<div class="ov hidden" id="dexOv"><div class="sheet" id="dexSheet"></div></div>
+<div class="ov hidden" id="lvOv"><div class="sheet" id="lvSheet"></div></div>
+<div class="ov hidden" id="medOv"><div class="sheet" id="medSheet"></div></div>
+<div class="ov hidden" id="helpOv"><div class="sheet" id="helpSheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/*==================== i18n ====================*/
+let LANG = (function(){ try{ return localStorage.getItem("gachaLang")||"zh"; }catch(e){ return "zh"; } })();
+const TR = {
+  "点券":"Credits","单抽":"Draw","十连":"10-Pull","领点券":"Free Credits","免费抽":"Free Draw","图鉴":"Dex",
+  "等级":"Levels","勋章":"Medals","玩法":"How","返回":"Back","欧皇卡牌 512":"Lucky Gacha 512",
+  "512 张卡 · 8 稀有度 · 抽卡收藏冲创世":"512 cards · 8 rarities · collect to Genesis",
+  "点券不足":"Not enough credits","恭喜获得":"You got","新卡":"NEW","重复":"DUPE","本次抽卡":"This pull",
+  "新卡":"NEW","已拥有":"Owned","收藏进度":"Collection","全部":"All","关闭":"Close",
+  "点券等级":"Credits Level","累计点券":"Lifetime credits","距下一级":"To next",
+  "已满级":"MAX LEVEL","特权":"Perks","收藏等级":"Collector Level","张":"cards",
+  "领取":"Claim","已领取":"Claimed","未达成":"Locked","勋章任务":"Medal Missions","达到等级":"Reach Lv",
+  "冷却中":"cooldown","可领取":"ready","双倍下次":"2× next","半价":"half price",
+  "抽卡折扣":"Draw discount","每次领点券":"Credits per claim","免费抽间隔":"Free draw cd",
+  "玩法说明":"How to Play","虚拟娱乐提示":"Credits are in-game only — no real money, no cash-out. Pure entertainment, not gambling for value.",
+  "闪卡":"Foil","彩虹":"Rainbow","签名":"Signature","普通版":"Normal","变体":"Variant",
+  "点券卡":"Credit Card","免费抽卡":"Free draws","双倍奖励":"Double reward","本轮半价":"Half-price draws","银行派奖":"Bank payout","幸运日":"Lucky Day",
+  "抽到功能卡":"Bonus card!","获得":"got","免费抽奖":"free draws","下次抽卡奖励翻倍":"next dupe dust doubled","接下来若干抽半价":"next draws half-price",
+  "保底临近":"Pity building","保底":"pity","距保底":"to guaranteed SSR+","恭喜升级":"LEVEL UP",
+  "创世卡":"GENESIS CARD","神话降临":"MYTHIC!","收藏家进阶":"Collector rank up",
+  "普通":"Common","稀有":"Rare","超稀有":"Super Rare","史诗":"Epic","传说":"Legendary","神话":"Mythic","神级":"Godly","创世":"Genesis",
+  "新人":"Rookie","青铜":"Bronze","白银":"Silver","黄金":"Gold","铂金":"Platinum","钻石":"Diamond","大师":"Master","宗师":"Grandmaster",
+  "王者":"King","至尊":"Supreme","欧皇":"Lucky Emperor","神豪":"Whale","收藏大师":"Collector Master","传奇收藏家":"Legend Collector","创世欧皇":"Genesis Emperor",
+  "新手收藏家":"Novice Collector","初级收藏家":"Junior Collector","中级收藏家":"Mid Collector","高级收藏家":"Senior Collector","专家收藏家":"Expert Collector","大收藏家":"Grand Collector",
+  "青铜勋章":"Bronze Medal","白银勋章":"Silver Medal","黄金徽章":"Gold Medal","钻石徽章":"Diamond Medal","王者职责":"King's Duty",
+  "先玩一会再来":"Come back a bit later","已达最高职位":"Max",
+  "点券为游戏内虚拟货币，不能兑换现实货币。":"Credits are virtual and cannot be exchanged for real money.",
+  "越稀有越难抽，重复卡自动分解返还点券。":"Rarer = harder to pull. Duplicates auto-dust into credits.",
+  "十连保底至少 1 张超稀有(SR)。":"10-pull guarantees at least 1 SR+.",
+  "累计消耗点券提升点券等级，解锁折扣等特权。":"Lifetime credits raise your Credits Level, unlocking perks like discounts.",
+  "集齐不同卡牌提升收藏等级。":"Collecting unique cards raises your Collector Level.",
+  "达到点券等级里程碑可领取勋章奖励。":"Hit Credits-Level milestones to claim medal rewards.",
+  "闪卡/彩虹/签名是同一张卡的稀有版本，收藏价值更高。":"Foil/Rainbow/Signature are rare versions of the same card — worth more.",
+};
+function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
+function nm(o){ return o ? (LANG==="en" ? (o.en||o.zh) : o.zh) : ""; }
+function applyLang(){
+  document.querySelectorAll("[data-i18n]").forEach(el=>{ el.textContent = tr(el.getAttribute("data-i18n")); });
+  byId("langLbl").textContent = LANG==="en" ? "中" : "EN";
+  byId("credLbl").textContent = tr("点券");
+  renderHud();
+  ["result","dex","lv","med","help"].forEach(id=>{ const ov=byId(id+"Ov"); if(ov && !ov.classList.contains("hidden")){
+    ({result:()=>{}, dex:renderDex, lv:renderLevels, med:renderMedals, help:renderHelp})[id]?.(); } });
+}
+function toggleLang(){ LANG = LANG==="en"?"zh":"en"; try{ localStorage.setItem("gachaLang",LANG); }catch(e){} applyLang(); }
+
+/*==================== 稀有度 & 卡池 ====================*/
+const byId=id=>document.getElementById(id);
+const RARITIES=[
+  {id:"N",  zh:"普通", en:"Common",     col:"#c7ccd6", p:0.45,  dust:5,    cnt:170},
+  {id:"R",  zh:"稀有", en:"Rare",       col:"#4a90ff", p:0.25,  dust:12,   cnt:100},
+  {id:"SR", zh:"超稀有",en:"Super Rare", col:"#a45cff", p:0.15,  dust:30,   cnt:60},
+  {id:"SSR",zh:"史诗", en:"Epic",       col:"#ffcf3a", p:0.08,  dust:80,   cnt:35},
+  {id:"UR", zh:"传说", en:"Legendary",  col:"#ff7ac2", p:0.04,  dust:200,  cnt:20},
+  {id:"MR", zh:"神话", en:"Mythic",     col:"#ff4d4d", p:0.02,  dust:600,  cnt:10},
+  {id:"GR", zh:"神级", en:"Godly",      col:"#ffd700", p:0.008, dust:2000, cnt:4},
+  {id:"OR", zh:"创世", en:"Genesis",    col:"#7fefff", p:0.002, dust:8000, cnt:1},
+];
+const RAR=Object.fromEntries(RARITIES.map(r=>[r.id,r]));
+const RIDX=Object.fromEntries(RARITIES.map((r,i)=>[r.id,i]));
+// 变体（同卡的稀有版本）：普通/闪卡/彩虹/签名
+const VARIANTS=[{zh:"普通版",en:"Normal",b:"",mult:1},{zh:"闪卡",en:"Foil",b:"✨",mult:1.5},{zh:"彩虹",en:"Rainbow",b:"🌈",mult:2.5},{zh:"签名",en:"Signature",b:"🏅",mult:4}];
+// 确定性生成 400 张收藏卡（名字/图标按序，存档跨会话稳定），编号 No.001–400
+const EMO={
+  N:["🍎","🐟","🥔","🧦","🔩","🪵","🍞","🧅","🐌","🪨","🧻","🥚","🧊","🍄","🐛","🪱","🥕","🧱","🫘","🕯️"],
+  R:["🐺","🦊","🦉","🗡️","🛡️","🏹","🐗","🦌","🐍","🦅","⚙️","🔮","🐴","🦇","🦂","🐙","🦈","🐊","🦁","🐯"],
+  SR:["🧙","🧝","🐉","🦄","⚔️","🔱","🌋","❄️","🌪️","⚡","🧛","🧟","👺","👹","🦅","🐲","🌊","🔥","💠","🪬"],
+  SSR:["🐦‍🔥","🐺","🦁","🐘","🦏","🦕","🦖","🐋","🦚","🦣","🌟","☄️","🛸","🗿","🏛️","👑","🎇","🌌","🪐","🧬"],
+  UR:["🐉","🦅","🔱","⚡","🌈","🌠","🕊️","🦢","🐦‍🔥","🌞","🌛","🪽","💫","🎆","🌟","🦄"],
+  MR:["🐲","👁️","🔮","🌀","🕳️","💀","☀️","🌑","🪷","🐍"],
+  GR:["👑","⚜️","🔆","💎"],
+  OR:["✨"],
+};
+const NAMES={
+  N:{zh:["土豆","小鱼","苹果","木块","石头","铁钉","面包","洋葱","蜗牛","鸡蛋","蘑菇","毛线","冰块","小虫","萝卜","砖头","蜡烛","豆子","树叶","泥巴"],
+     en:["Potato","Fishy","Apple","Woodblock","Pebble","Nail","Bread","Onion","Snail","Egg","Mushroom","Yarn","Ice","Bug","Carrot","Brick","Candle","Bean","Leaf","Mud"]},
+  R:{zh:["灰狼","赤狐","夜枭","短剑","圆盾","猎弓","野猪","麋鹿","青蛇","雄鹰","齿轮","水晶","战马","蝙蝠","毒蝎","章鱼","鲨鱼","鳄鱼","雄狮","猛虎"],
+     en:["Grey Wolf","Red Fox","Night Owl","Dagger","Round Shield","Hunt Bow","Boar","Elk","Viper","Eagle","Gear","Crystal","War Horse","Bat","Scorpion","Octopus","Shark","Croc","Lion","Tiger"]},
+  SR:{zh:["法师","精灵","幼龙","独角兽","符文剑","三叉戟","火山","冰霜","飓风","雷霆","吸血鬼","不死者","鬼将","罗刹","天鹰","翼龙","巨浪","烈焰","灵珠","护符"],
+      en:["Mage","Elf","Wyrmling","Unicorn","Rune Blade","Trident","Volcano","Frost","Hurricane","Thunder","Vampire","Undead","Ghost Lord","Rakshasa","Sky Eagle","Wyvern","Tsunami","Blaze","Spirit Orb","Amulet"]},
+  SSR:{zh:["不死鸟","冰原狼","黄金狮","战象","犀神","雷龙","暴君龙","巨鲸","孔雀神","猛犸","星辰","彗星","飞碟","巨像","神殿","王冠","焰火","星云","行星","基因"],
+       en:["Phoenix","Dire Wolf","Golden Lion","War Elephant","Rhino God","Thunder Lizard","Tyrant Rex","Leviathan","Peacock God","Mammoth","Starlight","Comet","UFO","Colossus","Temple","Crown","Fireworks","Nebula","Planet","Genome"]},
+  UR:{zh:["圣龙","雷鹰","海皇戟","天雷","虹光","流星","白鸽神","天鹅座","炎凤","太阳神","月神","羽翼","星辉","焰火祭","传说之星","圣兽麒麟"],
+      en:["Holy Dragon","Storm Eagle","Sea King's Trident","Sky Bolt","Rainbow Light","Meteor","Dove God","Cygnus","Flame Phoenix","Sun God","Moon God","Winged","Starshine","Fire Rite","Star of Legend","Qilin"]},
+  MR:{zh:["混沌龙","全视之眼","预言水晶","时空漩涡","虚空","死神","太阳圣灵","黑月","莲华","衔尾蛇"],
+      en:["Chaos Dragon","All-Seeing Eye","Oracle Crystal","Spacetime Vortex","The Void","Reaper","Sun Spirit","Black Moon","Lotus","Ouroboros"]},
+  GR:{zh:["天帝","神王之冠","太初之光","永恒钻石"],
+      en:["Heaven Emperor","Crown of Godking","Primordial Light","Eternal Diamond"]},
+  OR:{zh:["创世欧皇"], en:["Genesis Emperor"]},
+};
+const MEM_NOS=[1,100,200,300,400];   // 纪念卡编号
+function buildCards(){
+  const out=[]; let no=0;
+  for(const r of RARITIES){
+    const emo=EMO[r.id], zh=NAMES[r.id].zh, en=NAMES[r.id].en;
+    for(let i=0;i<r.cnt;i++){ no++;
+      const set=Math.floor(i/zh.length)+1;  // 循环第几轮，用于同名区分
+      const suf = i>=zh.length ? " "+["Ⅱ","Ⅲ","Ⅳ","Ⅴ","Ⅵ","Ⅶ","Ⅷ","Ⅸ"][Math.min(set-2,7)] : "";
+      out.push({ id:"c"+no, no, r:r.id, ico:emo[i%emo.length], zh:zh[i%zh.length]+suf, en:en[i%en.length]+suf, mem:MEM_NOS.includes(no) });
+    }
+  }
+  return out;
+}
+const CARDS=buildCards();
+const CBY=Object.fromEntries(CARDS.map(c=>[c.id,c]));
+const POOL=Object.fromEntries(RARITIES.map(r=>[r.id, CARDS.filter(c=>c.r===r.id)]));
+const TOTAL_CARDS=CARDS.length;   // 400
+
+/*==================== 点券等级 / 收藏等级 / 勋章 ====================*/
+const PLV=[
+  {lv:1, need:0,     zh:"新人",  en:"Rookie",         ico:"⚪", col:"#c7ccd6"},
+  {lv:2, need:500,   zh:"青铜",  en:"Bronze",         ico:"🥉", col:"#cd7f32"},
+  {lv:3, need:1000,  zh:"白银",  en:"Silver",         ico:"🥈", col:"#c0c8d4"},
+  {lv:4, need:2000,  zh:"黄金",  en:"Gold",           ico:"🥇", col:"#ffcf3a"},
+  {lv:5, need:4000,  zh:"铂金",  en:"Platinum",       ico:"💠", col:"#7fe0d0"},
+  {lv:6, need:6000,  zh:"钻石",  en:"Diamond",        ico:"💎", col:"#8fb8ff"},
+  {lv:7, need:8000,  zh:"大师",  en:"Master",         ico:"🔶", col:"#ff9f43"},
+  {lv:8, need:10000, zh:"宗师",  en:"Grandmaster",    ico:"🔷", col:"#4a90ff"},
+  {lv:9, need:15000, zh:"王者",  en:"King",           ico:"👑", col:"#ffd700"},
+  {lv:10,need:20000, zh:"至尊",  en:"Supreme",        ico:"🏆", col:"#ff7ac2"},
+  {lv:11,need:30000, zh:"欧皇",  en:"Lucky Emperor",  ico:"🌟", col:"#ffe08a"},
+  {lv:12,need:50000, zh:"神豪",  en:"Whale",          ico:"💰", col:"#28c76f"},
+  {lv:13,need:80000, zh:"收藏大师",en:"Collector Master",ico:"📚",col:"#a45cff"},
+  {lv:14,need:120000,zh:"传奇收藏家",en:"Legend Collector",ico:"🦄",col:"#ff5c8a"},
+  {lv:15,need:200000,zh:"创世欧皇",en:"Genesis Emperor",ico:"✨",col:"#7fefff"},
+];
+function pointLevelIdx(life){ let x=0; for(let i=0;i<PLV.length;i++) if(life>=PLV[i].need) x=i; return x; }
+function pointLevel(){ return pointLevelIdx(S?S.lifeCredits:0); }        // 0-based index
+function drawDiscount(){ return Math.min(0.25, pointLevelIdx(S.lifeCredits)*0.02); }  // 每级 2%，封顶 25%
+function claimAmount(){ return 80 + pointLevel()*40; }
+const CLV=[
+  {need:10, zh:"新手收藏家",en:"Novice Collector",ico:"📔"},
+  {need:30, zh:"初级收藏家",en:"Junior Collector",ico:"📘"},
+  {need:60, zh:"中级收藏家",en:"Mid Collector",   ico:"📗"},
+  {need:100,zh:"高级收藏家",en:"Senior Collector", ico:"📙"},
+  {need:200,zh:"专家收藏家",en:"Expert Collector", ico:"📕"},
+  {need:400,zh:"大收藏家",  en:"Grand Collector",  ico:"👑"},
+];
+function uniqueOwned(){ if(!S)return 0; let n=0; for(const c of CARDS) if(S.owned[c.id]) n++; return n; }
+function collLevelIdx(){ const u=uniqueOwned(); let x=-1; for(let i=0;i<CLV.length;i++) if(u>=CLV[i].need) x=i; return x; }
+const MEDALS=[
+  {lv:3, ico:"🥉", zh:"青铜勋章", en:"Bronze Medal", reward:500},
+  {lv:6, ico:"🥈", zh:"白银勋章", en:"Silver Medal", reward:1500},
+  {lv:9, ico:"🥇", zh:"黄金徽章", en:"Gold Medal",   reward:5000},
+  {lv:12,ico:"💎", zh:"钻石徽章", en:"Diamond Medal",reward:15000},
+  {lv:15,ico:"👑", zh:"王者职责", en:"King's Duty",  reward:50000},
+];
+function medalClaimable(){ let n=0; for(let i=0;i<MEDALS.length;i++){ if(pointLevel()+1>=MEDALS[i].lv && !S.medals.includes(MEDALS[i].lv)) n++; } return n; }
+
+/*==================== 功能卡 ====================*/
+const FCARDS=[
+  {k:"credit", amt:100,  w:10, ico:"💰", zh:"点券卡 +100", en:"+100 Credits"},
+  {k:"credit", amt:200,  w:8,  ico:"💰", zh:"点券卡 +200", en:"+200 Credits"},
+  {k:"credit", amt:500,  w:6,  ico:"💰", zh:"点券卡 +500", en:"+500 Credits"},
+  {k:"credit", amt:1000, w:4,  ico:"💵", zh:"点券卡 +1000", en:"+1000 Credits"},
+  {k:"credit", amt:2000, w:2,  ico:"🤑", zh:"点券卡 +2000", en:"+2000 Credits"},
+  {k:"free",   amt:1,    w:8,  ico:"🎟️", zh:"免费抽卡券 ×1", en:"Free Draw ×1"},
+  {k:"free",   amt:2,    w:5,  ico:"🎟️", zh:"免费抽卡券 ×2", en:"Free Draw ×2"},
+  {k:"free",   amt:3,    w:2,  ico:"🎫", zh:"十连券碎片 ×3", en:"Free Draw ×3"},
+  {k:"double", amt:1,    w:5,  ico:"⭐", zh:"双倍奖励卡", en:"Double Reward"},
+  {k:"half",   amt:5,    w:4,  ico:"🏷️", zh:"本轮半价卡", en:"Half-Price ×5"},
+  {k:"bank",   amt:0,    w:3,  ico:"🏦", zh:"银行派奖卡", en:"Bank Payout"},
+  {k:"lucky",  amt:0,    w:2,  ico:"🍀", zh:"幸运日卡", en:"Lucky Day"},
+];
+const FWEIGHT=FCARDS.reduce((s,f)=>s+f.w,0);
+function rollFunction(){ let r=Math.random()*FWEIGHT; for(const f of FCARDS){ r-=f.w; if(r<0) return f; } return FCARDS[0]; }
+const FUNC_CHANCE=0.15;   // 每抽 15% 概率是功能卡
+
+/*==================== 状态 & 存档 ====================*/
+let S=null;
+const HARD_PITY=70;   // 连续 70 抽未出 SSR+ 则保底
+function fresh(){ return {
+  credits:800, lifeCredits:0, owned:{}, variant:{}, pity:0, drawn:0, medals:[],
+  lastClaim:0, lastFree:0, dblNext:0, halfPrice:0, freeDraws:0, bestRar:"" }; }
+function save(){ try{ localStorage.setItem("gachaSave", JSON.stringify(S)); }catch(e){} }
+function load(){ try{ const d=JSON.parse(localStorage.getItem("gachaSave")); if(d&&d.owned){ S=Object.assign(fresh(), d); return true; } }catch(e){} return false; }
+
+/*==================== 抽卡核心 ====================*/
+function rollRarity(){ const r=Math.random(); let acc=0; for(const R of RARITIES){ acc+=R.p; if(r<acc) return R.id; } return "N"; }
+function rollVariant(){ const r=Math.random(); if(r<0.005)return 3; if(r<0.03)return 2; if(r<0.12)return 1; return 0; }
+function atLeast(minId, rid){ return RIDX[rid] < RIDX[minId] ? minId : rid; }
+
+// 产出一张卡的结果对象（不写 UI）
+function drawOne(opts){ opts=opts||{};
+  // 功能卡
+  if(!opts.noFunc && Math.random()<FUNC_CHANCE){ const f=rollFunction(); applyFunc(f); return {func:f}; }
+  let rid=rollRarity();
+  if(S.pity>=HARD_PITY) rid=atLeast("SSR", rid);
+  if(opts.min) rid=atLeast(opts.min, rid);
+  if(RIDX[rid]>=RIDX["SSR"]) S.pity=0; else S.pity++;
+  const pool=POOL[rid]; const card=pool[Math.floor(Math.random()*pool.length)];
+  const v=rollVariant();
+  const isNew = !(S.owned[card.id]);
+  S.owned[card.id]=(S.owned[card.id]||0)+1;
+  S.drawn++;
+  let dust=0;
+  if(!isNew){ dust=Math.round(RAR[rid].dust*VARIANTS[v].mult*(S.dblNext>0?2:1)); addCredits(dust); if(S.dblNext>0)S.dblNext--; }
+  if(v>(S.variant[card.id]||0)) S.variant[card.id]=v;
+  if(!S.bestRar || RIDX[rid]>RIDX[S.bestRar]) S.bestRar=rid;
+  return {card, rid, v, isNew, dust};
+}
+function applyFunc(f){
+  if(f.k==="credit"){ addCredits(f.amt); }
+  else if(f.k==="free"){ S.freeDraws+=f.amt; }
+  else if(f.k==="double"){ S.dblNext+=1; }
+  else if(f.k==="half"){ S.halfPrice+=f.amt; }
+  else if(f.k==="bank"){ addCredits(300+pointLevel()*150); }
+  else if(f.k==="lucky"){ S.dblNext+=1; S.freeDraws+=1; }
+}
+function addCredits(n){ S.credits+=n; S.lifeCredits+=Math.max(0,n); }
+function drawCost(single){ const base=single?100:900; let c=Math.round(base*(1-drawDiscount())); if(S.halfPrice>0) c=Math.round(c/2); return c; }
+
+function drawSingle(){ if(!S)return;
+  const cost=drawCost(true); if(S.credits<cost){ toast(tr("点券不足")); return; }
+  S.credits-=cost; if(S.halfPrice>0)S.halfPrice--;
+  const before=pointLevel();
+  const res=[drawOne()];
+  afterDraw(res, before);
+}
+function drawTen(){ if(!S)return;
+  const cost=drawCost(false); if(S.credits<cost){ toast(tr("点券不足")); return; }
+  S.credits-=cost; if(S.halfPrice>0)S.halfPrice--;
+  const before=pointLevel();
+  const res=[]; for(let i=0;i<10;i++) res.push(drawOne());
+  // 十连保底：无 SR+ 收藏卡则最后一张升到 SR
+  const hasHi = res.some(r=>r.card && RIDX[r.rid]>=RIDX["SR"]);
+  if(!hasHi){ res[9]=forceCard("SR"); }
+  afterDraw(res, before);
+}
+function forceCard(minId){ const pool=POOL[minId]; const card=pool[Math.floor(Math.random()*pool.length)];
+  const v=rollVariant(); const isNew=!(S.owned[card.id]); S.owned[card.id]=(S.owned[card.id]||0)+1; S.drawn++;
+  let dust=0; if(!isNew){ dust=Math.round(RAR[minId].dust*VARIANTS[v].mult); addCredits(dust); }
+  if(v>(S.variant[card.id]||0)) S.variant[card.id]=v; S.pity=0; return {card,rid:minId,v,isNew,dust}; }
+
+function freeDraw(){ if(!S)return; if(S.freeDraws>0){ S.freeDraws--; const before=pointLevel(); afterDraw([drawOne({noFunc:true})], before); return; }
+  const now=Date.now(); const CD=45000;
+  if(now-(S.lastFree||0) < CD){ toast(tr("先玩一会再来")); return; }
+  S.lastFree=now; const before=pointLevel(); afterDraw([drawOne({noFunc:true})], before); }
+
+function claimFree(){ if(!S)return; const now=Date.now(); const CD=20000;
+  if(now-(S.lastClaim||0) < CD){ toast(tr("先玩一会再来")); return; }
+  S.lastClaim=now; const amt=claimAmount(); addCredits(amt); toast("🎁 +"+amt+" "+tr("点券")); afterState(); }
+
+function afterDraw(res, beforeLv){
+  showResult(res);
+  const afterLv=pointLevel();
+  if(afterLv>beforeLv) setTimeout(()=>levelUpToast(afterLv), 400);
+  afterState();
+}
+function afterState(){ save(); renderHud(); refreshOpen(); }
+
+/*==================== UI ====================*/
+function toast(msg){ const t=byId("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),1600); }
+function levelUpToast(idx){ const p=PLV[idx]; toast(p.ico+" "+tr("恭喜升级")+" Lv"+p.lv+" "+nm(p)); }
+function fmt(n){ n=Math.round(n); return n.toLocaleString("en-US"); }
+
+function renderHud(){ if(!S)return;
+  byId("credVal").textContent=fmt(S.credits);
+  const idx=pointLevel(), p=PLV[idx], nx=PLV[idx+1];
+  byId("lvIco").textContent=p.ico; byId("lvTitle").textContent=nm(p); byId("lvNum").textContent="Lv"+p.lv;
+  byId("lvCur").textContent="Lv"+p.lv+" "+nm(p);
+  if(nx){ const span=nx.need-p.need, prog=Math.max(0,Math.min(1,(S.lifeCredits-p.need)/span));
+    byId("lvBar").style.width=(prog*100)+"%"; byId("lvNext").textContent=fmt(S.lifeCredits)+" / "+fmt(nx.need); }
+  else { byId("lvBar").style.width="100%"; byId("lvNext").textContent=tr("已满级"); }
+  byId("c1").textContent=fmt(drawCost(true)); byId("c10").textContent=fmt(drawCost(false));
+  byId("d1").disabled = S.credits<drawCost(true); byId("d10").disabled = S.credits<drawCost(false);
+  // free draw / claim state
+  const now=Date.now();
+  const freeReady = S.freeDraws>0 || (now-(S.lastFree||0)>=45000);
+  byId("freeBtn").classList.toggle("hot", freeReady);
+  byId("freeSub").textContent = S.freeDraws>0 ? ("×"+S.freeDraws) : (freeReady?tr("可领取"):Math.ceil((45000-(now-(S.lastFree||0)))/1000)+"s");
+  const claimReady = now-(S.lastClaim||0)>=20000;
+  byId("claimBtn").classList.toggle("hot", claimReady);
+  byId("claimSub").textContent = claimReady ? ("+"+claimAmount()) : Math.ceil((20000-(now-(S.lastClaim||0)))/1000)+"s";
+  // badges
+  const med=medalClaimable(); byId("medBadge").style.display=med>0?"block":"none"; byId("medBadge").textContent="!";
+  const dexN=uniqueOwned(); const db=byId("dexBadge"); db.style.display="none"; // (dex badge reserved)
+}
+
+function cardHTML(res, single){
+  if(res.func){ const f=res.func; return `<div class="card r-SSR" style="--rc:#28c76f"><div class="cico">${f.ico}</div>
+    <div class="cnm">${nm(f)}</div><div class="crt"><span class="rtag" style="background:#28c76f">${tr("功能卡")||"BONUS"}</span></div></div>`; }
+  const c=res.card, R=RAR[res.rid], hi=RIDX[res.rid]>=RIDX["UR"];
+  const vcls = res.v===1?"foil":res.v===2?"rainbow":res.v===3?"foil":"";
+  return `<div class="card r-${res.rid} ${vcls} ${hi?'big-hit':''}">
+    ${res.isNew?`<span class="cnew">${tr("新卡")}</span>`:(res.dust>0?`<span class="cdup">+${res.dust}</span>`:"")}
+    ${res.v>0?`<span class="cvar">${VARIANTS[res.v].b}</span>`:""}
+    <div class="cico">${c.ico}</div>
+    <div class="cno">${c.mem?"👑":""}No.${String(c.no).padStart(3,"0")}</div>
+    <div class="cnm">${nm(c)}</div>
+    <div class="crt"><span class="rtag">${res.rid}</span></div>
+  </div>`;
+}
+function showResult(res){
+  const single=res.length===1;
+  let h=`<h2>🎴 <span>${tr("本次抽卡")}</span><button class="x" onclick="closeOv('resultOv')">${tr("关闭")}</button></h2>`;
+  h+=`<div class="rgrid ${single?'one':''}">`;
+  res.forEach((r,i)=>{ h+=cardHTML(r, single).replace('class="card', `style="animation-delay:${i*0.06}s" class="card`); });
+  h+=`</div>`;
+  // summary
+  const dust=res.reduce((s,r)=>s+(r.dust||0),0), news=res.filter(r=>r.card&&r.isNew).length, funcs=res.filter(r=>r.func).length;
+  h+=`<div class="rsum">${tr("新卡")}: ${news} · ${tr("重复")} +${dust} 💰${funcs?` · 🎁${funcs}`:""}</div>`;
+  h+=`<div class="fgrid2"><button class="draw" onclick="closeOv('resultOv');drawSingle()">🎴 ${tr("单抽")} ${fmt(drawCost(true))}</button>
+    <button class="draw ten" onclick="closeOv('resultOv');drawTen()">🎴×10 ${fmt(drawCost(false))}</button></div>`;
+  if(S.pity>=HARD_PITY-15) h+=`<div class="note">🎯 ${tr("保底临近")}：${HARD_PITY-S.pity} ${tr("距保底")}</div>`;
+  byId("resultSheet").innerHTML=h;
+  byId("resultOv").classList.remove("hidden");
+}
+
+/* 图鉴 */
+let dexFilter="all";
+function openDex(){ if(!S)return; dexFilter="all"; byId("dexOv").classList.remove("hidden"); renderDex(); }
+function setDexFilter(f){ dexFilter=f; renderDex(); }
+function renderDex(){
+  const u=uniqueOwned(), ci=collLevelIdx();
+  const cl = ci>=0?CLV[ci]:null, cn=CLV[Math.min(ci+1,CLV.length-1)];
+  let h=`<h2>📖 <span>${tr("图鉴")}</span><button class="x" onclick="closeOv('dexOv')">${tr("关闭")}</button></h2>`;
+  h+=`<div class="lrow cur" style="display:flex;align-items:center;gap:9px;background:#12152a;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px">
+    <span style="font-size:22px">${cl?cl.ico:"📔"}</span>
+    <div style="flex:1"><div style="font-weight:800;font-size:13px">${cl?nm(cl):tr("收藏等级")}</div>
+      <div style="font-size:10px;color:var(--muted)">${tr("已拥有")} ${u}/${TOTAL_CARDS} ${tr("张")} · ${tr("收藏进度")} ${Math.round(u/TOTAL_CARDS*100)}%</div></div>
+    <div style="font-size:11px;font-weight:800;color:var(--gold)">${ci<CLV.length-1?(u+"/"+cn.need):"👑 MAX"}</div></div>`;
+  h+=`<div class="tabs"><div class="tab${dexFilter==='all'?' on':''}" onclick="setDexFilter('all')">${tr("全部")} ${u}/${TOTAL_CARDS}</div>`;
+  RARITIES.forEach(r=>{ const own=POOL[r.id].filter(c=>S.owned[c.id]).length;
+    h+=`<div class="tab${dexFilter===r.id?' on':''}" onclick="setDexFilter('${r.id}')" style="${dexFilter===r.id?'':'color:'+r.col}">${r.id} ${own}/${r.cnt}</div>`; });
+  h+=`</div>`;
+  const list = dexFilter==="all"?CARDS:POOL[dexFilter];
+  h+=`<div class="dexgrid">`;
+  list.forEach(c=>{ const cnt=S.owned[c.id]||0, have=cnt>0, v=S.variant[c.id]||0;
+    h+=`<div class="dex r-${c.r} ${have?'have':'miss'} ${have&&v>=1?'foilv':''}">
+      ${cnt>1?`<span class="dcnt">×${cnt}</span>`:""}${have&&v>0?`<span class="dvar">${VARIANTS[v].b}</span>`:""}
+      <div class="dico">${have?c.ico:"❓"}</div>
+      <div class="dno">${c.mem?"👑":""}No.${String(c.no).padStart(3,"0")}</div>
+      <div class="dnm">${have?nm(c):"???"}</div></div>`; });
+  h+=`</div>`;
+  byId("dexSheet").innerHTML=h;
+}
+
+/* 等级 */
+function openLevels(){ if(!S)return; byId("lvOv").classList.remove("hidden"); renderLevels(); }
+function renderLevels(){
+  const idx=pointLevel();
+  let h=`<h2>💰 <span>${tr("点券等级")}</span><button class="x" onclick="closeOv('lvOv')">${tr("关闭")}</button></h2>`;
+  h+=`<div class="note" style="text-align:left;margin:0 0 8px">${tr("累计消耗点券提升点券等级，解锁折扣等特权。")}<br>
+    🏷️ ${tr("抽卡折扣")}: <b>${Math.round(drawDiscount()*100)}%</b> · 🎁 ${tr("每次领点券")}: <b>+${claimAmount()}</b></div>`;
+  h+=`<div class="ladder">`;
+  PLV.forEach((p,i)=>{ const cur=i===idx, done=i<idx; const perk=Math.min(25,i*2);
+    h+=`<div class="lrow ${cur?'cur':''} ${done?'done':''}">
+      <span class="li">${p.ico}</span>
+      <div class="lt"><div class="ln">Lv${p.lv} ${nm(p)} ${cur?'◀':''}</div>
+        <div class="ld">${tr("累计点券")} ${fmt(p.need)} · 🏷️ -${perk}%</div></div>
+      <div class="lv">${done?'✔':cur?'●':fmt(p.need)}</div></div>`; });
+  h+=`</div>`;
+  // 收藏等级
+  const u=uniqueOwned(), ci=collLevelIdx();
+  h+=`<h2 style="margin-top:14px">🎖️ <span>${tr("收藏等级")}</span></h2><div class="ladder">`;
+  CLV.forEach((c,i)=>{ const cur=i===ci, done=i<ci;
+    h+=`<div class="lrow ${cur?'cur':''} ${done?'done':''}"><span class="li">${c.ico}</span>
+      <div class="lt"><div class="ln">${nm(c)}</div><div class="ld">${tr("已拥有")} ${c.need} ${tr("张")}</div></div>
+      <div class="lv">${u>=c.need?'✔':u+'/'+c.need}</div></div>`; });
+  h+=`</div>`;
+  byId("lvSheet").innerHTML=h;
+}
+
+/* 勋章 */
+function openMedals(){ if(!S)return; byId("medOv").classList.remove("hidden"); renderMedals(); }
+function claimMedal(i){ const m=MEDALS[i]; if(pointLevel()+1<m.lv){ toast(tr("未达成")); return; } if(S.medals.includes(m.lv)){ return; }
+  S.medals.push(m.lv); addCredits(m.reward); toast(m.ico+" "+nm(m)+" +"+m.reward); afterState(); }
+function renderMedals(){
+  let h=`<h2>🏅 <span>${tr("勋章任务")}</span><button class="x" onclick="closeOv('medOv')">${tr("关闭")}</button></h2>`;
+  h+=`<div class="note" style="text-align:left;margin:0 0 8px">${tr("达到点券等级里程碑可领取勋章奖励。")}</div>`;
+  MEDALS.forEach((m,i)=>{ const reached=pointLevel()+1>=m.lv, claimed=S.medals.includes(m.lv);
+    h+=`<div class="mrow"><span class="mi" style="${reached?'':'filter:grayscale(1) opacity(.5)'}">${m.ico}</span>
+      <div class="mt"><div class="mn">${nm(m)}</div><div class="md">${tr("达到等级")} ${m.lv} · +${fmt(m.reward)} 💰</div></div>
+      ${claimed?`<button class="cbtn dis">${tr("已领取")}</button>`
+        :reached?`<button class="cbtn" onclick="claimMedal(${i})">${tr("领取")}</button>`
+        :`<button class="cbtn locked">${tr("未达成")}</button>`}</div>`; });
+  byId("medSheet").innerHTML=h;
+}
+
+/* 玩法 */
+function openHelp(){ byId("helpOv").classList.remove("hidden"); renderHelp(); }
+function renderHelp(){
+  let h=`<h2>❓ <span>${tr("玩法说明")}</span><button class="x" onclick="closeOv('helpOv')">${tr("关闭")}</button></h2>`;
+  const pts=["越稀有越难抽，重复卡自动分解返还点券。","十连保底至少 1 张超稀有(SR)。","累计消耗点券提升点券等级，解锁折扣等特权。",
+    "集齐不同卡牌提升收藏等级。","达到点券等级里程碑可领取勋章奖励。","闪卡/彩虹/签名是同一张卡的稀有版本，收藏价值更高。"];
+  h+=`<div style="font-size:13px;line-height:1.9">`;
+  pts.forEach(p=> h+=`<div>• ${tr(p)}</div>`);
+  h+=`</div>`;
+  // rarity table
+  h+=`<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:5px">`;
+  RARITIES.forEach(r=> h+=`<span class="rtag" style="background:${r.col}">${r.id} ${nm(r)} ${(r.p*100).toFixed(r.p<0.01?2:0)}%</span>`);
+  h+=`</div>`;
+  h+=`<div class="disc">${tr("点券为游戏内虚拟货币，不能兑换现实货币。")}<br>${tr("虚拟娱乐提示")}</div>`;
+  byId("helpSheet").innerHTML=h;
+}
+
+function closeOv(id){ byId(id).classList.add("hidden"); }
+function refreshOpen(){
+  if(!byId("dexOv").classList.contains("hidden")) renderDex();
+  if(!byId("lvOv").classList.contains("hidden")) renderLevels();
+  if(!byId("medOv").classList.contains("hidden")) renderMedals();
+}
+function goHome(){ try{ if(window.parent!==window) window.parent.postMessage("leo-arcade-home","*"); }catch(e){} }
+
+/*==================== 启动 ====================*/
+function init(){ if(!load()){ S=fresh(); save(); } applyLang(); renderHud();
+  try{ setInterval(()=>{ if(S) renderHud(); }, 1000); }catch(e){} }
+init();
+
+// 暴露给测试
+if(typeof window!=="undefined") window.__gacha={ get S(){return S;}, CARDS, RARITIES, drawOne, drawSingle, drawTen, pointLevel, uniqueOwned, fresh };
+</script>
