@@ -128,6 +128,20 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(4px);}
   .fgrid2{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
   .disc{font-size:9px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.5;}
+  /* market */
+  .mkstrip{display:flex;gap:5px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;} .mkstrip::-webkit-scrollbar{display:none;}
+  .mkchip{flex:0 0 auto;background:#12152a;border:1px solid var(--line);border-radius:9px;padding:5px 9px;font-size:11px;font-weight:800;text-align:center;line-height:1.35;}
+  .mkchip .up{color:var(--green);} .mkchip .down{color:var(--red);}
+  .mkrow{display:flex;align-items:center;gap:8px;background:#12152a;border:1px solid var(--line);border-radius:10px;padding:7px 9px;margin-bottom:5px;}
+  .mkrow.r-N,.mkrow.r-R,.mkrow.r-SR,.mkrow.r-SSR,.mkrow.r-UR,.mkrow.r-MR,.mkrow.r-GR,.mkrow.r-OR{border-left:3px solid var(--rc);}
+  .mkrow .mkico{font-size:22px;} .mkrow .mkt{flex:1;min-width:0;} .mkrow .mkn{font-weight:800;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mkrow .mkd{font-size:9px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mkrow .mkp{font-weight:900;font-size:12px;color:var(--gold);white-space:nowrap;}
+  .minp{width:62px;background:#0c0f22;border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:5px 6px;font-size:12px;font-weight:700;text-align:right;}
+  .mbtn{border:none;border-radius:8px;padding:6px 9px;font-weight:800;font-size:11px;cursor:pointer;background:var(--green);color:#04140b;white-space:nowrap;}
+  .mbtn.buy{background:var(--blue);color:#fff;} .mbtn.gray{background:#2a3250;color:var(--muted);}
+  .feed{font-size:10px;color:var(--muted);line-height:1.8;max-height:104px;overflow-y:auto;background:#0e1226;border:1px solid var(--line);border-radius:9px;padding:6px 9px;margin-top:8px;}
+  .feed b{color:var(--ink);font-weight:700;} .feed .g{color:var(--green);} .feed .o{color:var(--muted);}
 </style>
 
 <div id="app">
@@ -160,6 +174,7 @@
 
   <div class="dock">
     <button class="ib" onclick="openDex()"><i>📖</i><b data-i18n="图鉴">图鉴</b><span class="bdg" id="dexBadge" style="display:none"></span></button>
+    <button class="ib" onclick="openMarket()"><i>🏪</i><b data-i18n="市场">市场</b><span class="bdg" id="mktBadge" style="display:none"></span></button>
     <button class="ib" onclick="openLevels()"><i>💰</i><b data-i18n="等级">等级</b></button>
     <button class="ib" onclick="openMedals()"><i>🏅</i><b data-i18n="勋章">勋章</b><span class="bdg pulse" id="medBadge" style="display:none">!</span></button>
     <button class="ib" onclick="openHelp()"><i>❓</i><b data-i18n="玩法">玩法</b></button>
@@ -171,6 +186,7 @@
 <!-- overlays -->
 <div class="ov hidden" id="resultOv"><div class="sheet" id="resultSheet"></div></div>
 <div class="ov hidden" id="dexOv"><div class="sheet" id="dexSheet"></div></div>
+<div class="ov hidden" id="mktOv"><div class="sheet" id="mktSheet"></div></div>
 <div class="ov hidden" id="lvOv"><div class="sheet" id="lvSheet"></div></div>
 <div class="ov hidden" id="medOv"><div class="sheet" id="medSheet"></div></div>
 <div class="ov hidden" id="helpOv"><div class="sheet" id="helpSheet"></div></div>
@@ -209,6 +225,13 @@ const TR = {
   "集齐不同卡牌提升收藏等级。":"Collecting unique cards raises your Collector Level.",
   "达到点券等级里程碑可领取勋章奖励。":"Hit Credits-Level milestones to claim medal rewards.",
   "闪卡/彩虹/签名是同一张卡的稀有版本，收藏价值更高。":"Foil/Rainbow/Signature are rare versions of the same card — worth more.",
+  // 市场
+  "市场":"Market","交易市场":"Market","买入":"Buy","卖出换点券":"Sell for Credits","出价":"Bid","要价":"Ask","市场价":"Market","秒卖":"Quick Sell","挂单":"List","撤单":"Cancel",
+  "开价":"Ask","成交":"Deal","缺":"NEW","我的挂单":"My Listings","累计交易收入":"Total trade income","重复卡（保留1张，其余可卖）":"Duplicates (1 kept, rest sellable)",
+  "暂无重复卡——多抽几次吧":"No duplicates yet — pull more!","你买入":"You bought","你卖出":"You sold","已挂单":"Listed","已撤单":"Cancelled","至少保留一张":"Keep at least one",
+  "挂单已被抢走":"Listing already taken","卖家拒绝了你的出价":"Seller rejected your bid","开价越低越快成交":"lower ask = faster sale",
+  "出价越高越容易成交；出价≥要价必成交。可淘到你缺的卡。":"Higher bid = higher chance; bid ≥ ask always closes. Hunt cards you're missing.",
+  "市场为拟真玩家经济：AI 交易者挂单、价格实时波动。点券为虚拟货币，不涉及真钱。":"A living player-style economy: AI traders list cards, prices float live. Credits are virtual — no real money.",
 };
 function tr(s){ return LANG==="en" ? (TR[s]||s) : s; }
 function nm(o){ return o ? (LANG==="en" ? (o.en||o.zh) : o.zh) : ""; }
@@ -217,8 +240,8 @@ function applyLang(){
   byId("langLbl").textContent = LANG==="en" ? "中" : "EN";
   byId("credLbl").textContent = tr("点券");
   renderHud();
-  ["result","dex","lv","med","help"].forEach(id=>{ const ov=byId(id+"Ov"); if(ov && !ov.classList.contains("hidden")){
-    ({result:()=>{}, dex:renderDex, lv:renderLevels, med:renderMedals, help:renderHelp})[id]?.(); } });
+  ["result","dex","mkt","lv","med","help"].forEach(id=>{ const ov=byId(id+"Ov"); if(ov && !ov.classList.contains("hidden")){
+    ({result:()=>{}, dex:renderDex, mkt:renderMarket, lv:renderLevels, med:renderMedals, help:renderHelp})[id]?.(); } });
 }
 function toggleLang(){ LANG = LANG==="en"?"zh":"en"; try{ localStorage.setItem("gachaLang",LANG); }catch(e){} applyLang(); }
 
@@ -349,7 +372,8 @@ let S=null;
 const HARD_PITY=70;   // 连续 70 抽未出 SSR+ 则保底
 function fresh(){ return {
   credits:800, lifeCredits:0, owned:{}, variant:{}, pity:0, drawn:0, medals:[],
-  lastClaim:0, lastFree:0, dblNext:0, halfPrice:0, freeDraws:0, bestRar:"" }; }
+  lastClaim:0, lastFree:0, dblNext:0, halfPrice:0, freeDraws:0, bestRar:"",
+  mkt:{}, mktPrev:{}, buyList:[], sellList:[], tradeLog:[], mktProfit:0 }; }
 function save(){ try{ localStorage.setItem("gachaSave", JSON.stringify(S)); }catch(e){} }
 function load(){ try{ const d=JSON.parse(localStorage.getItem("gachaSave")); if(d&&d.owned){ S=Object.assign(fresh(), d); return true; } }catch(e){} return false; }
 
@@ -578,14 +602,131 @@ function refreshOpen(){
   if(!byId("dexOv").classList.contains("hidden")) renderDex();
   if(!byId("lvOv").classList.contains("hidden")) renderLevels();
   if(!byId("medOv").classList.contains("hidden")) renderMedals();
+  if(!byId("mktOv").classList.contains("hidden")) renderMarket();
 }
 function goHome(){ try{ if(window.parent!==window) window.parent.postMessage("leo-arcade-home","*"); }catch(e){} }
 
+/*==================== 🏪 交易市场 ====================
+   单机存档无法安全托管所有玩家余额，故这里是「拟真玩家市场」：由 AI 交易者挂单、
+   价格实时波动、你可开价出价(越高越易成交)买卡，也可把重复卡挂单/秒卖换点券。 */
+const MARKET_MULT=4;        // 市场基准价 = 稀有度分解值 × 4（卖市场远比直接分解划算）
+const SELL_FEE=0.08;        // 秒卖手续费
+const TRADERS=["卡神小明","欧皇Alice","抽卡狂魔","收藏家老王","Lucky Bob","满命Cindy","毕业玩家","土豪Dave","非酋逆袭","锦鲤附体","StarGazer","饭团君"];
+function mktIndex(rid){ if(!S.mkt)S.mkt={}; if(!(S.mkt[rid]>0)) S.mkt[rid]=0.9+Math.random()*0.4; return S.mkt[rid]; }
+function marketPrice(rid,v){ return Math.max(1, Math.round(RAR[rid].dust*MARKET_MULT*mktIndex(rid)*VARIANTS[v||0].mult)); }
+function cardMarketPrice(cardId,v){ const c=CBY[cardId]; return c?marketPrice(c.r,v||0):0; }
+function mktTrend(rid){ const p=(S.mktPrev&&S.mktPrev[rid])||S.mkt[rid]; const c=S.mkt[rid]; return p>0?(c-p)/p*100:0; }
+function rid4(){ return Math.floor(Math.random()*1e9); }
+function genListing(){ let card;
+  if(Math.random()<0.55){ const miss=CARDS.filter(c=>!S.owned[c.id]); card = miss.length? miss[Math.floor(Math.random()*miss.length)] : CARDS[Math.floor(Math.random()*CARDS.length)]; }
+  else { const rid=rollRarity(); card=POOL[rid][Math.floor(Math.random()*POOL[rid].length)]; }
+  const v = Math.random()<0.02?2:(Math.random()<0.10?1:0);
+  const ask = Math.round(marketPrice(card.r,v)*(0.95+Math.random()*0.35));   // 多在市场价附近或略高
+  return { tid:"L"+rid4(), trader:TRADERS[Math.floor(Math.random()*TRADERS.length)], cardId:card.id, v, ask }; }
+function refillBuyList(){ if(!S.buyList)S.buyList=[];
+  if(S.buyList.length>=8 && Math.random()<0.3) S.buyList.splice(Math.floor(Math.random()*S.buyList.length),1);
+  while(S.buyList.length<8) S.buyList.push(genListing()); }
+function pushLog(o){ if(!S.tradeLog)S.tradeLog=[]; o.t=Date.now(); S.tradeLog.unshift(o); if(S.tradeLog.length>24)S.tradeLog.pop(); }
+function mktTick(){ if(!S)return; if(!S.mkt)S.mkt={}; S.mktPrev=Object.assign({},S.mkt);
+  RARITIES.forEach(r=>{ let x=mktIndex(r.id); x*=(1+(Math.random()-0.5)*0.09); if(Math.random()<0.06) x*=(Math.random()<0.5?1.16:0.86); S.mkt[r.id]=Math.max(0.6,Math.min(1.7,x)); });
+  // 处理你的挂单：市场价相对开价越高，成交越快
+  if(S.sellList&&S.sellList.length){ S.sellList=S.sellList.filter(L=>{ const mp=cardMarketPrice(L.cardId,L.v);
+    const ch=Math.max(0,Math.min(1,(mp/L.ask-0.7)/0.4));
+    if(Math.random()<ch*0.6){ addCredits(L.ask); S.mktProfit=(S.mktProfit||0)+L.ask; pushLog({kind:"sold",cardId:L.cardId,v:L.v,amt:L.ask}); return false; } return true; }); }
+  refillBuyList();
+  // 拟真：别的「玩家」也在成交，制造活跃行情感
+  if(Math.random()<0.7){ const c=CARDS[Math.floor(Math.random()*CARDS.length)];
+    pushLog({kind:"other", trader:TRADERS[Math.floor(Math.random()*TRADERS.length)], cardId:c.id, v:0, amt:marketPrice(c.r,0)}); }
+}
+// —— 买：开价出价，越高越容易成交 ——
+function buyBid(tid,bidStr){ const L=S.buyList.find(x=>x.tid===tid); if(!L){ toast(tr("挂单已被抢走")); return; }
+  let bid=Math.round(parseFloat(bidStr)); if(!(bid>0)) bid=L.ask;
+  let pay,ok;
+  if(bid>=L.ask){ pay=L.ask; ok=true; }                                   // 出价≥要价：必成交（按要价付）
+  else { const chance=Math.max(0,Math.min(1,(bid/L.ask-0.75)/0.35)); ok=Math.random()<chance; pay=bid; }
+  if(!ok){ toast("🙅 "+tr("卖家拒绝了你的出价")+" ("+Math.round(bid/L.ask*100)+"%)"); return; }
+  if(pay>S.credits){ toast(tr("点券不足")); return; }
+  S.credits-=pay; S.owned[L.cardId]=(S.owned[L.cardId]||0)+1;
+  if((L.v||0)>(S.variant[L.cardId]||0)) S.variant[L.cardId]=L.v||0;
+  S.buyList=S.buyList.filter(x=>x.tid!==tid); refillBuyList();
+  pushLog({kind:"bought",cardId:L.cardId,v:L.v,amt:pay}); toast("✅ "+tr("成交")+" -"+pay); afterState(); }
+// —— 卖：秒卖 / 挂单换点券 ——
+function quickSell(cardId){ const cnt=S.owned[cardId]||0; if(cnt<=1){ toast(tr("至少保留一张")); return; }
+  const got=Math.round(cardMarketPrice(cardId,0)*(1-SELL_FEE));
+  S.owned[cardId]=cnt-1; addCredits(got); S.mktProfit=(S.mktProfit||0)+got;
+  pushLog({kind:"sold",cardId,v:0,amt:got}); toast("💰 +"+got); afterState(); }
+function listCard(cardId,askStr){ const cnt=S.owned[cardId]||0; if(cnt<=1){ toast(tr("至少保留一张")); return; }
+  let ask=Math.round(parseFloat(askStr)); if(!(ask>0)) ask=cardMarketPrice(cardId,0);
+  S.owned[cardId]=cnt-1; if(!S.sellList)S.sellList=[];
+  S.sellList.push({lid:"S"+rid4(), cardId, v:0, ask}); toast("📤 "+tr("已挂单")+" "+ask); afterState(); }
+function cancelListing(lid){ if(!S.sellList)return; const i=S.sellList.findIndex(x=>x.lid===lid); if(i<0)return;
+  const L=S.sellList[i]; S.owned[L.cardId]=(S.owned[L.cardId]||0)+1; S.sellList.splice(i,1); toast(tr("已撤单")); afterState(); }
+
+let mktView="buy";
+function openMarket(){ if(!S)return; RARITIES.forEach(r=>mktIndex(r.id)); if(!S.buyList||!S.buyList.length) refillBuyList(); byId("mktOv").classList.remove("hidden"); renderMarket(); }
+function setMktView(v){ mktView=v; renderMarket(); }
+function refreshMarket(){ if(!byId("mktOv").classList.contains("hidden")) renderMarket(); }
+function vBadge(v){ return v>0?VARIANTS[v].b:""; }
+function feedLine(o){ const c=CBY[o.cardId], nmc=c?(c.ico+" "+nm(c)):"?";
+  if(o.kind==="other") return `<div class="o">🌐 <b>${o.trader}</b> ${tr("成交")} ${nmc} · ${o.amt}💰</div>`;
+  if(o.kind==="bought") return `<div>🛒 ${tr("你买入")} ${nmc} · -${o.amt}💰</div>`;
+  return `<div class="g">💰 ${tr("你卖出")} ${nmc} · +${o.amt}💰</div>`; }
+function renderMarket(){
+  let h=`<h2>🏪 <span>${tr("交易市场")}</span><button class="x" onclick="closeOv('mktOv')">${tr("关闭")}</button></h2>`;
+  // 行情条
+  h+=`<div class="mkstrip">`;
+  RARITIES.forEach(r=>{ const t=mktTrend(r.id), up=t>=0;
+    h+=`<div class="mkchip" style="border-color:${r.col}"><div style="color:${r.col}">${r.id}</div>
+      <div class="${up?'up':'down'}">${up?'▲':'▼'}${Math.abs(t).toFixed(1)}%</div></div>`; });
+  h+=`</div>`;
+  h+=`<div class="tabs" style="padding-bottom:8px">
+      <div class="tab${mktView==='buy'?' on':''}" onclick="setMktView('buy')">🛒 ${tr("买入")}</div>
+      <div class="tab${mktView==='sell'?' on':''}" onclick="setMktView('sell')">💰 ${tr("卖出换点券")}</div>
+    </div>`;
+  if(mktView==="buy"){
+    h+=`<div class="note" style="text-align:left;margin:0 0 8px">${tr("出价越高越容易成交；出价≥要价必成交。可淘到你缺的卡。")}</div>`;
+    (S.buyList||[]).forEach(L=>{ const c=CBY[L.cardId], own=S.owned[L.cardId]||0;
+      h+=`<div class="mkrow r-${c.r}"><div class="mkico">${c.ico}${vBadge(L.v)}</div>
+        <div class="mkt"><div class="mkn"><span class="rtag" style="background:${RAR[c.r].col}">${c.r}</span> ${nm(c)} ${own?`<span style="color:var(--muted);font-size:9px">×${own}</span>`:`<span style="color:var(--green);font-size:9px">${tr("缺")}</span>`}</div>
+          <div class="mkd">👤 ${L.trader} · ${tr("要价")} <b style="color:var(--gold)">${L.ask}</b></div></div>
+        <input class="minp" id="bid_${L.tid}" inputmode="numeric" placeholder="${L.ask}">
+        <button class="mbtn buy" onclick="buyBid('${L.tid}', byId('bid_${L.tid}').value)">${tr("出价")}</button></div>`; });
+  } else {
+    h+=`<div class="frow" style="display:flex;justify-content:space-between;align-items:center;background:#12152a;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:800">📈 ${tr("累计交易收入")}</div><div style="font-weight:900;color:var(--gold)">${fmt(S.mktProfit||0)} 💰</div></div>`;
+    // 我的挂单
+    if(S.sellList&&S.sellList.length){ h+=`<div class="note" style="text-align:left;margin:0 0 5px">📤 ${tr("我的挂单")}（${tr("开价越低越快成交")}）</div>`;
+      S.sellList.forEach(L=>{ const c=CBY[L.cardId], mp=cardMarketPrice(L.cardId,L.v);
+        h+=`<div class="mkrow r-${c.r}"><div class="mkico">${c.ico}</div>
+          <div class="mkt"><div class="mkn">${nm(c)}</div><div class="mkd">${tr("开价")} <b style="color:var(--gold)">${L.ask}</b> · ${tr("市场价")} ${mp}</div></div>
+          <button class="mbtn gray" onclick="cancelListing('${L.lid}')">${tr("撤单")}</button></div>`; }); }
+    // 可卖的重复卡
+    const dups=CARDS.filter(c=>(S.owned[c.id]||0)>1);
+    h+=`<div class="note" style="text-align:left;margin:8px 0 5px">🎴 ${tr("重复卡（保留1张，其余可卖）")}</div>`;
+    if(!dups.length) h+=`<div class="note">${tr("暂无重复卡——多抽几次吧")}</div>`;
+    dups.slice(0,60).forEach(c=>{ const mp=cardMarketPrice(c.id,0), got=Math.round(mp*(1-SELL_FEE)), own=S.owned[c.id];
+      h+=`<div class="mkrow r-${c.r}"><div class="mkico">${c.ico}</div>
+        <div class="mkt"><div class="mkn"><span class="rtag" style="background:${RAR[c.r].col}">${c.r}</span> ${nm(c)} <span style="color:var(--muted);font-size:9px">×${own}</span></div>
+          <div class="mkd">${tr("市场价")} ${mp} · ${tr("秒卖")} +${got}</div></div>
+        <input class="minp" id="ask_${c.id}" inputmode="numeric" placeholder="${mp}">
+        <button class="mbtn" onclick="listCard('${c.id}', byId('ask_${c.id}').value)">${tr("挂单")}</button>
+        <button class="mbtn buy" onclick="quickSell('${c.id}')">${tr("秒卖")}</button></div>`; });
+  }
+  // 实时成交动态
+  if(S.tradeLog&&S.tradeLog.length){ h+=`<div class="feed">${S.tradeLog.slice(0,12).map(feedLine).join("")}</div>`; }
+  h+=`<div class="disc">${tr("市场为拟真玩家经济：AI 交易者挂单、价格实时波动。点券为虚拟货币，不涉及真钱。")}</div>`;
+  byId("mktSheet").innerHTML=h;
+}
+
 /*==================== 启动 ====================*/
 function init(){ if(!load()){ S=fresh(); save(); } applyLang(); renderHud();
-  try{ setInterval(()=>{ if(S) renderHud(); }, 1000); }catch(e){} }
+  let mtk=0;
+  try{ setInterval(()=>{ if(!S)return; renderHud();
+    if(++mtk%5===0){ mktTick(); refreshMarket(); save(); }   // 每5秒行情波动一次
+  }, 1000); }catch(e){} }
 init();
 
 // 暴露给测试
-if(typeof window!=="undefined") window.__gacha={ get S(){return S;}, CARDS, RARITIES, drawOne, drawSingle, drawTen, pointLevel, uniqueOwned, fresh };
+if(typeof window!=="undefined") window.__gacha={ get S(){return S;}, CARDS, RARITIES, drawOne, drawSingle, drawTen, pointLevel, uniqueOwned, fresh,
+  marketPrice, cardMarketPrice, mktTick, buyBid, quickSell, listCard, cancelListing, refillBuyList };
 </script>
