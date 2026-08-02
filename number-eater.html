@@ -85,6 +85,11 @@
   <button class="cbtn" onclick="goHome()">🏠</button>
 </div>
 <button class="tiny" id="langBtn" onclick="toggleLang()">EN</button>
+<div id="buildBar" style="position:fixed;left:12px;bottom:96px;flex-direction:column;gap:7px;pointer-events:auto;display:none;align-items:center">
+  <button class="cbtn" onclick="placeObstacle('square')" title="放正方形">🟦</button>
+  <button class="cbtn" onclick="placeObstacle('rect')" title="放长方形">🧱</button>
+  <div id="brickTxt" style="font-size:10px;color:#c8d0e8;font-weight:800"></div>
+</div>
 
 <!-- start -->
 <div class="ov" id="startOv">
@@ -153,6 +158,7 @@ const TR={
   "吃解药后 8 秒免疫":"8s immunity after a cure","解药更常出现·小地图显示丧尸":"More cures · zombies on minimap","血量上限 150":"Max HP 150",
   "数字>6 可击杀丧尸":"Kill zombies when your number >6","可击杀丧尸(>6)·移速略快":"Kills zombies (>6) · a bit faster","可击杀丧尸(>6)·小地图显示丧尸":"Kills zombies (>6) · zombies on minimap",
   "免疫尾迹感染":"Immune to trail infection","移动速度 +35%":"Move speed +35%","血上限120·感染掉血 -30%":"120 max HP · infection −30%",
+  "建筑师":"Architect","放置方形/长方形障碍墙，挡住丧尸":"Places square/rectangle walls to block zombies","砖块不足，等它回充":"Out of bricks — wait for recharge",
 };
 function tr(s){ return LANG==="en"?(TR[s]||s):s; }
 function applyLang(){ document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=tr(el.getAttribute("data-i18n")));
@@ -215,6 +221,7 @@ const CLASSES=[
   {id:"firefighter",zh:"消防员", en:"Firefighter",ico:"🧯",   d:"免疫尾迹感染"},
   {id:"ninja",      zh:"忍者",   en:"Ninja",      ico:"🥷",   d:"移动速度 +35%"},
   {id:"priest",     zh:"神父",   en:"Priest",     ico:"⛪",   d:"血上限120·感染掉血 -30%"},
+  {id:"architect",  zh:"建筑师", en:"Architect",  ico:"🏗️",  d:"放置方形/长方形障碍墙，挡住丧尸"},
 ];
 
 /* ==================== 状态 ==================== */
@@ -227,6 +234,7 @@ function freshG(mode){ return {
   // 🦠 病毒模式
   hp:100, maxHp:100, infected:false, cureImmuneUntil:0, humanClass:"civilian", drainMul:1, cureImmuneDur:4, cureRateMul:1, showZombiesMap:false,
   trails:[], cures:[], quarantine:null, quarantineAt:(mode==="virus"?QUARANTINE_AT:Infinity), survTime:0,
+  obstacles:[], architect:false, bricks:0, brickMax:0,
   bots:[], coins:0, best:loadBest(), combo:0, comboMax:0, comboT:0, eats:0, bossKills:0, level:1,
   aimX:WORLD_W/2, aimY:WORLD_H/2-1, moving:false, keyx:0, keyy:0,
   dashUntil:0, magnetUntil:0, shieldUntil:0, invUntil:0, crownUntil:0, frozenUntil:0, hurtNext:0, hurtFlash:0,
@@ -240,7 +248,7 @@ function loadBoard(){ try{ return JSON.parse(localStorage.getItem("neBoard")||"[
 function saveBest(v){ try{ if(v>loadBest()) localStorage.setItem("neBest",String(Math.floor(v))); }catch(e){} }
 function saveBoard(v,mode){ try{ const b=loadBoard(); b.push({v:Math.floor(v),mode,t:Date.now()}); b.sort((a,b)=>b.v-a.v); localStorage.setItem("neBoard",JSON.stringify(b.slice(0,5))); }catch(e){} }
 function applyClass(g, cid){ const c=CLASSES.find(x=>x.id===cid)||CLASSES[0]; g.humanClass=c.id;
-  g.maxHp=100; g.drainMul=1; g.cureImmuneDur=4; g.cureRateMul=1; g.showZombiesMap=false; g.fighter=false; g.trailImmune=false;
+  g.maxHp=100; g.drainMul=1; g.cureImmuneDur=4; g.cureRateMul=1; g.showZombiesMap=false; g.fighter=false; g.trailImmune=false; g.architect=false; g.bricks=0; g.brickMax=0;
   switch(c.id){
     case "athlete":     g.player.speedMul*=1.25; break;
     case "doctor":      g.drainMul=0.5; break;
@@ -253,6 +261,7 @@ function applyClass(g, cid){ const c=CLASSES.find(x=>x.id===cid)||CLASSES[0]; g.
     case "firefighter": g.trailImmune=true; break;
     case "ninja":       g.player.speedMul*=1.35; break;
     case "priest":      g.maxHp=120; g.drainMul=0.7; break;
+    case "architect":   g.architect=true; g.bricks=6; g.brickMax=12; break;
     default:            g.cureImmuneDur=6; // civilian
   }
   g.hp=g.maxHp; g.player.r=radiusOf(g.player.val);
@@ -302,6 +311,21 @@ function explode(x,y){ G.flashes.push({t:0,x,y,boom:true});
   if(Math.hypot(G.player.x-x,G.player.y-y)<BOMB_R){ G.player.val=Math.max(1,G.player.val-BOMB_MINUS); G.player.r=radiusOf(G.player.val); }
   for(const b of G.bots){ if(Math.hypot(b.x-x,b.y-y)<BOMB_R){ b.val=Math.max(1,b.val-BOMB_MINUS); b.r=radiusOf(b.val,b.boss); } }
   popup(x,y,"💥 -"+BOMB_MINUS,"#ff5b6e"); }
+/* -------- 🏗️ 建筑师：障碍墙 -------- */
+function placeObstacle(shape){ if(!G||G.over||G.paused||!G.architect) return; if((G.bricks||0)<1){ toast(tr("砖块不足，等它回充")); return; }
+  const p=G.player; let dx=p.vx, dy=p.vy, dl=Math.hypot(dx,dy); if(dl<1){ dx=1; dy=0; } else { dx/=dl; dy/=dl; }
+  let hw,hh; if(shape==="square"){ hw=46; hh=46; } else { if(Math.abs(dx)>=Math.abs(dy)){ hw=28; hh=94; } else { hw=94; hh=28; } }   // 长墙垂直于前进方向
+  const off=p.r+Math.max(hw,hh)+8;
+  const o={cx:clamp(p.x+dx*off,hw,WORLD_W-hw), cy:clamp(p.y+dy*off,hh,WORLD_H-hh), hw, hh};
+  G.obstacles.push(o); if(G.obstacles.length>18) G.obstacles.shift();
+  G.bricks--; popup(o.cx,o.cy,"🧱","#c8d0e8"); }
+function collideObstacles(e){ if(!G.obstacles||!G.obstacles.length) return; for(const o of G.obstacles){
+    const nx=clamp(e.x,o.cx-o.hw,o.cx+o.hw), ny=clamp(e.y,o.cy-o.hh,o.cy+o.hh), dx=e.x-nx, dy=e.y-ny, d2=dx*dx+dy*dy;
+    if(d2 < e.r*e.r){
+      if(d2>0.01){ const d=Math.sqrt(d2), push=e.r-d; e.x+=dx/d*push; e.y+=dy/d*push; }
+      else { const L=e.x-(o.cx-o.hw), Rr=(o.cx+o.hw)-e.x, T=e.y-(o.cy-o.hh), B=(o.cy+o.hh)-e.y, m=Math.min(L,Rr,T,B);
+        if(m===L) e.x=o.cx-o.hw-e.r; else if(m===Rr) e.x=o.cx+o.hw+e.r; else if(m===T) e.y=o.cy-o.hh-e.r; else e.y=o.cy+o.hh+e.r; }
+    } } }
 /* -------- 🦠 病毒模式 -------- */
 function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
   // 隔离带：只持续 20 秒，关闭后 30 秒再出现
@@ -382,7 +406,7 @@ function updateBot(b,dt){ const p=G.player; b.t-=dt; if(b.t<=0){ b.t=1+Math.rand
   const spd=(b.boss?46:66)*(1-Math.min(0.4,Math.log10(b.val+1)*0.05))*BOT_SPEED_MUL*((b.boostUntil||0)>G.time?SPEED_BOOST:1)*(b.zombie?ZOMBIE_SPEED:1);   // -40%，加速方块+80%，丧尸+20%
   b.vx+=(ax*spd-b.vx)*0.06; b.vy+=(ay*spd-b.vy)*0.06;
   if(G.magnetUntil>G.time && b.val<p.val && d<330){ b.vx+=dx/d*260*dt; b.vy+=dy/d*260*dt; }
-  b.x+=b.vx*dt; b.y+=b.vy*dt; clampEntity(b,10);
+  b.x+=b.vx*dt; b.y+=b.vy*dt; clampEntity(b,10); collideObstacles(b);
 }
 
 /* ==================== 吞噬 ==================== */
@@ -429,7 +453,8 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
   else if(G.moving){ const dx=G.aimX-p.x, dy=G.aimY-p.y, d=Math.hypot(dx,dy); if(d>5){ mx=dx/d; my=dy/d; } }
   let maxs=205*(1-Math.min(0.42,Math.log10(p.val+1)*0.045))*(G.dashUntil>G.time?2.15:1)*p.speedMul*(G.sprint?SPRINT_MUL:1)*((p.boostUntil||0)>G.time?SPEED_BOOST:1);
   p.vx+=(mx*maxs-p.vx)*0.16; p.vy+=(my*maxs-p.vy)*0.16;
-  p.x+=p.vx*dt; p.y+=p.vy*dt; clampEntity(p,10);
+  p.x+=p.vx*dt; p.y+=p.vy*dt; clampEntity(p,10); collideObstacles(p);
+  if(G.architect && G.brickMax) G.bricks=Math.min(G.brickMax,(G.bricks||0)+dt*0.28);   // 砖块回充
   // 加速/爆炸方块随机刷新（病毒模式免除）
   if(!virus){
     if(Math.random()<0.006 && G.blocks.filter(b=>b.type==="speed").length<5) G.blocks.push({type:"speed",x:40+Math.random()*(WORLD_W-80),y:40+Math.random()*(WORLD_H-80),r:20});
@@ -544,6 +569,11 @@ function render(){ if(!G) return; const p=G.player;
     ctx.save(); ctx.shadowColor="#ffcf3a"; ctx.shadowBlur=16; ctx.setLineDash([22,14]); ctx.lineWidth=6; ctx.strokeStyle="#ffcf3a"; ctx.strokeRect(R.x0,R.y0,R.x1-R.x0,R.y1-R.y0); ctx.setLineDash([]); ctx.restore();
     ctx.strokeStyle="#7fffd6"; ctx.lineWidth=5; ctx.beginPath(); ctx.moveTo(R.x0,R.y0+8); ctx.lineTo(R.x0,R.y1-8); ctx.stroke();
   }
+  // 🏗️ 障碍墙
+  for(const o of G.obstacles){ if(o.cx+o.hw<camx||o.cx-o.hw>camx+VW/zoom||o.cy+o.hh<camy||o.cy-o.hh>camy+VH/zoom) continue;
+    ctx.fillStyle="rgba(118,128,158,.92)"; ctx.fillRect(o.cx-o.hw,o.cy-o.hh,o.hw*2,o.hh*2);
+    ctx.strokeStyle="rgba(205,214,240,.95)"; ctx.lineWidth=3; ctx.strokeRect(o.cx-o.hw,o.cy-o.hh,o.hw*2,o.hh*2);
+    ctx.strokeStyle="rgba(0,0,0,.18)"; ctx.lineWidth=1; for(let yy=o.cy-o.hh+11;yy<o.cy+o.hh;yy+=12){ ctx.beginPath(); ctx.moveTo(o.cx-o.hw,yy); ctx.lineTo(o.cx+o.hw,yy); ctx.stroke(); } }
   // 🦠 病毒模式：尾迹 / 隔离带 / 解药
   if(G.mode==="virus"){
     for(const t of G.trails){ if(t.x<camx-40||t.x>camx+VW/zoom+40||t.y<camy-40||t.y>camy+VH/zoom+40) continue;
@@ -630,6 +660,9 @@ function hud(){ if(!G) return; document.getElementById("bignum").textContent=fmt
     const cls=CLASSES.find(c=>c.id===G.humanClass);
     document.getElementById("hpTxt").textContent="❤️ "+Math.ceil(G.hp)+"/"+G.maxHp+(G.infected?" · 🦠"+tr("感染中"):"")+" · "+(cls?cls.ico+nm(cls):"")+" · "+tr("存活")+" "+Math.floor(G.survTime||0)+"s";
   } else hw.style.display="none";
+  const bb=document.getElementById("buildBar");
+  if(G.mode==="virus" && G.architect){ bb.style.display="flex"; document.getElementById("brickTxt").textContent="🧱 "+Math.floor(G.bricks)+"/"+G.brickMax; }
+  else bb.style.display="none";
 }
 
 /* ==================== 循环 ==================== */
@@ -653,6 +686,7 @@ function bindInput(){
     if(k==="a"||k==="arrowleft") G.keyx=-1; else if(k==="d"||k==="arrowright") G.keyx=1;
     else if(k==="w"||k==="arrowup") G.keyy=-1; else if(k==="s"||k==="arrowdown") G.keyy=1;
     else if(k==="1") useSkill("dash"); else if(k==="2") useSkill("magnet"); else if(k==="3") useSkill("shield");
+    else if(k==="q") placeObstacle("square"); else if(k==="e") placeObstacle("rect");
     else if(k===" "){ G.sprint=true; e.preventDefault(); } });     // 空格 = 加速（按住）
   window.addEventListener("keyup",e=>{ if(!G) return; const k=e.key.toLowerCase();
     if(k==="a"||k==="arrowleft"||k==="d"||k==="arrowright") G.keyx=0;
@@ -713,5 +747,6 @@ if(typeof window!=="undefined") window.__ne={ get G(){return G;}, startGame, upd
   get WORLD_W(){return WORLD_W;}, get WORLD_H(){return WORLD_H;}, get EAT_PCT(){return EAT_PCT;}, setG(g){ G=g; }, useSkill,
   openRoom, roomTick, isInRoom, addFood, FOOD_TYPES, BOT_SPEED_MUL, ROOM_INTERVAL, ROOM_DURATION, OFFSCREEN_DESPAWN,
   hitBlock, explode, SPAWN_RATE, SPRINT_MUL, SPEED_BOOST, BOOST_DUR, BOMB_MINUS, BOMB_R,
-  virusStep, applyClass, CLASSES, VIRUS_DRAIN, QUARANTINE_AT, QUARANTINE_DUR, ZOMBIE_SPEED, TRAIL_INFECT, seedVirusPeople };
+  virusStep, applyClass, CLASSES, VIRUS_DRAIN, QUARANTINE_AT, QUARANTINE_DUR, ZOMBIE_SPEED, TRAIL_INFECT, seedVirusPeople,
+  placeObstacle, collideObstacles };
 </script>
