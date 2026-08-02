@@ -163,6 +163,7 @@ const TR={
   "人类职业（求生）":"Human classes (survive)","丧尸职业（感染全城）":"Zombie classes (infect all)",
   "普通丧尸":"Walker","疾行丧尸":"Runner","巨型丧尸":"Brute","剧毒丧尸":"Toxic","潜伏丧尸":"Stalker","尸王":"Zombie King",
   "均衡":"Balanced","速度快·血略少":"Fast · slightly less HP","血超厚·较慢":"Huge HP · slower","范围感染":"Ranged infection","速度较快":"Faster","血王·范围感染":"Max HP · ranged infection",
+  "🏆 霸屏！你统治了全屏":"🏆 SCREEN DOMINATED — YOU WIN!",
 };
 function tr(s){ return LANG==="en"?(TR[s]||s):s; }
 function applyLang(){ document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=tr(el.getAttribute("data-i18n")));
@@ -193,6 +194,7 @@ function levelOf(v){ let lv=1; for(const t of TIERS){ if(v>t) lv++; else break; 
 function lvName(lv){ return LV_NAMES[Math.min(lv, LV_NAMES.length-1)]; }
 // 数字越大体积越大（更陡的成长 + 更高上限），大数字会「霸屏」
 function radiusOf(v, boss){ let r=16+27*Math.log10(v+1); r=Math.min(r, 210); return boss? r*1.5 : r; }
+const BASU_RADIUS=190, FIXED_ZOOM=1;   // 霸屏胜利：身体半径达 190 即填满全屏；固定缩放（视野不随数字变大）
 const SKILLS={ dash:{cd:4}, magnet:{cd:12}, shield:{cd:20} };
 // 引力（高强度）：力 ∝ 大小差/(和)，越大引力越强，大小相近则抵消；大的把小的吸过来，你也会被更大的拉过去。
 const GRAV={ range:720, pull:480, suck:520 };
@@ -497,6 +499,7 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
   if(Math.random()<0.02 && G.foods.filter(f=>!f.room).length<6) addFood(40+Math.random()*(WORLD_W-80),40+Math.random()*(WORLD_H-80),false);
   if(G.room&&G.room.active && Math.random()<0.12 && G.foods.filter(f=>f.room).length<42){ const R=G.room; addFood(R.x0+24+Math.random()*(R.x1-R.x0-48),R.y0+24+Math.random()*(R.y1-R.y0-48),true); }
   for(let i=G.foods.length-1;i>=0;i--){ const f=G.foods[i]; if(Math.hypot(f.x-p.x,f.y-p.y) < p.r+f.r){ p.val=Math.ceil(p.val*f.mult); p.r=radiusOf(p.val); G.foods.splice(i,1); popup(f.x,f.y,f.label,f.col); if(p.val>G.best)G.best=p.val; checkLevel(); } }
+  if(!virus && p.r>=BASU_RADIUS){ return gameOver("basu"); }   // 🏆 霸屏胜利：长到填满全屏
   // 毒圈
   if(G.zone){ if(G.time>=G.zone.next){ G.zone.next=G.time+7; G.zone.r=Math.max(210, G.zone.r*0.82); }
     const zd=Math.hypot(p.x-G.zone.x,p.y-G.zone.y);
@@ -558,8 +561,9 @@ function gameOver(cause){ if(G.over) return; G.over=true; G.running=false; G.dea
   document.getElementById("newBest").style.display=nb?"block":"none";
   const surv=G.mode==="survive" && G.player.val<=1;
   document.getElementById("overTitle").textContent =
-      cause==="domination"?tr("全城沦陷！你赢了") : cause==="killed"?tr("你被消灭了") : cause==="zombie"?tr("你变成了丧尸！")
+      cause==="basu"?tr("🏆 霸屏！你统治了全屏") : cause==="domination"?tr("全城沦陷！你赢了") : cause==="killed"?tr("你被消灭了") : cause==="zombie"?tr("你变成了丧尸！")
     : cause==="room"?tr("被困在隐藏房间！") : surv?(LANG==="en"?"WIPED OUT":"被毒圈吞没") : tr("被吞噬了！");
+  if(cause==="basu") document.getElementById("overEn").textContent="SCREEN DOMINATED";
   if(G.mode==="virus") document.getElementById("overEn").textContent=tr("存活")+" "+Math.floor(G.survTime||0)+"s";
   document.getElementById("overOv").classList.remove("hidden");
 }
@@ -573,7 +577,7 @@ function colorFor(b){ const p=G.player;
   if(b.kind==="bomb") return "#ff8f3a"; if(b.kind==="crown") return "#ffd76a"; if(b.kind==="freeze") return "#7fd0ff";
   if(b.boss) return "#ff5b6e"; if(b.val<p.val) return "#2f7d55"; if(b.val>p.val) return "#7a2f3c"; return "#4a4f70"; }
 function render(){ if(!G) return; const p=G.player;
-  const zoom=clamp(0.62/(p.r/46), 0.5, 1);
+  const zoom=FIXED_ZOOM;   // 固定缩放：地图不随数字变大而变大
   const R=(G.room&&G.room.active)?G.room:null;
   let camx=p.x - VW/2/zoom, camy=p.y - VH/2/zoom;
   const camMaxX=(R?R.x1:WORLD_W)-VW/zoom;
@@ -703,7 +707,7 @@ function loop(t){ raf=requestAnimationFrame(loop); if(!lastT) lastT=t; let dt=(t
   update(dt); render(); hud(); }
 
 /* ==================== 控制 ==================== */
-function toWorld(cx,cy){ const p=G.player; const zoom=clamp(0.62/(p.r/46),0.5,1); let camx=p.x-VW/2/zoom, camy=p.y-VH/2/zoom;
+function toWorld(cx,cy){ const p=G.player; const zoom=FIXED_ZOOM; let camx=p.x-VW/2/zoom, camy=p.y-VH/2/zoom;
   camx=clamp(camx,0,WORLD_W-VW/zoom); camy=clamp(camy,0,WORLD_H-VH/zoom); return {x:camx+cx/zoom, y:camy+cy/zoom}; }
 function pointerMove(cx,cy){ if(!G) return; const w=toWorld(cx,cy); G.aimX=w.x; G.aimY=w.y; }
 function bindInput(){
@@ -784,5 +788,5 @@ if(typeof window!=="undefined") window.__ne={ get G(){return G;}, startGame, upd
   openRoom, roomTick, isInRoom, addFood, FOOD_TYPES, BOT_SPEED_MUL, ROOM_INTERVAL, ROOM_DURATION, OFFSCREEN_DESPAWN,
   hitBlock, explode, SPAWN_RATE, SPRINT_MUL, SPEED_BOOST, BOOST_DUR, BOMB_MINUS, BOMB_R,
   virusStep, applyClass, CLASSES, VIRUS_DRAIN, QUARANTINE_AT, QUARANTINE_DUR, ZOMBIE_SPEED, TRAIL_INFECT, seedVirusPeople,
-  placeObstacle, collideObstacles, ZCLASSES, ZOMBIE_HP_MUL, FIGHTER_DPS, infectBot, applyZClass, turnPlayerZombie };
+  placeObstacle, collideObstacles, ZCLASSES, ZOMBIE_HP_MUL, FIGHTER_DPS, infectBot, applyZClass, turnPlayerZombie, BASU_RADIUS, FIXED_ZOOM };
 </script>
