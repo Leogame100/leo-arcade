@@ -147,20 +147,22 @@ function levelOf(v){ let lv=1; for(const t of TIERS){ if(v>t) lv++; else break; 
 function lvName(lv){ return LV_NAMES[Math.min(lv, LV_NAMES.length-1)]; }
 function radiusOf(v, boss){ let r=14+22*Math.log10(v+1); r=Math.min(r, 78); return boss? r*1.5 : r; }
 const SKILLS={ dash:{cd:4}, magnet:{cd:12}, shield:{cd:20} };
+// 引力：力 ∝ 大小差 /(和)，越大引力越强，大小相近则抵消。大的把小的往自己吸，你会被更大的数字拉过去。
+const GRAV={ range:520, pull:220, suck:240 };
 
 /* ==================== 状态 ==================== */
 let G=null, cv, ctx, DPR=1, VW=0, VH=0, raf=0, lastT=0;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 function freshG(mode){ return {
   mode, running:true, over:false, paused:false, time:0,
-  player:{ val:1, x:WORLD_W/2, y:WORLD_H/2, vx:0, vy:0, r:radiusOf(1), speedMul:1 },
+  player:{ val:2, x:WORLD_W/2, y:WORLD_H/2, vx:0, vy:0, r:radiusOf(2), speedMul:1 },
   bots:[], coins:0, best:loadBest(), combo:0, comboMax:0, comboT:0, eats:0, bossKills:0, level:1,
   aimX:WORLD_W/2, aimY:WORLD_H/2-1, moving:false, keyx:0, keyy:0,
   dashUntil:0, magnetUntil:0, shieldUntil:0, invUntil:0, crownUntil:0, frozenUntil:0,
   cool:{dash:0, magnet:0, shield:0}, flashes:[], popups:[],
   zone:(mode==="survive"?{x:WORLD_W/2,y:WORLD_H/2,r:Math.max(WORLD_W,WORLD_H)/2, next:0}:null),
 }; }
-function loadBest(){ try{ return +localStorage.getItem("neBest")||1; }catch(e){ return 1; } }
+function loadBest(){ try{ return +localStorage.getItem("neBest")||2; }catch(e){ return 2; } }
 function loadBoard(){ try{ return JSON.parse(localStorage.getItem("neBoard")||"[]"); }catch(e){ return []; } }
 function saveBest(v){ try{ if(v>loadBest()) localStorage.setItem("neBest",String(Math.floor(v))); }catch(e){} }
 function saveBoard(v,mode){ try{ const b=loadBoard(); b.push({v:Math.floor(v),mode,t:Date.now()}); b.sort((a,b)=>b.v-a.v); localStorage.setItem("neBoard",JSON.stringify(b.slice(0,5))); }catch(e){} }
@@ -172,8 +174,11 @@ function spawnBot(force){ if(!G) return; const p=G.player;
   const ang=Math.random()*Math.PI*2, dist=(force?120:300)+Math.random()*560;
   let x=clamp(p.x+Math.cos(ang)*dist,20,WORLD_W-20), y=clamp(p.y+Math.sin(ang)*dist,20,WORLD_H-20);
   let val, kind="normal", boss=false;
-  if(Math.random()<0.014 && G.time>7){ boss=true; val=Math.max(10,Math.round(p.val*(2.4+Math.random()*4.5))); }
-  else { const f=Math.random()<0.74?(0.04+Math.random()*0.9):(1.03+Math.random()*0.55); val=Math.max(1,Math.round(p.val*f)); if(val===p.val) val=Math.max(1,val-1); }
+  // 出现范围随玩家数字：[⌊v/2⌋, v+3]（2→1-5，3→1-6，4→2-7，5→2-8 …），多为可吃的小数字
+  const v=p.val, lo=Math.max(1,Math.floor(v/2)), hi=v+3;
+  if(Math.random()<0.014 && G.time>7){ boss=true; val=Math.max(10,Math.round(v*(2.4+Math.random()*4.5))); }
+  else if(Math.random()<0.68 && v>lo){ val=lo+Math.floor(Math.random()*(v-lo)); }   // [lo, v-1] 可吃
+  else { val=clamp(v+Math.floor(Math.random()*(hi-v+1)), lo, hi); }                    // [v, hi]
   if(!boss && val<p.val){ const s=Math.random();
     if(s<0.03) kind="rainbow"; else if(s<0.085) kind="gold"; else if(s<0.10){ kind="lucky7"; val=7; }
     else if(s<0.125) kind="bomb"; else if(s<0.145) kind="crown"; else if(s<0.163) kind="freeze"; }
@@ -243,6 +248,12 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt;
     if(zd>G.zone.r){ p._outAcc=(p._outAcc||0)+dt; if(p._outAcc>=0.5){ p._outAcc=0; p.val=Math.max(1,Math.floor(p.val*0.97)-1); p.r=radiusOf(p.val); popup(p.x,p.y-p.r-8,"☠-","#ff5b6e"); if(p.val<=1 && G.time>4){ return gameOver(); } } } else p._outAcc=0; }
   // bots
   for(const b of G.bots) updateBot(b,dt);
+  // 引力：大小差越大吸力越强，相近则抵消
+  for(const b of G.bots){ const dx=b.x-p.x, dy=b.y-p.y, d=Math.hypot(dx,dy); if(d>=GRAV.range||d<1) continue;
+    const fall=1-d/GRAV.range, ratio=(b.val-p.val)/(b.val+p.val);   // >0 对方更大
+    if(ratio>0){ p.vx+=(dx/d)*GRAV.pull*ratio*fall*dt; p.vy+=(dy/d)*GRAV.pull*ratio*fall*dt; }   // 被更大的拉过去
+    else if(ratio<0){ const m=-ratio; b.vx+=(-dx/d)*GRAV.suck*m*fall*dt; b.vy+=(-dy/d)*GRAV.suck*m*fall*dt; } // 把更小的吸过来
+  }
   // 碰撞吞噬
   for(let i=G.bots.length-1;i>=0;i--){ const b=G.bots[i]; const d=Math.hypot(b.x-p.x,b.y-p.y);
     if(d < p.r + b.r*0.5){
