@@ -121,6 +121,13 @@
   <div class="modes" id="classList"></div>
   <button class="tiny" style="margin-top:4px" onclick="document.getElementById('classOv').classList.add('hidden');document.getElementById('startOv').classList.remove('hidden')" data-i18n="返回">返回</button>
 </div></div>
+<!-- gunfight submode picker -->
+<div class="ov hidden" id="gunOv"><div class="card">
+  <h1 data-i18n="枪战模式">枪战模式</h1>
+  <div class="en">GUNFIGHT · 🔫 · 🔴50 vs 🔵50</div>
+  <div class="modes" id="gunList"></div>
+  <button class="tiny" style="margin-top:4px" onclick="document.getElementById('gunOv').classList.add('hidden');document.getElementById('startOv').classList.remove('hidden')" data-i18n="返回">返回</button>
+</div></div>
 <!-- game over -->
 <div class="ov hidden" id="overOv">
   <div class="card">
@@ -168,6 +175,10 @@ const TR={
   "可开枪(🔫)攻击丧尸·武器菜单":"Shoot (🔫) zombies · weapon menu","可开枪·移速略快·武器菜单":"Shoot · a bit faster · weapon menu","可开枪·小地图显示丧尸·武器菜单":"Shoot · zombies on minimap · weapon menu",
   "特警":"SWAT","特种部队":"Spec Ops","可开枪·默认冲锋枪·移速快·武器菜单":"Shoot · SMG default · faster · weapon menu","可开枪·默认突击步枪·移速快·武器菜单":"Shoot · Rifle default · faster · weapon menu",
   "烟雾：丧尸看不见人类":"Smoke: zombies can't see humans",
+  "枪战模式":"Gunfight","红蓝各50人开枪对战·某方清零即胜（阵地战/大乱战/人数战）":"50v50 red vs blue firefight · wipe out a side to win (Positional/Deathmatch/Numbers)",
+  "阵地战":"Positional","大乱战":"Deathmatch","人数战":"Numbers War",
+  "无限复活·占领全部旗子获胜":"Infinite respawn · own every flag to win","随机混战·消灭对方全部获胜":"Random melee · eliminate the enemy team","两军对垒·先清空对方获胜":"Two armies clash · empty the enemy first",
+  "占领了旗子":"captured a flag","阵亡，即将复活":"Down — respawning","🎉 消灭了所有丧尸！":"🎉 All zombies eliminated!","🏆 你方获胜！":"🏆 YOUR TEAM WINS!","💀 你方失败…":"💀 Your team lost…",
   "免疫尾迹感染":"Immune to trail infection","移动速度 +35%":"Move speed +35%","血上限120·感染掉血 -30%":"120 max HP · infection −30%",
   "建筑师":"Architect","放置方形/长方形障碍墙，挡住丧尸":"Places square/rectangle walls to block zombies","砖块不足，等它回充":"Out of bricks — wait for recharge","病毒模式人数":"Virus population","上车！加速·碾压丧尸·防感染":"Boarded! Speed · crush zombies · infection-proof","车没油了，下车":"Out of fuel — dismounted","有人被袭击！警察出动":"Someone attacked! Police responding",
   "你变成了丧尸！去感染所有人类":"You turned into a zombie — go infect everyone!","你被消灭了":"YOU WERE DESTROYED","全城沦陷！你赢了":"CITY OVERRUN — YOU WIN!","丧尸":"Zombie",
@@ -179,7 +190,7 @@ const TR={
 function tr(s){ return LANG==="en"?(TR[s]||s):s; }
 function nm(o){ return o?(LANG==="en"?(o.en||o.zh):o.zh):""; }   // 职业/对象名（按语言）
 function applyLang(){ document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=tr(el.getAttribute("data-i18n")));
-  document.getElementById("langBtn").textContent=LANG==="en"?"中":"EN"; buildMapSel(); buildPopSel(); buildModes(); buildClasses(); buildWeaponBar(); renderBoard(); if(G) hud(); }
+  document.getElementById("langBtn").textContent=LANG==="en"?"中":"EN"; buildMapSel(); buildPopSel(); buildModes(); buildClasses(); buildGunfight(); buildWeaponBar(); renderBoard(); if(G) hud(); }
 function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("neLang",LANG);}catch(e){} applyLang(); }
 
 /* ==================== 数字格式化（近乎无限）==================== */
@@ -209,6 +220,16 @@ const POP_SIZES=[  // 病毒模式人数（玩家可选）
 let popId=(function(){try{return localStorage.getItem("nePop")||"p250";}catch(e){return "p250";}})();
 function popCount(){ return (POP_SIZES.find(x=>x.id===popId)||POP_SIZES[2]).n; }
 const RIDE_DUR=14, RIDE_MUL=1.85;   // 车辆：乘坐时长与加速倍率
+// 🔫 枪战模式：红蓝双方各 50 人
+const GF_TEAM_SIZE=50, GF_BOT_SPD=150, GF_HP=240;   // 枪战：血量高一点，避免秒杀、对局更耐打
+const GF_SUBMODES=[
+  {id:"position", zh:"阵地战", en:"Positional", d:"无限复活·占领全部旗子获胜"},
+  {id:"chaos",    zh:"大乱战", en:"Deathmatch", d:"随机混战·消灭对方全部获胜"},
+  {id:"numbers",  zh:"人数战", en:"Numbers War",d:"两军对垒·先清空对方获胜"},
+];
+const GF_BOT_WEAPONS=["pistol","smg","rifle","rifle","smg","pistol","pistol","rpg","grenade","smoke"];
+const TEAM_COL={red:"#ff5b6e", blue:"#4a90ff"};
+const TEAM_ICO={red:"🔴", blue:"🔵"};
 const TIERS=[10,30,60,100,300,1000,3000,1e4,3e4,1e5,3e5,1e6,1e8,1e12];
 const LV_NAMES=["新手","新手","学徒","高手","大师","宗师","传奇","神话","超越"];
 function levelOf(v){ let lv=1; for(const t of TIERS){ if(v>t) lv++; else break; } return lv; }
@@ -286,6 +307,7 @@ function freshG(mode){ return {
   obstacles:[], architect:false, bricks:0, brickMax:0, bullets:[], shootCool:0,
   vehicles:[], riding:false, rideUntil:0, alarm:null,   // 🚗车辆 / 🚨警报（丧尸袭击点）
   weapon:"pistol", smoke:null,   // 当前武器 / 烟雾云
+  team:null, sub:null, flags:[], bases:null, playerDead:false, respawnAt:0, spawnProtect:0,   // 🔫 枪战
   zombie:false, zcls:null, zspd:1, zInfR:0, zMax:0,   // 玩家变丧尸后的状态
   bots:[], coins:0, best:loadBest(), combo:0, comboMax:0, comboT:0, eats:0, bossKills:0, level:1,
   aimX:WORLD_W/2, aimY:WORLD_H/2-1, moving:false, keyx:0, keyy:0,
@@ -428,21 +450,29 @@ function freeXY(r){ let x=0,y=0;   // 找一个不与其他物品重叠的位置
     if(good) for(const c of G.cures){ if(hyp(c.x-x,c.y-y)<c.r+r+6){ good=false; break; } }
     if(good) break; } return {x,y}; }
 function currentWeapon(){ return WEAPONS.find(w=>w.id===G.weapon)||WEAPONS[0]; }
-function selectWeapon(id){ if(!G||!G.fighter) return; if(WEAPONS.some(w=>w.id===id)){ G.weapon=id; const w=currentWeapon(); toast(w.ico+" "+nm(w)); if(typeof buildWeaponBar==="function") buildWeaponBar(); } }
+function selectWeapon(id){ if(!G||(!G.fighter && G.mode!=="gunfight")) return; if(WEAPONS.some(w=>w.id===id)){ G.weapon=id; const w=currentWeapon(); toast(w.ico+" "+nm(w)); if(typeof buildWeaponBar==="function") buildWeaponBar(); } }
 function inSmoke(x,y){ const s=G.smoke; return !!(s && G.time<s.until && hyp(x-s.x,y-s.y)<s.r); }
-function explodeAt(x,y,r,dmg){ G.flashes.push({x,y,t:0,boom:true,br:r*2.6});   // 爆炸伤害范围内的丧尸
-  for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(!z.zombie) continue; if(hyp(z.x-x,z.y-y) < r+z.r){ z.hp=(z.hp||100)-dmg; if(z.hp<=0){ G.bots.splice(j,1); popup(z.x,z.y,"💥","#ffcf3a"); } } }
+function explodeAt(x,y,r,dmg,team){ G.flashes.push({x,y,t:0,boom:true,br:r*2.6});   // 爆炸：范围伤害
+  if(team!=null){   // 🔫枪战：伤害敌方
+    for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(z.dead||z.team===team) continue; if(hyp(z.x-x,z.y-y)<r+z.r){ z.hp=(z.hp||100)-dmg; if(z.hp<=0) killGunBot(z); } }
+    const p=G.player; if(G.team && G.team!==team && !G.playerDead && G.time>=(G.spawnProtect||0) && hyp(p.x-x,p.y-y)<r+p.r){ G.hp-=dmg; }
+  } else {   // 🦠病毒：伤害丧尸
+    for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(!z.zombie) continue; if(hyp(z.x-x,z.y-y)<r+z.r){ z.hp=(z.hp||100)-dmg; if(z.hp<=0){ G.bots.splice(j,1); popup(z.x,z.y,"💥","#ffcf3a"); } } }
+  }
   popup(x,y,"💥","#ff8f3a"); }
-function fireGun(){ if(!G||G.over||G.paused||G.mode!=="virus"||!G.fighter) return; const p=G.player; const w=currentWeapon();
-  if(G.time<(G.shootCool||0)) return; G.shootCool=G.time+w.cd;
-  let best=null,bd=1e9; for(const b of G.bots){ if(!b.zombie) continue; const dd=hyp(b.x-p.x,b.y-p.y); if(dd<bd){bd=dd;best=b;} }
-  let ax,ay; if(best){ ax=best.x-p.x; ay=best.y-p.y; } else { ax=G.aimX-p.x; ay=G.aimY-p.y; if(hyp(ax,ay)<1){ax=p.vx;ay=p.vy;} if(hyp(ax,ay)<1){ax=1;ay=0;} }
-  const d=hyp(ax,ay)||1; ax/=d; ay/=d;
-  const proj={x:p.x+ax*(p.r+6), y:p.y+ay*(p.r+6), vx:ax*w.spd, vy:ay*w.spd, life:1.3, dmg:w.dmg||0, aoe:w.aoe||0, aoeDmg:w.aoeDmg||0, ico:(w.type!=="bullet"?w.ico:null)};
+function spawnProjectile(x,y,ax,ay,w,team){ const proj={x,y,vx:ax*w.spd,vy:ay*w.spd,life:1.3,dmg:w.dmg||0,aoe:w.aoe||0,aoeDmg:w.aoeDmg||0,ico:(w.type!=="bullet"?w.ico:null),team};
   if(w.type==="rocket") proj.rocket=true;
   if(w.type==="grenade"){ proj.fuse=G.time+(w.fuse||0.9); proj.life=2.2; }
   if(w.type==="smoke"){ proj.smoke=true; proj.smokeR=w.r; proj.smokeDur=w.dur; proj.fuse=G.time+(w.fuse||0.5); proj.life=2.2; }
-  G.bullets.push(proj); popup(p.x+ax*p.r, p.y+ay*p.r, w.ico, "#ffd76a"); }
+  G.bullets.push(proj); return proj; }
+function fireGun(){ if(!G||G.over||G.paused) return; const gf=G.mode==="gunfight"; if(G.mode!=="virus" && !gf) return;
+  if(!gf && !G.fighter) return; if(gf && G.playerDead) return; const p=G.player; const w=currentWeapon();
+  if(G.time<(G.shootCool||0)) return; G.shootCool=G.time+w.cd;
+  let best=null,bd=1e9; for(const b of G.bots){ if(gf?(b.dead||b.team===G.team):!b.zombie) continue; const dd=hyp(b.x-p.x,b.y-p.y); if(dd<bd){bd=dd;best=b;} }
+  let ax,ay; if(best){ ax=best.x-p.x; ay=best.y-p.y; } else { ax=G.aimX-p.x; ay=G.aimY-p.y; if(hyp(ax,ay)<1){ax=p.vx;ay=p.vy;} if(hyp(ax,ay)<1){ax=1;ay=0;} }
+  const d=hyp(ax,ay)||1; ax/=d; ay/=d;
+  spawnProjectile(p.x+ax*(p.r+6), p.y+ay*(p.r+6), ax, ay, w, gf?G.team:null);
+  popup(p.x+ax*p.r, p.y+ay*p.r, w.ico, "#ffd76a"); }
 function collideObstacles(e){ if(!G.obstacles||!G.obstacles.length) return; for(const o of G.obstacles){
     const nx=clamp(e.x,o.cx-o.hw,o.cx+o.hw), ny=clamp(e.y,o.cy-o.hh,o.cy+o.hh), dx=e.x-nx, dy=e.y-ny, d2=dx*dx+dy*dy;
     if(d2 < e.r*e.r){
@@ -459,6 +489,86 @@ function rideStep(dt){ const p=G.player;   // 🚗 车辆：上车→加速+免�
       if(z.hp<=0){ G.bots.splice(i,1); popup(z.x,z.y,"💥","#ffcf3a"); } } } } } }
 function raiseAlarm(x,y){ const fresh=!(G.alarm && G.time<G.alarm.t); G.alarm={x,y,t:G.time+6};   // 🚨丧尸袭击人类 → 所有警察赶来
   if(fresh) toast("🚨 "+tr("有人被袭击！警察出动")); }
+// ==================== 🔫 弹药 / 枪战模式 ====================
+function stepBullets(dt){ if(!G.bullets.length) return; const gf=G.mode==="gunfight", p=G.player;
+  for(let i=G.bullets.length-1;i>=0;i--){ const bl=G.bullets[i]; bl.x+=bl.vx*dt; bl.y+=bl.vy*dt; bl.life-=dt;
+    const oob=bl.x<0||bl.y<0||bl.x>WORLD_W||bl.y>WORLD_H; let gone=false;
+    if(bl.smoke){ if(G.time>=bl.fuse||bl.life<=0||oob){ G.smoke={x:bl.x,y:bl.y,r:bl.smokeR,until:G.time+bl.smokeDur}; popup(bl.x,bl.y,"💨","#cdd6e8"); if(!gf) toast("💨 "+tr("烟雾：丧尸看不见人类")); gone=true; } }
+    else if(bl.aoe){ let boom=(G.time>=(bl.fuse||1e9))||bl.life<=0||oob;
+      if(!boom && bl.rocket){ if(gf){ for(const z of G.bots){ if(!z.dead && z.team!==bl.team && hyp(z.x-bl.x,z.y-bl.y)<z.r+6){ boom=true; break; } } if(!boom && G.team&&G.team!==bl.team&&!G.playerDead && hyp(p.x-bl.x,p.y-bl.y)<p.r+6) boom=true; }
+        else { for(const z of G.bots){ if(z.zombie && hyp(z.x-bl.x,z.y-bl.y)<z.r+6){ boom=true; break; } } } }
+      if(boom){ explodeAt(bl.x,bl.y,bl.aoe,bl.aoeDmg,gf?bl.team:null); gone=true; } }
+    else if(gf){   // 直射子弹（枪战）：命中敌方
+      if(!oob){ let hit=false;
+        for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(z.dead||z.team===bl.team) continue; if(hyp(z.x-bl.x,z.y-bl.y)<z.r+4){ z.hp=(z.hp||100)-bl.dmg; if(z.hp<=0) killGunBot(z); else popup(bl.x,bl.y,"−","#ffe37a"); hit=true; break; } }
+        if(!hit && G.team&&G.team!==bl.team&&!G.playerDead && hyp(p.x-bl.x,p.y-bl.y)<p.r+4){ if(G.time>=(G.spawnProtect||0)){ G.hp-=bl.dmg; G.hurtFlash=0.3; popup(p.x,p.y-p.r,"−","#ff5b6e"); } hit=true; }
+        if(hit) gone=true; }
+      if(bl.life<=0||oob) gone=true; }
+    else {   // 直射子弹（病毒）：命中丧尸
+      if(!oob) for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(!z.zombie) continue; if(hyp(z.x-bl.x,z.y-bl.y)<z.r+4){ z.hp=(z.hp||100)-bl.dmg; if(z.hp<=0){ G.bots.splice(j,1); popup(z.x,z.y,"💥","#ffcf3a"); } else popup(bl.x,bl.y,"−","#ffcf3a"); gone=true; break; } }
+      if(bl.life<=0||oob) gone=true; }
+    if(gone) G.bullets.splice(i,1); } }
+function killGunBot(b){ popup(b.x,b.y,"💀",TEAM_COL[b.team]||"#fff"); if(G.sub==="position"){ b.dead=true; b.respawnAt=G.time+2.5; } else b.gone=true; }
+function teamCount(t){ let n=0; for(const b of G.bots){ if(b.team===t && !b.dead && !b.gone) n++; } if(G.team===t && !G.playerDead) n++; return n; }
+function teamBase(t){ return (G.bases&&G.bases[t])||{x:WORLD_W/2,y:WORLD_H/2}; }
+function gunBotShoot(b,tx,ty){ if(G.time<(b.shootCool||0)) return; const w=WEAPONS.find(x=>x.id===b.weapon)||WEAPONS[0];
+  b.shootCool=G.time+w.cd*1.5+Math.random()*0.15;   // NPC 稍慢
+  let ax=tx-b.x, ay=ty-b.y; const d=hyp(ax,ay)||1; ax/=d; ay/=d;
+  const sp=(Math.random()-0.5)*0.2, c=Math.cos(sp), s=Math.sin(sp), rx=ax*c-ay*s, ry=ax*s+ay*c;   // 散布
+  spawnProjectile(b.x+rx*(b.r+6), b.y+ry*(b.r+6), rx, ry, w, b.team); }
+function nearestEnemyFlag(b){ let best=null,bd=1e9; for(const f of G.flags){ if(f.owner===b.team) continue; const d=hyp(f.x-b.x,f.y-b.y); if(d<bd){bd=d;best=f;} } return best; }
+function updateGunBot(b,dt){ if(b.dead||b.gone) return; const p=G.player; b.t-=dt; if(b.t<=0){ b.t=1.5+Math.random()*2; b.dir=Math.random()*Math.PI*2; }
+  let tx=null,ty=null,td=1e9; const grid=G._grid, bcx=Math.floor(b.x/NBR_CELL), bcy=Math.floor(b.y/NBR_CELL);
+  if(grid) for(let gx=bcx-2;gx<=bcx+2;gx++) for(let gy=bcy-2;gy<=bcy+2;gy++){ const arr=grid.get(gx*4096+gy); if(!arr) continue;
+    for(const o of arr){ if(o===b||o.dead||o.gone||o.team===b.team) continue; const dd=hyp(o.x-b.x,o.y-b.y); if(dd<td){td=dd;tx=o.x;ty=o.y;} } }
+  if(G.team&&G.team!==b.team&&!G.playerDead){ const dd=hyp(p.x-b.x,p.y-b.y); if(dd<td){td=dd;tx=p.x;ty=p.y;} }
+  let ax=Math.cos(b.dir), ay=Math.sin(b.dir);
+  if(tx!=null && td<900){   // 有敌人：交战
+    const ex=tx-b.x, ey=ty-b.y, ed=hyp(ex,ey)||1, ux=ex/ed, uy=ey/ed;
+    if(ed>220){ ax=ux; ay=uy; } else { ax=-uy*0.7+ux*0.4; ay=ux*0.7+uy*0.4; }   // 接近，近了则边打边绕（略向内）
+    gunBotShoot(b,tx,ty);
+  } else if(G.sub==="position"){ const f=nearestEnemyFlag(b); if(f){ const ex=f.x-b.x,ey=f.y-b.y,ed=hyp(ex,ey)||1; ax=ex/ed; ay=ey/ed; } }
+  else { const f=G.bases[b.team==="red"?"blue":"red"]; const ex=f.x-b.x,ey=f.y-b.y,ed=hyp(ex,ey)||1; ax=ex/ed; ay=ey/ed; }   // 无敌人可见：推向敌方基地
+  const spd=GF_BOT_SPD; b.vx+=(ax*spd-b.vx)*0.12; b.vy+=(ay*spd-b.vy)*0.12;
+  b.x+=b.vx*dt; b.y+=b.vy*dt; clampEntity(b,10); collideObstacles(b); }
+function gunOver(team){ return gameOver(team===G.team?"gf_win":"gf_lose"); }
+function gunfightStep(dt){ const p=G.player;
+  separateVirus();   // 通用分离：单位不重叠
+  stepBullets(dt);
+  if(G.smoke && G.time>=G.smoke.until) G.smoke=null;
+  if(G.bots.some(b=>b.gone)) G.bots=G.bots.filter(b=>!b.gone);
+  // 玩家阵亡
+  if(!G.playerDead && G.hp<=0){ if(G.sub==="position"){ G.playerDead=true; G.respawnAt=G.time+2.5; popup(p.x,p.y,"💀","#fff"); toast("💀 "+tr("阵亡，即将复活")); } else return gameOver("gf_lose"); }
+  if(G.playerDead && G.sub==="position" && G.time>=G.respawnAt){ G.playerDead=false; G.hp=G.maxHp; G.spawnProtect=G.time+3; const bs=teamBase(G.team); p.x=bs.x+(Math.random()-0.5)*220; p.y=bs.y+(Math.random()-0.5)*220; p.vx=p.vy=0; }
+  if(G.sub==="position"){
+    for(const b of G.bots){ if(b.dead && G.time>=b.respawnAt){ b.dead=false; b.hp=GF_HP; const bs=teamBase(b.team); b.x=bs.x+(Math.random()-0.5)*300; b.y=bs.y+(Math.random()-0.5)*300; b.vx=b.vy=0; } }
+    for(const f of G.flags){ let red=0,blue=0;
+      for(const b of G.bots){ if(b.dead||b.gone) continue; if(hyp(b.x-f.x,b.y-f.y)<f.r){ b.team==="red"?red++:blue++; } }
+      if(G.team&&!G.playerDead && hyp(p.x-f.x,p.y-f.y)<f.r){ G.team==="red"?red++:blue++; }
+      let by=null; if(red>0&&blue===0) by="red"; else if(blue>0&&red===0) by="blue";
+      if(by && f.owner!==by){ if(f.by!==by){ f.by=by; f.prog=0; } f.prog+=dt*45; if(f.prog>=100){ f.owner=by; f.prog=100; toast(TEAM_ICO[by]+" "+tr("占领了旗子")); } }
+    }
+    if(G.flags.length && G.flags.every(f=>f.owner==="red")) return gunOver("red");
+    if(G.flags.length && G.flags.every(f=>f.owner==="blue")) return gunOver("blue");
+  } else {
+    const red=teamCount("red"), blue=teamCount("blue");
+    if(red===0) return gunOver("blue"); if(blue===0) return gunOver("red");
+  }
+}
+function seedGunfight(sub, team){ G.team=team||"blue"; G.sub=sub||"chaos"; G.maxHp=GF_HP; G.hp=GF_HP; G.playerDead=false; G.weapon="pistol";
+  G.bots=[]; G.flags=[]; const mid=WORLD_H/2;
+  G.bases={ red:{x:WORLD_W*0.12, y:mid}, blue:{x:WORLD_W*0.88, y:mid} };
+  const P=G.player; const pb=teamBase(G.team); P.val=5; P.r=radiusOf(5); P.vx=P.vy=0; P.x=pb.x; P.y=pb.y;
+  G.spawnProtect=3;   // 出生保护3秒
+  function mk(team,x,y){ return {team, x:clamp(x,30,WORLD_W-30), y:clamp(y,30,WORLD_H-30), vx:0,vy:0, r:radiusOf(5), val:5, hp:GF_HP, dead:false, weapon:GF_BOT_WEAPONS[Math.floor(Math.random()*GF_BOT_WEAPONS.length)], shootCool:Math.random()*0.6, t:Math.random()*3, dir:Math.random()*Math.PI*2, fighter:false, zombie:false}; }
+  const perTeam=GF_TEAM_SIZE;
+  for(const tm of ["red","blue"]){ const base=teamBase(tm); const cnt = tm===G.team ? perTeam-1 : perTeam;   // 玩家占己方1个名额
+    for(let i=0;i<cnt;i++){ let x,y;
+      if(sub==="chaos"){ x=60+Math.random()*(WORLD_W-120); y=60+Math.random()*(WORLD_H-120); }
+      else { x=base.x+(Math.random()-0.5)*(WORLD_W*0.22); y=base.y+(Math.random()-0.5)*(WORLD_H*0.8); }   // numbers/position：己方半场列阵
+      G.bots.push(mk(tm,x,y)); } }
+  if(sub==="position"){ const n=5; for(let i=0;i<n;i++){ const fx=WORLD_W*(0.5)+ (i-(n-1)/2)*Math.min(240,WORLD_W*0.13); G.flags.push({x:clamp(fx,120,WORLD_W-120), y:mid+((i%2)?-1:1)*WORLD_H*0.16, r:90, owner:null, prog:0, by:null}); } }
+}
 /* -------- 🦠 病毒模式 -------- */
 function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
   separateVirus();   // 人类/丧尸互不重叠
@@ -469,17 +579,7 @@ function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
   if(G.quarantine && G.time>=G.quarantine.closeAt){ G.quarantine=null; G.quarantineAt=G.time+30; toast("🛡️ "+tr("隔离带关闭了")); }
   const Q=G.quarantine, inQ=!!(Q && !G.zombie && hyp(p.x-Q.x,p.y-Q.y)<Q.r-p.r*0.4), immune=(G.time<G.cureImmuneUntil)||inQ||(G.riding&&!G.zombie);
   if(G.smoke && G.time>=G.smoke.until) G.smoke=null;   // 烟雾散去
-  // 武器弹药：子弹 / 火箭 / 手雷 / 烟雾弹
-  if(G.bullets.length){
-    for(let i=G.bullets.length-1;i>=0;i--){ const bl=G.bullets[i]; bl.x+=bl.vx*dt; bl.y+=bl.vy*dt; bl.life-=dt;
-      const oob = bl.x<0||bl.y<0||bl.x>WORLD_W||bl.y>WORLD_H; let gone=false;
-      if(bl.smoke){ if(G.time>=bl.fuse || bl.life<=0 || oob){ G.smoke={x:bl.x,y:bl.y,r:bl.smokeR,until:G.time+bl.smokeDur}; popup(bl.x,bl.y,"💨","#cdd6e8"); toast("💨 "+tr("烟雾：丧尸看不见人类")); gone=true; } }
-      else if(bl.aoe){ let boom=(G.time>=(bl.fuse||1e9))||bl.life<=0||oob;
-        if(!boom && bl.rocket){ for(const z of G.bots){ if(z.zombie && hyp(z.x-bl.x,z.y-bl.y)<z.r+6){ boom=true; break; } } }
-        if(boom){ explodeAt(bl.x,bl.y,bl.aoe,bl.aoeDmg); gone=true; } }
-      else { if(!oob) for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(!z.zombie) continue; if(hyp(z.x-bl.x,z.y-bl.y) < z.r+4){ z.hp=(z.hp||100)-bl.dmg; if(z.hp<=0){ G.bots.splice(j,1); popup(z.x,z.y,"💥","#ffcf3a"); } else popup(bl.x,bl.y,"−","#ffcf3a"); gone=true; break; } }
-        if(bl.life<=0||oob) gone=true; }
-      if(gone) G.bullets.splice(i,1); } }
+  stepBullets(dt);   // 武器弹药：子弹 / 火箭 / 手雷 / 烟雾弹
 
   if(!G.zombie){   // ===== 玩家是人类 =====
     let zTouch=false;
@@ -490,6 +590,7 @@ function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
     if(onTrail && !immune && !G.trailImmune){ p.trailT=(p.trailT||0)+dt; if(p.trailT>=TRAIL_INFECT) G.infected=true; } else p.trailT=Math.max(0,(p.trailT||0)-dt);
     if(inQ){ G.infected=false; G.hp=Math.min(G.maxHp, G.hp+G.maxHp*0.14*dt); }
     else if(G.infected){ G.hp-=G.maxHp*(VIRUS_DRAIN/100)*G.drainMul*dt; if(G.hp<=0){ turnPlayerZombie(); } }   // 血空 → 变丧尸（不再直接结束）
+    if(G.time>3 && !G.bots.some(b=>b.zombie)) return gameOver("cleared");   // 🎉 消灭所有丧尸 → 胜利
   } else {          // ===== 玩家是丧尸 =====
     if(p.val>G.best) G.best=p.val;
     for(let i=G.bots.length-1;i>=0;i--){ const h=G.bots[i]; if(h.zombie) continue; const d=hyp(h.x-p.x,h.y-p.y);
@@ -629,9 +730,11 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
   let mx=0,my=0;
   if(G.keyx||G.keyy){ mx=G.keyx; my=G.keyy; const m=hyp(mx,my)||1; mx/=m; my/=m; }
   else if(G.moving){ const dx=G.aimX-p.x, dy=G.aimY-p.y, d=hyp(dx,dy); if(d>5){ mx=dx/d; my=dy/d; } }
+  if(G.mode==="gunfight" && G.playerDead){ mx=0; my=0; }
   let maxs=205*(1-Math.min(0.42,Math.log10(p.val+1)*0.045))*(G.dashUntil>G.time?2.15:1)*p.speedMul*(G.sprint?SPRINT_MUL:1)*((p.boostUntil||0)>G.time?SPEED_BOOST:1)*(G.zombie?ZOMBIE_SPEED*(G.zspd||1):1)*(G.riding?RIDE_MUL:1);
   p.vx+=(mx*maxs-p.vx)*0.16; p.vy+=(my*maxs-p.vy)*0.16;
   p.x+=p.vx*dt; p.y+=p.vy*dt; clampEntity(p,10); collideObstacles(p);
+  if(G.mode==="gunfight"){ G._grid=buildBotGrid(); for(const b of G.bots) updateGunBot(b,dt); gunfightStep(dt); if(G.over) return; return; }
   if(G.architect && G.brickMax) G.bricks=Math.min(G.brickMax,(G.bricks||0)+dt*0.28);   // 砖块回充
   // 加速/爆炸方块随机刷新（病毒模式免除）
   if(!virus){
@@ -711,6 +814,7 @@ function gameOver(cause){ if(G.over) return; G.over=true; G.running=false; G.dea
   const surv=G.mode==="survive" && G.player.val<=1;
   document.getElementById("overTitle").textContent =
       cause==="basu"?tr("🏆 霸屏！你统治了全屏") : cause==="domination"?tr("全城沦陷！你赢了") : cause==="killed"?tr("你被消灭了") : cause==="zombie"?tr("你变成了丧尸！")
+    : cause==="cleared"?tr("🎉 消灭了所有丧尸！") : cause==="gf_win"?tr("🏆 你方获胜！") : cause==="gf_lose"?tr("💀 你方失败…")
     : cause==="room"?tr("被困在隐藏房间！") : surv?(LANG==="en"?"WIPED OUT":"被毒圈吞没") : tr("被吞噬了！");
   if(cause==="basu") document.getElementById("overEn").textContent="SCREEN DOMINATED";
   if(G.mode==="virus") document.getElementById("overEn").textContent=tr("存活")+" "+Math.floor(G.survTime||0)+"s";
@@ -787,6 +891,16 @@ function render(){ if(!G) return; const p=G.player;
     if(G.smoke && G.time<G.smoke.until){ const s=G.smoke; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fillStyle="rgba(200,208,224,.42)"; ctx.fill();
       ctx.strokeStyle="rgba(220,228,244,.6)"; ctx.lineWidth=3; ctx.stroke(); ctx.font="26px sans-serif"; ctx.fillText("💨",s.x,s.y); }   // 💨烟雾云
   }
+  // 🔫 枪战：旗子 + 烟雾
+  if(G.mode==="gunfight"){
+    for(const f of G.flags){ const oc=f.owner?TEAM_COL[f.owner]:"rgba(180,190,210,.5)";
+      ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,7); ctx.fillStyle=f.owner?(f.owner==="red"?"rgba(255,91,110,.10)":"rgba(74,144,255,.10)"):"rgba(180,190,210,.06)"; ctx.fill();
+      ctx.setLineDash([12,9]); ctx.strokeStyle=oc; ctx.lineWidth=3; ctx.stroke(); ctx.setLineDash([]);
+      ctx.font="30px sans-serif"; ctx.fillText("🚩",f.x,f.y);
+      if(f.by && f.owner!==f.by && f.prog>0){ ctx.fillStyle=TEAM_COL[f.by]; ctx.fillRect(f.x-40,f.y+f.r-8,80*(f.prog/100),5); } }
+    if(G.smoke && G.time<G.smoke.until){ const s=G.smoke; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fillStyle="rgba(200,208,224,.42)"; ctx.fill();
+      ctx.strokeStyle="rgba(220,228,244,.6)"; ctx.lineWidth=3; ctx.stroke(); ctx.font="26px sans-serif"; ctx.fillText("💨",s.x,s.y); }
+  }
   // 食物
   for(const f of G.foods){ if(f.x<camx-40||f.x>camx+VW/zoom+40||f.y<camy-40||f.y>camy+VH/zoom+40) continue;
     ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,7); ctx.fillStyle=f.col; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle="#fff"; ctx.stroke();
@@ -802,7 +916,12 @@ function render(){ if(!G) return; const p=G.player;
     ctx.beginPath(); ctx.arc(G.zone.x,G.zone.y,G.zone.r,0,7); ctx.strokeStyle="rgba(120,200,255,.8)"; ctx.lineWidth=4; ctx.stroke(); }
   // bots
   ctx.textAlign="center"; ctx.textBaseline="middle";
+  const gfr=G.mode==="gunfight";
   for(const b of G.bots){ if(b.x<camx-80||b.x>camx+VW/zoom+80||b.y<camy-80||b.y>camy+VH/zoom+80) continue;
+    if(gfr){ if(b.dead||b.gone) continue;
+      ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,7); ctx.fillStyle=TEAM_COL[b.team]; ctx.fill();
+      ctx.lineWidth=2; ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.stroke();
+      ctx.font="900 "+Math.round(b.r*1.4)+"px sans-serif"; ctx.fillText("👤", b.x, b.y); continue; }
     ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,7); ctx.fillStyle=colorFor(b); ctx.fill();
     ctx.lineWidth=b.boss?4:2; ctx.strokeStyle=b.boss?"#ffcf3a":"rgba(255,255,255,.25)"; ctx.stroke();
     if(!b.zombie && b.fighter){ ctx.font="900 "+Math.round(b.r*1.6)+"px sans-serif"; ctx.fillText(b.fico||"👮", b.x, b.y);   // 攻击兵种：显眼图标替换小球
@@ -813,13 +932,18 @@ function render(){ if(!G) return; const p=G.player;
   }
   // player
   const inv=G.invUntil>G.time, sh=G.shieldUntil>G.time, greenP=(G.mode==="virus"&&(G.infected||G.zombie));
-  ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fillStyle=G.zombie?"#4caf50":(greenP?"#7bbf5a":(inv?"#8fb8ff":"#4a90ff")); ctx.fill();
-  ctx.lineWidth=4; ctx.strokeStyle=sh?"#7fd0ff":"#bcd6ff"; ctx.stroke();
+  if(gfr && G.playerDead){ /* 阵亡：不画玩家（等待复活） */ }
+  else {
+  ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fillStyle=gfr?TEAM_COL[G.team]:(G.zombie?"#4caf50":(greenP?"#7bbf5a":(inv?"#8fb8ff":"#4a90ff"))); ctx.fill();
+  ctx.lineWidth=4; ctx.strokeStyle=gfr?"#fff":(sh?"#7fd0ff":"#bcd6ff"); ctx.stroke();
   if(sh){ ctx.beginPath(); ctx.arc(p.x,p.y,p.r+7,0,7); ctx.strokeStyle="rgba(127,208,255,.7)"; ctx.lineWidth=3; ctx.stroke(); }
   if(G.magnetUntil>G.time){ ctx.beginPath(); ctx.arc(p.x,p.y,330,0,7); ctx.strokeStyle="rgba(196,107,255,.25)"; ctx.lineWidth=2; ctx.stroke(); }
-  if(G.fighter && !G.zombie){ ctx.font="900 "+Math.round(p.r*1.5)+"px sans-serif"; ctx.fillText(FIGHTER_ICO[G.humanClass]||"👮",p.x,p.y);   // 玩家攻击兵种显眼图标
+  if(gfr){ ctx.font="900 "+Math.round(p.r*1.5)+"px sans-serif"; ctx.fillText("🙂",p.x,p.y);
+    if(G.time<(G.spawnProtect||0)){ ctx.beginPath(); ctx.arc(p.x,p.y,p.r+8,0,7); ctx.strokeStyle="rgba(255,255,255,.75)"; ctx.lineWidth=3; ctx.stroke(); } }
+  else if(G.fighter && !G.zombie){ ctx.font="900 "+Math.round(p.r*1.5)+"px sans-serif"; ctx.fillText(FIGHTER_ICO[G.humanClass]||"👮",p.x,p.y);   // 玩家攻击兵种显眼图标
     ctx.fillStyle="#eaf1ff"; ctx.font="900 11px ui-monospace,monospace"; ctx.fillText(fmt(p.val),p.x,p.y+p.r-4); }
   else { ctx.fillStyle="#fff"; ctx.font="900 "+Math.max(13,Math.min(p.r*0.85,34))+"px ui-monospace,monospace"; ctx.fillText(fmt(p.val),p.x,p.y); }
+  }
   if(G.riding){ ctx.font="900 "+Math.round(p.r*1.3)+"px ui-monospace,monospace"; ctx.fillText("🚗",p.x,p.y-p.r-12);   // 🚗 乘坐中
     const fl=Math.max(0,(G.rideUntil-G.time)/RIDE_DUR); ctx.fillStyle="rgba(255,210,90,.9)"; ctx.fillRect(p.x-p.r,p.y-p.r-6,p.r*2*fl,4); }
   // level flash rings
@@ -866,11 +990,16 @@ function hud(){ if(!G) return; document.getElementById("bignum").textContent=fmt
     document.getElementById("hpFill").style.background=isZ?"linear-gradient(90deg,#2e7d32,#66bb6a)":(G.infected?"linear-gradient(90deg,#4caf50,#8bc34a)":"linear-gradient(90deg,#ff5b6e,#ff9f3a)");
     const cls=isZ?ZCLASSES.find(c=>c.id===G.zcls):CLASSES.find(c=>c.id===G.humanClass);
     document.getElementById("hpTxt").textContent=(isZ?"🧟 ":"❤️ ")+Math.ceil(G.hp)+"/"+Math.round(mx)+(isZ?" · "+tr("丧尸"):(G.infected?" · 🦠"+tr("感染中"):""))+" · "+(cls?cls.ico+nm(cls):"")+" · "+tr("存活")+" "+Math.floor(G.survTime||0)+"s";
+  } else if(G.mode==="gunfight"){ hw.style.display="block"; const frac=Math.max(0,G.hp/G.maxHp);
+    document.getElementById("hpFill").style.width=(frac*100)+"%";
+    document.getElementById("hpFill").style.background=(G.team==="red"?"linear-gradient(90deg,#ff5b6e,#ff9f9f)":"linear-gradient(90deg,#4a90ff,#8fc0ff)");
+    const red=teamCount("red"), blue=teamCount("blue"), sub=(GF_SUBMODES.find(s=>s.id===G.sub)||{}); const flagTxt=G.sub==="position"?(" · 🚩"+G.flags.filter(f=>f.owner==="blue").length+":"+G.flags.filter(f=>f.owner==="red").length):"";
+    document.getElementById("hpTxt").textContent=(G.playerDead?"💀 ":TEAM_ICO[G.team]+" ")+Math.ceil(Math.max(0,G.hp))+"/"+G.maxHp+" · 🔵"+blue+" vs 🔴"+red+" · "+nm(sub)+flagTxt;
   } else hw.style.display="none";
   const bb=document.getElementById("buildBar");
   if(G.mode==="virus" && G.architect){ bb.style.display="flex"; document.getElementById("brickTxt").textContent="🧱 "+Math.floor(G.bricks)+"/"+G.brickMax; }
   else bb.style.display="none";
-  const showFight=(G.mode==="virus" && G.fighter && !G.zombie);
+  const showFight=(G.mode==="virus" && G.fighter && !G.zombie) || G.mode==="gunfight";
   const fbar=document.getElementById("fireBar"); if(fbar) fbar.style.display=showFight?"block":"none";
   const wbar=document.getElementById("weaponBar"); if(wbar) wbar.style.display=showFight?"flex":"none";
   const fbtn=document.getElementById("fireBtn"); if(fbtn && showFight) fbtn.textContent=currentWeapon().ico;
@@ -897,8 +1026,8 @@ function bindInput(){
     if(k==="a"||k==="arrowleft") G.keyx=-1; else if(k==="d"||k==="arrowright") G.keyx=1;
     else if(k==="w"||k==="arrowup") G.keyy=-1; else if(k==="s"||k==="arrowdown") G.keyy=1;
     else if(k==="1") useSkill("dash"); else if(k==="2") useSkill("magnet"); else if(k==="3") useSkill("shield");
-    else if(k==="q"){ if(G.fighter) fireGun(); else placeObstacle("square"); } else if(k==="e") placeObstacle("rect");
-    else if(k>="4"&&k<="9"&&G.fighter){ const idx=+k-4; if(WEAPONS[idx]) selectWeapon(WEAPONS[idx].id); }
+    else if(k==="q"){ if(G.fighter||G.mode==="gunfight") fireGun(); else placeObstacle("square"); } else if(k==="e") placeObstacle("rect");
+    else if(k>="4"&&k<="9"&&(G.fighter||G.mode==="gunfight")){ const idx=+k-4; if(WEAPONS[idx]) selectWeapon(WEAPONS[idx].id); }
     else if(k===" "){ G.sprint=true; e.preventDefault(); } });     // 空格 = 加速（按住）
   window.addEventListener("keyup",e=>{ if(!G) return; const k=e.key.toLowerCase();
     if(k==="a"||k==="arrowleft"||k==="d"||k==="arrowright") G.keyx=0;
@@ -912,11 +1041,12 @@ const MODES=[
   {id:"energy",  ico:"⚡", zh:"能量模式", en:"Energy",  d:"吸收被吃数字的一半，成长飞快"},
   {id:"survive", ico:"☠️", zh:"生存模式", en:"Survival", d:"毒圈不断缩小，圈外掉数字，活到最后"},
   {id:"virus",   ico:"🦠", zh:"病毒模式", en:"Virus", d:"末日丧尸：躲避感染、抢解药、进隔离带，选职业求生"},
+  {id:"gunfight",ico:"🔫", zh:"枪战模式", en:"Gunfight", d:"红蓝各50人开枪对战·某方清零即胜（阵地战/大乱战/人数战）"},
 ];
 function buildModes(){ const box=document.getElementById("modeList"); if(!box) return; box.innerHTML="";
   MODES.forEach(m=>{ const el=document.createElement("div"); el.className="mode"+(m.pri?" pri":"");
     el.innerHTML=`<div class="mi">${m.ico}</div><div class="mt"><div class="mn">${LANG==="en"?m.en:m.zh}</div><div class="md">${tr(m.d)}</div></div>`;
-    el.onclick=()=> m.id==="virus"?openClassPicker():startGame(m.id, mapSizeId); box.appendChild(el); }); }
+    el.onclick=()=> m.id==="virus"?openClassPicker():(m.id==="gunfight"?openGunPicker():startGame(m.id, mapSizeId)); box.appendChild(el); }); }
 function renderBoard(){ const box=document.getElementById("boardBox"); if(!box) return; const b=loadBoard();
   let h=`<div style="font-weight:900;margin-bottom:4px">🏆 ${tr("排行榜")}</div>`;
   if(!b.length) h+=`<div style="color:#4a5480">${tr("暂无记录")}</div>`;
@@ -928,11 +1058,13 @@ function renderBoard(){ const box=document.getElementById("boardBox"); if(!box) 
 function startGame(mode, sizeId, classId, asZombie){ applyMapSize(sizeId||mapSizeId);
   document.getElementById("startOv").classList.add("hidden"); document.getElementById("overOv").classList.add("hidden");
   const co=document.getElementById("classOv"); if(co) co.classList.add("hidden");
+  const go=document.getElementById("gunOv"); if(go) go.classList.add("hidden");
   G=freshG(mode);
   if(mode==="virus"){ if(asZombie){ applyClass(G,"civilian"); seedVirusPeople(true); turnPlayerZombie(classId); } else { applyClass(G, classId||"civilian"); seedVirusPeople(); } }
+  else if(mode==="gunfight"){ seedGunfight(classId||"chaos", "blue"); }
   else ensureBots();
-  seedObstacles(mode==="virus"?11:8);   // 开局随机障碍物（分散）
-  seedVehicles(mode==="virus"?7:5);      // 🚗 开局车辆
+  seedObstacles(mode==="virus"?11:(mode==="gunfight"?14:8));   // 开局随机障碍物（分散，枪战多些掩体）
+  if(mode!=="gunfight") seedVehicles(mode==="virus"?7:5);      // 🚗 开局车辆
   buildWeaponBar();
   lastT=0; if(!raf) raf=requestAnimationFrame(loop); hud();
   document.getElementById("pauseBtn").textContent="⏸️"; }
@@ -945,6 +1077,11 @@ function buildClasses(){ const box=document.getElementById("classList"); if(!box
   const h2=document.createElement("div"); h2.style.cssText="font-size:12px;font-weight:800;color:#7bbf5a;margin:10px 0 4px;text-align:left"; h2.textContent="🧟 "+tr("丧尸职业（感染全城）"); box.appendChild(h2);
   ZCLASSES.forEach(c=> box.appendChild(mkClass(c, ()=>startGame("virus", mapSizeId, c.id, true)))); }
 function openClassPicker(){ document.getElementById("startOv").classList.add("hidden"); buildClasses(); document.getElementById("classOv").classList.remove("hidden"); }
+function buildGunfight(){ const box=document.getElementById("gunList"); if(!box) return; box.innerHTML="";
+  GF_SUBMODES.forEach(m=>{ const el=document.createElement("div"); el.className="mode";
+    el.innerHTML=`<div class="mi">${ {position:"🚩",chaos:"💥",numbers:"⚔️"}[m.id] }</div><div class="mt"><div class="mn">${LANG==="en"?m.en:m.zh}</div><div class="md">${tr(m.d)}</div></div>`;
+    el.onclick=()=>startGame("gunfight", mapSizeId, m.id); box.appendChild(el); }); }
+function openGunPicker(){ document.getElementById("startOv").classList.add("hidden"); buildGunfight(); document.getElementById("gunOv").classList.remove("hidden"); }
 function toggleFullscreen(){ try{ const d=document, el=d.documentElement;
   if(!d.fullscreenElement && !d.webkitFullscreenElement){ (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el); }
   else { (d.exitFullscreen||d.webkitExitFullscreen||function(){}).call(d); } }catch(e){} }
@@ -980,5 +1117,6 @@ if(typeof window!=="undefined") window.__ne={ get G(){return G;}, startGame, upd
   virusStep, applyClass, CLASSES, VIRUS_DRAIN, QUARANTINE_AT, QUARANTINE_DUR, ZOMBIE_SPEED, TRAIL_INFECT, seedVirusPeople,
   placeObstacle, collideObstacles, ZCLASSES, ZOMBIE_HP_MUL, FIGHTER_DPS, infectBot, applyZClass, turnPlayerZombie, BASU_RADIUS, FIXED_ZOOM, ensureBots, assignZombieTargets, fireGun, seedObstacles, separateVirus, freeXY, get ROOM_FIRST(){return ROOM_FIRST;},
   seedVehicles, rideStep, raiseAlarm, buildBotGrid, popCount, get popId(){return popId;}, set popId(v){ popId=v; }, POP_SIZES, get RIDE_DUR(){return RIDE_DUR;}, get RIDE_MUL(){return RIDE_MUL;},
-  WEAPONS, currentWeapon, selectWeapon, explodeAt, inSmoke, FIGHTER_ICO };
+  WEAPONS, currentWeapon, selectWeapon, explodeAt, inSmoke, FIGHTER_ICO,
+  seedGunfight, gunfightStep, updateGunBot, stepBullets, spawnProjectile, teamCount, gameOver, GF_SUBMODES, GF_TEAM_SIZE };
 </script>
