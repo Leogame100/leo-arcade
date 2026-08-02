@@ -93,7 +93,7 @@
     <div class="modes" id="modeList"></div>
     <div class="stat"><span data-i18n="历史最大">历史最大</span> <b id="startBest">1</b> · <span data-i18n="金币">金币</span> <b id="startCoins">0</b></div>
     <div class="board" id="boardBox"></div>
-    <div class="foot" data-i18n="拖动/鼠标移动 · 技能键 1/2/3 或点按钮 · 虚拟娱乐">拖动/鼠标移动 · 技能键 1/2/3 或点按钮 · 虚拟娱乐</div>
+    <div class="foot" data-i18n="拖动移动 · 空格或长按=加速 · 技能键 1/2/3">拖动移动 · 空格或长按=加速 · 技能键 1/2/3</div>
   </div>
 </div>
 <!-- game over -->
@@ -117,6 +117,7 @@ let LANG=(function(){try{return localStorage.getItem("neLang")||"zh";}catch(e){r
 const TR={
   "数字吞噬":"Number Eater","冲刺":"Dash","磁铁":"Magnet","护盾":"Shield",
   "控制你的数字，吞噬比你小的数字不断变大——别碰比你大的！":"Steer your number, eat smaller ones to grow — never touch a bigger one!",
+  "拖动移动 · 空格或长按=加速 · 技能键 1/2/3":"Drag to move · Space / long-press = sprint · skills 1/2/3",
   "历史最大":"Best","金币":"Coins","拖动/鼠标移动 · 技能键 1/2/3 或点按钮 · 虚拟娱乐":"Drag / move mouse · skills 1/2/3 or tap · for fun only",
   "被吞噬了！":"EATEN!","最终数字":"Final number","等级":"Level","吞噬":"Eaten","最高连击":"Best combo","新纪录！":"NEW RECORD!","再来一局":"Play Again",
   "经典模式":"Classic","能量模式":"Energy","生存模式":"Survival",
@@ -174,13 +175,18 @@ const FOOD_TYPES=[               // 食物：吃到即按倍率暴涨（高倍�
 ];
 const FOOD_W=FOOD_TYPES.reduce((s,f)=>s+f.w,0);
 const ROOM_INTERVAL=250, ROOM_DURATION=120, ROOM_WARN=12;   // 每250秒开隐藏房间，持续120秒，最后12秒警告
+const SPAWN_RATE=2.1;            // 其他数字刷新速度（-65%）
+const SPRINT_MUL=1.7;            // 加速键（空格/长按）
+const SPEED_BOOST=1.8, BOOST_DUR=2;   // 加速方块：+80% 速度，续 2 秒
+const BOMB_MINUS=50, BOMB_R=280;      // 爆炸方块：附近数字 -50
 
 /* ==================== 状态 ==================== */
 let G=null, cv, ctx, DPR=1, VW=0, VH=0, raf=0, lastT=0;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 function freshG(mode){ return {
   mode, running:true, over:false, paused:false, time:0,
-  player:{ val:2, x:WORLD_W/2, y:WORLD_H/2, vx:0, vy:0, r:radiusOf(2), speedMul:1 },
+  player:{ val:2, x:WORLD_W/2, y:WORLD_H/2, vx:0, vy:0, r:radiusOf(2), speedMul:1, boostUntil:0 },
+  sprint:false, spawnAcc:0, blocks:[],
   bots:[], coins:0, best:loadBest(), combo:0, comboMax:0, comboT:0, eats:0, bossKills:0, level:1,
   aimX:WORLD_W/2, aimY:WORLD_H/2-1, moving:false, keyx:0, keyy:0,
   dashUntil:0, magnetUntil:0, shieldUntil:0, invUntil:0, crownUntil:0, frozenUntil:0, hurtNext:0, hurtFlash:0,
@@ -220,8 +226,18 @@ function ensureBots(){
     b.offT=off?(b.offT||0)+(G._dt||0.016):0;
     if(b.offT>OFFSCREEN_DESPAWN){ G.bots.splice(i,1); }
   }
-  let want=44, guard=0; while(G.bots.length<want && guard++<80) spawnBot();
+  const want=40; let guard=0;
+  if(G.time<0.5){ while(G.bots.length<want && guard++<80) spawnBot(); }   // 开局补满
+  else { G.spawnAcc=(G.spawnAcc||0)+SPAWN_RATE*(G._dt||0.016);            // 之后按 -65% 的速度慢慢刷新
+    while(G.bots.length<want && G.spawnAcc>=1 && guard++<8){ spawnBot(); G.spawnAcc-=1; } }
 }
+/* -------- 加速方块 / 爆炸方块 -------- */
+function hitBlock(blk, e){ if(blk.type==="speed"){ e.boostUntil=G.time+BOOST_DUR; if(e===G.player) popup(blk.x,blk.y,"⚡+80%","#ffcf3a"); }
+  else { explode(blk.x,blk.y); } }
+function explode(x,y){ G.flashes.push({t:0,x,y,boom:true});
+  if(Math.hypot(G.player.x-x,G.player.y-y)<BOMB_R){ G.player.val=Math.max(1,G.player.val-BOMB_MINUS); G.player.r=radiusOf(G.player.val); }
+  for(const b of G.bots){ if(Math.hypot(b.x-x,b.y-y)<BOMB_R){ b.val=Math.max(1,b.val-BOMB_MINUS); b.r=radiusOf(b.val,b.boss); } }
+  popup(x,y,"💥 -"+BOMB_MINUS,"#ff5b6e"); }
 /* -------- 食物 / 隐藏房间 -------- */
 function pickFood(){ let r=Math.random()*FOOD_W; for(const f of FOOD_TYPES){ r-=f.w; if(r<0) return f; } return FOOD_TYPES[0]; }
 function addFood(x,y,inRoom){ const f=pickFood(); G.foods.push({x,y,mult:f.mult,label:f.label,col:f.col,r:14+(f.mult>=2?6:0),room:!!inRoom}); }
@@ -254,7 +270,7 @@ function updateBot(b,dt){ const p=G.player; b.t-=dt; if(b.t<=0){ b.t=1+Math.rand
   if(b.toRoom && G.room && G.room.active){ const rx=G.room.cx-b.x, ry=G.room.cy-b.y, rd=Math.hypot(rx,ry)||1; ax=rx/rd*1.7; ay=ry/rd*1.7; }  // 前往隐藏房间
   else if(d<400){ if(b.val<p.val){ ax-=dx/d*1.5; ay-=dy/d*1.5; } else if(b.val>p.val){ ax+=dx/d*0.7; ay+=dy/d*0.7; } }
   if(G.frozenUntil>G.time){ ax*=0.03; ay*=0.03; }
-  const spd=(b.boss?46:66)*(1-Math.min(0.4,Math.log10(b.val+1)*0.05))*BOT_SPEED_MUL;   // 其他数字 -40% 速度
+  const spd=(b.boss?46:66)*(1-Math.min(0.4,Math.log10(b.val+1)*0.05))*BOT_SPEED_MUL*((b.boostUntil||0)>G.time?SPEED_BOOST:1);   // -40% 速度，加速方块 +80%
   b.vx+=(ax*spd-b.vx)*0.06; b.vy+=(ay*spd-b.vy)*0.06;
   if(G.magnetUntil>G.time && b.val<p.val && d<330){ b.vx+=dx/d*260*dt; b.vy+=dy/d*260*dt; }
   b.x+=b.vx*dt; b.y+=b.vy*dt; clampEntity(b,10);
@@ -302,9 +318,16 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
   let mx=0,my=0;
   if(G.keyx||G.keyy){ mx=G.keyx; my=G.keyy; const m=Math.hypot(mx,my)||1; mx/=m; my/=m; }
   else if(G.moving){ const dx=G.aimX-p.x, dy=G.aimY-p.y, d=Math.hypot(dx,dy); if(d>5){ mx=dx/d; my=dy/d; } }
-  let maxs=205*(1-Math.min(0.42,Math.log10(p.val+1)*0.045))*(G.dashUntil>G.time?2.15:1)*p.speedMul;
+  let maxs=205*(1-Math.min(0.42,Math.log10(p.val+1)*0.045))*(G.dashUntil>G.time?2.15:1)*p.speedMul*(G.sprint?SPRINT_MUL:1)*((p.boostUntil||0)>G.time?SPEED_BOOST:1);
   p.vx+=(mx*maxs-p.vx)*0.16; p.vy+=(my*maxs-p.vy)*0.16;
   p.x+=p.vx*dt; p.y+=p.vy*dt; clampEntity(p,10);
+  // 加速/爆炸方块随机刷新
+  if(Math.random()<0.006 && G.blocks.filter(b=>b.type==="speed").length<5) G.blocks.push({type:"speed",x:40+Math.random()*(WORLD_W-80),y:40+Math.random()*(WORLD_H-80),r:20});
+  if(Math.random()<0.004 && G.blocks.filter(b=>b.type==="bomb").length<4) G.blocks.push({type:"bomb", x:40+Math.random()*(WORLD_W-80),y:40+Math.random()*(WORLD_H-80),r:20});
+  for(let i=G.blocks.length-1;i>=0;i--){ const blk=G.blocks[i]; let hit=false;
+    if(Math.hypot(blk.x-p.x,blk.y-p.y) < p.r+blk.r){ hitBlock(blk,p); hit=true; }
+    else { for(const b of G.bots){ if(Math.hypot(blk.x-b.x,blk.y-b.y) < b.r+blk.r){ hitBlock(blk,b); hit=true; break; } } }
+    if(hit) G.blocks.splice(i,1); }
   // 食物刷新：外面很少，房间里多 500%（6倍）；吃到即按倍率暴涨
   if(Math.random()<0.02 && G.foods.filter(f=>!f.room).length<6) addFood(40+Math.random()*(WORLD_W-80),40+Math.random()*(WORLD_H-80),false);
   if(G.room&&G.room.active && Math.random()<0.12 && G.foods.filter(f=>f.room).length<42){ const R=G.room; addFood(R.x0+24+Math.random()*(R.x1-R.x0-48),R.y0+24+Math.random()*(R.y1-R.y0-48),true); }
@@ -331,10 +354,12 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
       const dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy); if(d>=GRAV.range) continue;
       if(d>=1 && a.val!==b.val){ const fall=1-d/GRAV.range, big=a.val>b.val?a:b, sm=a.val>b.val?b:a;
         const m=(big.val-sm.val)/(big.val+sm.val), ux=(big.x-sm.x)/d, uy=(big.y-sm.y)/d;
-        sm.vx+=ux*GRAV.suck*m*fall*dt*0.7; sm.vy+=uy*GRAV.suck*m*fall*dt*0.7; }
-      if(d < a.r + b.r*0.5){                                   // 互相吸收：明显更大的吃掉小的
+        sm.vx+=ux*GRAV.suck*m*fall*dt*0.45; sm.vy+=uy*GRAV.suck*m*fall*dt*0.45; }
+      if(d < a.r + b.r*0.85){                                  // 固体：几乎贴上才吃，减少穿模
         if(a.val>b.val*1.08){ a.val+=Math.max(1,Math.ceil(b.val*0.5)); a.r=radiusOf(a.val,a.boss); b.dead=true; }
         else if(b.val>a.val*1.08){ b.val+=Math.max(1,Math.ceil(a.val*0.5)); b.r=radiusOf(b.val,b.boss); a.dead=true; break; }
+        else if(d>=1){ const ov=(a.r+b.r-d), ux=(a.x-b.x)/d, uy=(a.y-b.y)/d;   // 大小相近 → 互相弹开，不挤在一起
+          a.vx+=ux*ov*5*dt; a.vy+=uy*ov*5*dt; b.vx-=ux*ov*5*dt; b.vy-=uy*ov*5*dt; }
       }
     }
   }
@@ -342,8 +367,8 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
   // 玩家碰撞：吃小的；碰到大的不立即死，每0.7秒-30%
   let bigContact=false;
   for(let i=G.bots.length-1;i>=0;i--){ const b=G.bots[i]; const d=Math.hypot(b.x-p.x,b.y-p.y);
-    if(d < p.r + b.r*0.5){
-      if(b.val < p.val){ eatBot(b); G.bots.splice(i,1); spawnBot(true); }
+    if(d < p.r + b.r*0.85){                                    // 固体：贴上才吃，减少穿模
+      if(b.val < p.val){ eatBot(b); G.bots.splice(i,1); }
       else if(b.val > p.val){ bigContact=true; }
       else { const nx=(p.x-b.x)/(d||1), ny=(p.y-b.y)/(d||1); p.vx+=nx*30; p.vy+=ny*30; }
     }
@@ -409,6 +434,11 @@ function render(){ if(!G) return; const p=G.player;
   for(const f of G.foods){ if(f.x<camx-40||f.x>camx+VW/zoom+40||f.y<camy-40||f.y>camy+VH/zoom+40) continue;
     ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,7); ctx.fillStyle=f.col; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle="#fff"; ctx.stroke();
     ctx.fillStyle="#0b0d16"; ctx.font="900 10px ui-monospace,monospace"; ctx.fillText(f.label,f.x,f.y); }
+  // 方块（加速/爆炸）
+  for(const blk of G.blocks){ if(blk.x<camx-40||blk.x>camx+VW/zoom+40||blk.y<camy-40||blk.y>camy+VH/zoom+40) continue;
+    ctx.fillStyle=blk.type==="speed"?"rgba(255,207,58,.92)":"rgba(255,91,110,.92)"; ctx.fillRect(blk.x-blk.r,blk.y-blk.r,blk.r*2,blk.r*2);
+    ctx.lineWidth=2; ctx.strokeStyle="#fff"; ctx.strokeRect(blk.x-blk.r,blk.y-blk.r,blk.r*2,blk.r*2);
+    ctx.font="18px sans-serif"; ctx.fillText(blk.type==="speed"?"⚡":"💣",blk.x,blk.y); }
   // zone
   if(G.zone){ ctx.save(); ctx.beginPath(); ctx.rect(camx-20,camy-20,VW/zoom+40,VH/zoom+40); ctx.arc(G.zone.x,G.zone.y,G.zone.r,0,7,true);
     ctx.fillStyle="rgba(255,60,90,.14)"; ctx.fill("evenodd"); ctx.restore();
@@ -430,7 +460,8 @@ function render(){ if(!G) return; const p=G.player;
   if(G.magnetUntil>G.time){ ctx.beginPath(); ctx.arc(p.x,p.y,330,0,7); ctx.strokeStyle="rgba(196,107,255,.25)"; ctx.lineWidth=2; ctx.stroke(); }
   ctx.fillStyle="#fff"; ctx.font="900 "+Math.max(13,Math.min(p.r*0.85,34))+"px ui-monospace,monospace"; ctx.fillText(fmt(p.val),p.x,p.y);
   // level flash rings
-  for(const f of G.flashes){ ctx.beginPath(); ctx.arc(p.x,p.y,p.r+f.t*160,0,7); ctx.strokeStyle="rgba(255,207,58,"+(0.6-f.t*0.6)+")"; ctx.lineWidth=4; ctx.stroke(); }
+  for(const f of G.flashes){ if(f.boom){ ctx.beginPath(); ctx.arc(f.x,f.y,20+f.t*BOMB_R,0,7); ctx.fillStyle="rgba(255,91,110,"+Math.max(0,0.28-f.t*0.28)+")"; ctx.fill(); ctx.strokeStyle="rgba(255,120,140,"+(0.8-f.t*0.8)+")"; ctx.lineWidth=6; ctx.stroke(); }
+    else { ctx.beginPath(); ctx.arc(p.x,p.y,p.r+f.t*160,0,7); ctx.strokeStyle="rgba(255,207,58,"+(0.6-f.t*0.6)+")"; ctx.lineWidth=4; ctx.stroke(); } }
   // popups
   for(const q of G.popups){ ctx.globalAlpha=Math.max(0,1-q.t/0.9); ctx.fillStyle=q.col; ctx.font="900 15px ui-monospace,monospace"; ctx.fillText(q.txt,q.x,q.y-q.t*40); ctx.globalAlpha=1; }
   ctx.setTransform(DPR,0,0,DPR,0,0);
@@ -479,17 +510,19 @@ function pointerMove(cx,cy){ if(!G) return; const w=toWorld(cx,cy); G.aimX=w.x; 
 function bindInput(){
   cv.addEventListener("mousemove",e=>{ pointerMove(e.clientX,e.clientY); G.moving=true; });
   cv.addEventListener("mousedown",e=>{ pointerMove(e.clientX,e.clientY); G.moving=true; });
-  cv.addEventListener("touchstart",e=>{ e.preventDefault(); const t=e.touches[0]; pointerMove(t.clientX,t.clientY); G.moving=true; },{passive:false});
+  cv.addEventListener("touchstart",e=>{ e.preventDefault(); const t=e.touches[0]; pointerMove(t.clientX,t.clientY); G.moving=true;
+    clearTimeout(G._spT); G._spT=setTimeout(()=>{ if(G&&G.moving) G.sprint=true; },260); },{passive:false});   // 长按加速
   cv.addEventListener("touchmove",e=>{ e.preventDefault(); const t=e.touches[0]; pointerMove(t.clientX,t.clientY); G.moving=true; },{passive:false});
-  cv.addEventListener("touchend",e=>{ e.preventDefault(); if(!e.touches.length) G.moving=false; },{passive:false});
+  cv.addEventListener("touchend",e=>{ e.preventDefault(); if(!e.touches.length){ G.moving=false; G.sprint=false; clearTimeout(G._spT); } },{passive:false});
   window.addEventListener("keydown",e=>{ if(!G) return; const k=e.key.toLowerCase();
     if(k==="a"||k==="arrowleft") G.keyx=-1; else if(k==="d"||k==="arrowright") G.keyx=1;
     else if(k==="w"||k==="arrowup") G.keyy=-1; else if(k==="s"||k==="arrowdown") G.keyy=1;
     else if(k==="1") useSkill("dash"); else if(k==="2") useSkill("magnet"); else if(k==="3") useSkill("shield");
-    else if(k===" ") useSkill("dash"); });
+    else if(k===" "){ G.sprint=true; e.preventDefault(); } });     // 空格 = 加速（按住）
   window.addEventListener("keyup",e=>{ if(!G) return; const k=e.key.toLowerCase();
     if(k==="a"||k==="arrowleft"||k==="d"||k==="arrowright") G.keyx=0;
-    if(k==="w"||k==="arrowup"||k==="s"||k==="arrowdown") G.keyy=0; });
+    if(k==="w"||k==="arrowup"||k==="s"||k==="arrowdown") G.keyy=0;
+    if(k===" ") G.sprint=false; });
 }
 
 /* ==================== 模式/界面 ==================== */
@@ -534,5 +567,6 @@ init();
 // 测试钩子
 if(typeof window!=="undefined") window.__ne={ get G(){return G;}, startGame, update, spawnBot, eatBot, fmt, levelOf, radiusOf, freshG, MODES, MAP_SIZES, applyMapSize,
   get WORLD_W(){return WORLD_W;}, get WORLD_H(){return WORLD_H;}, get EAT_PCT(){return EAT_PCT;}, setG(g){ G=g; }, useSkill,
-  openRoom, roomTick, isInRoom, addFood, FOOD_TYPES, BOT_SPEED_MUL, ROOM_INTERVAL, ROOM_DURATION, OFFSCREEN_DESPAWN };
+  openRoom, roomTick, isInRoom, addFood, FOOD_TYPES, BOT_SPEED_MUL, ROOM_INTERVAL, ROOM_DURATION, OFFSCREEN_DESPAWN,
+  hitBlock, explode, SPAWN_RATE, SPRINT_MUL, SPEED_BOOST, BOOST_DUR, BOMB_MINUS, BOMB_R };
 </script>
