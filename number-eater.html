@@ -378,7 +378,7 @@ function spawnBot(force){ if(!G) return; const p=G.player;
     else if(s<0.125) kind="bomb"; else if(s<0.145) kind="crown"; else if(s<0.163) kind="freeze"; }
   G.bots.push({val,x,y,vx:0,vy:0,kind,boss,r:radiusOf(val,boss),t:Math.random()*3,dir:Math.random()*Math.PI*2});
 }
-function infectBot(b){ b.zombie=true; b.fighter=false; const z=ZCLASSES[Math.floor(Math.random()*ZCLASSES.length)];   // 其他丧尸也随机有职业
+function infectBot(b, zid){ b.zombie=true; b.fighter=false; b.fico=null; const z=(zid&&ZCLASSES.find(x=>x.id===zid))||ZCLASSES[Math.floor(Math.random()*ZCLASSES.length)];   // 可指定职业，否则随机
   b.zcls=z.id; b.zspd=z.spd; b.infR=z.infR||0; b.hp=100*ZOMBIE_HP_MUL*z.hp; b.inf=false; }
 function applyZClass(g, zid){ const z=ZCLASSES.find(x=>x.id===zid)||ZCLASSES[0]; g.zcls=z.id; g.zspd=z.spd; g.zInfR=z.infR||0; g.zMax=100*ZOMBIE_HP_MUL*z.hp; g.hp=g.zMax; }
 function turnPlayerZombie(zid){ G.zombie=true; G.infected=false; G.player.trailT=0; G.fighter=false; applyZClass(G, zid||ZCLASSES[Math.floor(Math.random()*ZCLASSES.length)].id);
@@ -397,7 +397,7 @@ function seedVirusPeople(noPZ){ G.bots=[]; const POP=popCount();   // 开局人�
   for(let i=0;i<POP;i++){ const x=60+Math.random()*(WORLD_W-120), y=60+Math.random()*(WORLD_H-120), val=5;   // 病毒模式所有数字强制为 5
     const fighter=Math.random()<0.12; const fico=fighter?FIGHTER_ICONS[Math.floor(Math.random()*FIGHTER_ICONS.length)]:null;
     G.bots.push({val,x,y,vx:0,vy:0,kind:"normal",boss:false,r:radiusOf(val),t:Math.random()*3,dir:Math.random()*Math.PI*2,zombie:false,fighter,fico,hp:100,inf:false}); }
-  if(!noPZ && G.bots.length) infectBot(G.bots[Math.floor(Math.random()*G.bots.length)]);   // 零号感染者
+  if(!noPZ && G.bots.length) infectBot(G.bots[Math.floor(Math.random()*G.bots.length)], "king");   // 零号感染者 = 尸王👑
 }
 function ensureBots(){
   if(G.mode==="virus") return;   // 病毒模式人口固定、永久存在，不刷新
@@ -1014,7 +1014,7 @@ function render(){ if(!G) return; const p=G.player;
     if(!b.zombie && b.fighter){ ctx.font="900 "+Math.round(b.r*1.6)+"px sans-serif"; ctx.fillText(b.fico||"👮", b.x, b.y);   // 攻击兵种：显眼图标替换小球
       ctx.fillStyle="#dfe8ff"; ctx.font="900 10px ui-monospace,monospace"; ctx.fillText(fmt(b.val), b.x, b.y+b.r-4); }
     else { ctx.fillStyle="#fff"; ctx.font="900 "+Math.max(11,Math.min(b.r*0.9,30))+"px ui-monospace,monospace"; ctx.fillText(fmt(b.val), b.x, b.y);
-      if(b.zombie){ ctx.font="14px sans-serif"; ctx.fillText("🧟", b.x, b.y-b.r-10); }
+      if(b.zombie){ const zc=ZCLASSES.find(c=>c.id===b.zcls); ctx.font=(b.zcls==="king"?"18px":"14px")+" sans-serif"; ctx.fillText(zc?zc.ico:"🧟", b.x, b.y-b.r-10); }
       else if(b.kind!=="normal"&&!b.boss){ ctx.font="12px sans-serif"; ctx.fillText({gold:"⭐",rainbow:"🌈",lucky7:"🍀",bomb:"💣",crown:"👑",freeze:"❄️"}[b.kind]||"", b.x, b.y-b.r-8); } }
   }
   // player
