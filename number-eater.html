@@ -305,7 +305,7 @@ function spawnBot(force){ if(!G) return; const p=G.player;
   G.bots.push({val,x,y,vx:0,vy:0,kind,boss,r:radiusOf(val,boss),t:Math.random()*3,dir:Math.random()*Math.PI*2});
 }
 function infectBot(b){ b.zombie=true; b.fighter=false; const z=ZCLASSES[Math.floor(Math.random()*ZCLASSES.length)];   // 其他丧尸也随机有职业
-  b.zcls=z.id; b.zspd=z.spd; b.infR=z.infR||0; b.hp=100*ZOMBIE_HP_MUL*z.hp; }
+  b.zcls=z.id; b.zspd=z.spd; b.infR=z.infR||0; b.hp=100*ZOMBIE_HP_MUL*z.hp; b.inf=false; }
 function applyZClass(g, zid){ const z=ZCLASSES.find(x=>x.id===zid)||ZCLASSES[0]; g.zcls=z.id; g.zspd=z.spd; g.zInfR=z.infR||0; g.zMax=100*ZOMBIE_HP_MUL*z.hp; g.hp=g.zMax; }
 function turnPlayerZombie(zid){ G.zombie=true; G.infected=false; G.player.trailT=0; G.fighter=false; applyZClass(G, zid||ZCLASSES[Math.floor(Math.random()*ZCLASSES.length)].id);
   toast("🧟 "+tr("你变成了丧尸！去感染所有人类")); }
@@ -320,7 +320,7 @@ function assignZombieTargets(){   // 每只丧尸锁定最近的人类；若已�
 }
 function seedVirusPeople(noPZ){ G.bots=[];   // 开局 250 人散布全图，人类永久存在
   for(let i=0;i<250;i++){ const x=60+Math.random()*(WORLD_W-120), y=60+Math.random()*(WORLD_H-120), val=2+Math.floor(Math.random()*7);
-    G.bots.push({val,x,y,vx:0,vy:0,kind:"normal",boss:false,r:radiusOf(val),t:Math.random()*3,dir:Math.random()*Math.PI*2,zombie:false,fighter:Math.random()<0.12}); }
+    G.bots.push({val,x,y,vx:0,vy:0,kind:"normal",boss:false,r:radiusOf(val),t:Math.random()*3,dir:Math.random()*Math.PI*2,zombie:false,fighter:Math.random()<0.12,hp:100,inf:false}); }
   if(!noPZ && G.bots.length) infectBot(G.bots[Math.floor(Math.random()*G.bots.length)]);   // 零号感染者
 }
 function ensureBots(){
@@ -372,16 +372,16 @@ function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
   if(!G.zombie){   // ===== 玩家是人类 =====
     let zTouch=false;
     for(let i=G.bots.length-1;i>=0;i--){ const b=G.bots[i]; if(!b.zombie) continue; if(hyp(b.x-p.x,b.y-p.y) < p.r+b.r*0.9){
-      if(fighter){ b.hp=(b.hp||100)-FIGHTER_DPS*dt; if(b.hp<=0){ G.bots.splice(i,1); popup(b.x,b.y,"💥","#ffcf3a"); } } else zTouch=true; } }
+      if(fighter){ b.hp=(b.hp||100)-FIGHTER_DPS*dt; if(b.hp<=0){ G.bots.splice(i,1); popup(b.x,b.y,"💥","#ffcf3a"); } } else if(!G.fighter) zTouch=true; } }   // 士兵职业免疫感染
     if(zTouch && !immune) G.infected=true;
     let onTrail=false; for(const t of G.trails){ if(hyp(t.x-p.x,t.y-p.y) < p.r+t.r){ onTrail=true; break; } }
-    if(onTrail && !immune && !G.trailImmune){ p.trailT=(p.trailT||0)+dt; if(p.trailT>=TRAIL_INFECT) G.infected=true; } else p.trailT=Math.max(0,(p.trailT||0)-dt);
+    if(onTrail && !immune && !G.trailImmune && !G.fighter){ p.trailT=(p.trailT||0)+dt; if(p.trailT>=TRAIL_INFECT) G.infected=true; } else p.trailT=Math.max(0,(p.trailT||0)-dt);
     if(inQ){ G.infected=false; G.hp=Math.min(G.maxHp, G.hp+G.maxHp*0.14*dt); }
     else if(G.infected){ G.hp-=G.maxHp*(VIRUS_DRAIN/100)*G.drainMul*dt; if(G.hp<=0){ turnPlayerZombie(); } }   // 血空 → 变丧尸（不再直接结束）
   } else {          // ===== 玩家是丧尸 =====
     if(p.val>G.best) G.best=p.val;
     for(let i=G.bots.length-1;i>=0;i--){ const h=G.bots[i]; if(h.zombie) continue; const d=hyp(h.x-p.x,h.y-p.y);
-      if(d < p.r+h.r*0.9 || (G.zInfR && d<G.zInfR+h.r)){ if(h.fighter){ G.hp-=FIGHTER_DPS*dt; } else infectBot(h); } }   // 感染人类；碰到士兵会掉血
+      if(d < p.r+h.r*0.9 || (G.zInfR && d<G.zInfR+h.r)){ if(h.fighter){ G.hp-=FIGHTER_DPS*dt; } else h.inf=true; } }   // 感染人类（渐进掉血）；碰到士兵会掉血
     if(G.hp<=0){ G.hp=0; return gameOver("killed"); }   // 被士兵击杀才算死
     if(!G.bots.some(b=>!b.zombie)){ return gameOver("domination"); }   // 全城沦陷 → 胜利
     if(Math.random()<dt*10) G.trails.push({x:p.x,y:p.y,r:Math.max(14,p.r*0.7),t:0});   // 玩家丧尸也留尾迹
@@ -393,15 +393,17 @@ function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
   // 数字之间：丧尸感染人类（可范围）；碰到士兵人类 → 士兵造成伤害（丧尸互不吞噬、丧尸不因感染掉血）
   for(let i=G.bots.length-1;i>=0;i--){ const z=G.bots[i]; if(!z.zombie) continue; const rng=z.infR||0;
     for(const h of G.bots){ if(h.zombie) continue; const d=hyp(h.x-z.x,h.y-z.y);
-      if(d < z.r+h.r*0.9 || (rng && d<rng+h.r)){ if(h.fighter){ z.hp=(z.hp||100)-FIGHTER_DPS*dt; if(z.hp<=0){ z.dead=true; break; } } else infectBot(h); } } }
+      if(d < z.r+h.r*0.9 || (rng && d<rng+h.r)){ if(h.fighter){ z.hp=(z.hp||100)-FIGHTER_DPS*dt; if(z.hp<=0){ z.dead=true; break; } } else h.inf=true; } } }
   if(G.bots.some(x=>x.dead)) G.bots=G.bots.filter(x=>!x.dead);
+  // 被咬的人类：像玩家一样每0.7秒-30%血，掉光才变丧尸（不是秒变，给反应时间）
+  for(const h of G.bots){ if(h.zombie || !h.inf || h.fighter) continue; if(G.time>=(h.hurtNext||0)){ h.hurtNext=G.time+0.7; h.hp=Math.max(1,Math.floor((h.hp||100)*0.7)); if(h.hp<=1) infectBot(h); } }
   // 隔离带排斥丧尸
   if(Q){ for(const b of G.bots){ if(b.zombie){ const ddx=b.x-Q.x, ddy=b.y-Q.y, dd=hyp(ddx,ddy)||1; if(dd<Q.r+b.r){ const push=(Q.r+b.r-dd); b.x+=ddx/dd*push; b.y+=ddy/dd*push; } } } }
   // 解药：玩家(人类)吃→回人满血；丧尸吃→变回人类
   if(Math.random()<0.010*G.cureRateMul && G.cures.length<3) G.cures.push({x:60+Math.random()*(WORLD_W-120),y:60+Math.random()*(WORLD_H-120),r:18});
   for(let i=G.cures.length-1;i>=0;i--){ const c=G.cures[i];
     if(!G.zombie && hyp(c.x-p.x,c.y-p.y) < p.r+c.r){ G.infected=false; p.trailT=0; G.hp=G.maxHp; G.cureImmuneUntil=G.time+G.cureImmuneDur; G.cures.splice(i,1); popup(c.x,c.y,"💊","#31e07a"); toast("💊 "+tr("解药！变回人类·满血")); continue; }
-    let eaten=false; for(const b of G.bots){ if(b.zombie && hyp(c.x-b.x,c.y-b.y) < b.r+c.r){ b.zombie=false; b.hp=undefined; b.zcls=null; b.infR=0; eaten=true; break; } }
+    let eaten=false; for(const b of G.bots){ if(b.zombie && hyp(c.x-b.x,c.y-b.y) < b.r+c.r){ b.zombie=false; b.hp=100; b.inf=false; b.hurtNext=0; b.zcls=null; b.infR=0; eaten=true; break; } }
     if(eaten) G.cures.splice(i,1);
   }
 }
@@ -603,6 +605,7 @@ function resize(){ DPR=Math.min(window.devicePixelRatio||1,2); VW=window.innerWi
   cv.width=VW*DPR; cv.height=VH*DPR; cv.style.width=VW+"px"; cv.style.height=VH+"px"; ctx.setTransform(DPR,0,0,DPR,0,0); }
 function colorFor(b){ const p=G.player;
   if(b.zombie) return "#4caf50";   // 丧尸绿
+  if(b.inf) return "#c9a83a";   // 被感染中（渐进变丧尸）：病黄色
   if(b.kind==="gold") return "#ffcf3a"; if(b.kind==="rainbow") return "#c46bff"; if(b.kind==="lucky7") return "#31e07a";
   if(b.kind==="bomb") return "#ff8f3a"; if(b.kind==="crown") return "#ffd76a"; if(b.kind==="freeze") return "#7fd0ff";
   if(b.boss) return "#ff5b6e"; if(b.val<p.val) return "#2f7d55"; if(b.val>p.val) return "#7a2f3c"; return "#4a4f70"; }
