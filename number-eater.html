@@ -128,6 +128,9 @@ const TR={
   "⚡ 冲刺！":"⚡ Dash!","🧲 磁铁！":"🧲 Magnet!","🛡️ 护盾就绪":"🛡️ Shield armed","🛡️ 护盾挡下一击！":"🛡️ Shield saved you!","技能冷却中":"On cooldown",
   "💥 炸弹！掉了一截":"💥 Bomb! shrank","❄️ 冰冻！":"❄️ Freeze!","👑 双倍金币":"👑 Double coins","⭐ 升级！":"⭐ Level up!","💀 击败Boss！":"💀 Boss down!","🎁 宝箱":"🎁 Chest",
   "暂停中":"Paused","继续":"Resume","选择地图大小":"Choose map size",
+  "隐藏房间":"Hidden Room","小地图":"Map","快离开！":"GET OUT!",
+  "隐藏房间出现！沿箭头前往，里面全是食物":"Hidden room open! Follow the arrow — it's full of food",
+  "隐藏房间即将关闭，快离开！":"Room is closing — get out!","被困在隐藏房间！":"Trapped in the room!",
 };
 function tr(s){ return LANG==="en"?(TR[s]||s):s; }
 function applyLang(){ document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=tr(el.getAttribute("data-i18n")));
@@ -163,6 +166,14 @@ const SKILLS={ dash:{cd:4}, magnet:{cd:12}, shield:{cd:20} };
 const GRAV={ range:720, pull:480, suck:520 };
 const EAT_PCT={ classic:0.75, energy:0.90, survive:0.75 };   // 吃数字时吸收对方数值的比例
 const HURT_INTERVAL=0.7, HURT_LOSS=0.30;                     // 碰到更大数字：每0.7秒-30%（不立即死）
+const BOT_SPEED_MUL=0.6;         // 其他数字速度 -40%
+const OFFSCREEN_DESPAWN=4;       // 离开视野 4 秒后消失
+const FOOD_TYPES=[               // 食物：吃到即按倍率暴涨（高倍更稀有）
+  {mult:1.2,label:"+20%",col:"#7fd0ff",w:34},{mult:1.5,label:"+50%",col:"#31e07a",w:24},{mult:1.8,label:"+80%",col:"#ffcf3a",w:16},
+  {mult:2,label:"×2",col:"#ff9f3a",w:10},{mult:3,label:"×3",col:"#c46bff",w:5},{mult:5,label:"×5",col:"#ff5b6e",w:2},
+];
+const FOOD_W=FOOD_TYPES.reduce((s,f)=>s+f.w,0);
+const ROOM_INTERVAL=250, ROOM_DURATION=120, ROOM_WARN=12;   // 每250秒开隐藏房间，持续120秒，最后12秒警告
 
 /* ==================== 状态 ==================== */
 let G=null, cv, ctx, DPR=1, VW=0, VH=0, raf=0, lastT=0;
@@ -175,6 +186,8 @@ function freshG(mode){ return {
   dashUntil:0, magnetUntil:0, shieldUntil:0, invUntil:0, crownUntil:0, frozenUntil:0, hurtNext:0, hurtFlash:0,
   cool:{dash:0, magnet:0, shield:0}, flashes:[], popups:[],
   zone:(mode==="survive"?{x:WORLD_W/2,y:WORLD_H/2,r:Math.max(WORLD_W,WORLD_H)/2, next:0}:null),
+  foods:[], room:null, roomNextAt:(mode==="survive"?Infinity:ROOM_INTERVAL), roomWarned:false, _dt:0.016,
+  view:{x0:-1e9,y0:-1e9,x1:1e9,y1:1e9},
 }; }
 function loadBest(){ try{ return +localStorage.getItem("neBest")||2; }catch(e){ return 2; } }
 function loadBoard(){ try{ return JSON.parse(localStorage.getItem("neBoard")||"[]"); }catch(e){ return []; } }
@@ -198,18 +211,53 @@ function spawnBot(force){ if(!G) return; const p=G.player;
     else if(s<0.125) kind="bomb"; else if(s<0.145) kind="crown"; else if(s<0.163) kind="freeze"; }
   G.bots.push({val,x,y,vx:0,vy:0,kind,boss,r:radiusOf(val,boss),t:Math.random()*3,dir:Math.random()*Math.PI*2});
 }
-function ensureBots(){ const want=44; let guard=0; while(G.bots.length<want && guard++<80) spawnBot();
-  // cull far bots
-  const p=G.player; for(let i=G.bots.length-1;i>=0;i--){ const b=G.bots[i]; if(Math.hypot(b.x-p.x,b.y-p.y)>1500){ G.bots.splice(i,1); } } }
+function ensureBots(){
+  // 离开玩家视野 4 秒后消失（去房间/在房间里的除外）
+  const v=G.view;
+  for(let i=G.bots.length-1;i>=0;i--){ const b=G.bots[i];
+    if(b.toRoom||isInRoom(b)){ b.offT=0; continue; }
+    const off=(b.x<v.x0||b.x>v.x1||b.y<v.y0||b.y>v.y1);
+    b.offT=off?(b.offT||0)+(G._dt||0.016):0;
+    if(b.offT>OFFSCREEN_DESPAWN){ G.bots.splice(i,1); }
+  }
+  let want=44, guard=0; while(G.bots.length<want && guard++<80) spawnBot();
+}
+/* -------- 食物 / 隐藏房间 -------- */
+function pickFood(){ let r=Math.random()*FOOD_W; for(const f of FOOD_TYPES){ r-=f.w; if(r<0) return f; } return FOOD_TYPES[0]; }
+function addFood(x,y,inRoom){ const f=pickFood(); G.foods.push({x,y,mult:f.mult,label:f.label,col:f.col,r:14+(f.mult>=2?6:0),room:!!inRoom}); }
+function isInRoom(e){ const R=G.room; return !!(R&&R.active&&e.x>WORLD_W && e.y>=R.y0 && e.y<=R.y1); }
+function clampEntity(e,m){ const R=G.room, gap=R&&R.active && e.y>=R.y0 && e.y<=R.y1;
+  const xmax=gap?R.x1-m:WORLD_W-m; e.x=clamp(e.x,m,xmax);
+  if(R&&R.active && e.x>WORLD_W){ e.y=clamp(e.y,R.y0+m,R.y1-m); } else e.y=clamp(e.y,m,WORLD_H-m); }
+function openRoom(){ const rw=Math.round(WORLD_W*0.5), rh=Math.round(WORLD_H*0.5);
+  const y0=clamp(Math.round(G.player.y-rh/2),20,Math.max(20,WORLD_H-rh-20));
+  G.room={active:true,x0:WORLD_W,x1:WORLD_W+rw,y0,y1:y0+rh,cx:WORLD_W+rw/2,cy:y0+rh/2,closeAt:G.time+ROOM_DURATION};
+  G.roomWarned=false;
+  for(let i=0;i<38;i++) addFood(WORLD_W+24+Math.random()*(rw-48), y0+24+Math.random()*(rh-48), true);
+  for(const b of G.bots){ if(Math.random()<0.30) b.toRoom=true; }   // 30% 的数字前往房间
+  toast("🚪 "+tr("隐藏房间出现！沿箭头前往，里面全是食物"));
+}
+function roomTick(){
+  if(!G.room && G.time>=G.roomNextAt){ openRoom(); G.roomNextAt+=ROOM_INTERVAL; }
+  if(G.room && G.room.active){ const R=G.room, left=R.closeAt-G.time;
+    if(left<=ROOM_WARN && isInRoom(G.player) && (!G.roomWarned || G.time>=G.roomWarned)){ G.roomWarned=G.time+3; toast("⚠️ "+tr("隐藏房间即将关闭，快离开！")+" "+Math.ceil(left)+"s"); }
+    if(G.time>=R.closeAt){
+      if(isInRoom(G.player)){ return gameOver("room"); }             // 超时还在里面 → 直接死亡
+      for(const b of G.bots){ if(b.x>WORLD_W) b.x=WORLD_W-40; b.toRoom=false; }   // 其他数字出来
+      G.foods=G.foods.filter(f=>!f.room); G.room=null;
+    }
+  }
+}
 function updateBot(b,dt){ const p=G.player; b.t-=dt; if(b.t<=0){ b.t=1+Math.random()*2.5; b.dir=Math.random()*Math.PI*2; }
   let ax=Math.cos(b.dir), ay=Math.sin(b.dir);
   const dx=p.x-b.x, dy=p.y-b.y, d=Math.hypot(dx,dy)||1;
-  if(d<400){ if(b.val<p.val){ ax-=dx/d*1.5; ay-=dy/d*1.5; } else if(b.val>p.val){ ax+=dx/d*0.7; ay+=dy/d*0.7; } }
+  if(b.toRoom && G.room && G.room.active){ const rx=G.room.cx-b.x, ry=G.room.cy-b.y, rd=Math.hypot(rx,ry)||1; ax=rx/rd*1.7; ay=ry/rd*1.7; }  // 前往隐藏房间
+  else if(d<400){ if(b.val<p.val){ ax-=dx/d*1.5; ay-=dy/d*1.5; } else if(b.val>p.val){ ax+=dx/d*0.7; ay+=dy/d*0.7; } }
   if(G.frozenUntil>G.time){ ax*=0.03; ay*=0.03; }
-  const spd=(b.boss?46:66)*(1-Math.min(0.4,Math.log10(b.val+1)*0.05));
+  const spd=(b.boss?46:66)*(1-Math.min(0.4,Math.log10(b.val+1)*0.05))*BOT_SPEED_MUL;   // 其他数字 -40% 速度
   b.vx+=(ax*spd-b.vx)*0.06; b.vy+=(ay*spd-b.vy)*0.06;
   if(G.magnetUntil>G.time && b.val<p.val && d<330){ b.vx+=dx/d*260*dt; b.vy+=dy/d*260*dt; }
-  b.x=clamp(b.x+b.vx*dt,10,WORLD_W-10); b.y=clamp(b.y+b.vy*dt,10,WORLD_H-10);
+  b.x+=b.vx*dt; b.y+=b.vy*dt; clampEntity(b,10);
 }
 
 /* ==================== 吞噬 ==================== */
@@ -247,15 +295,20 @@ function useSkill(k){ if(!G||G.over||G.paused) return; if(G.time<G.cool[k]){ ret
   G.cool[k]=G.time+SKILLS[k].cd; }
 
 /* ==================== 更新 ==================== */
-function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt;
+function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
   const p=G.player;
+  roomTick(); if(G.over) return;   // 隐藏房间开/关（超时死亡）
   // 输入方向
   let mx=0,my=0;
   if(G.keyx||G.keyy){ mx=G.keyx; my=G.keyy; const m=Math.hypot(mx,my)||1; mx/=m; my/=m; }
   else if(G.moving){ const dx=G.aimX-p.x, dy=G.aimY-p.y, d=Math.hypot(dx,dy); if(d>5){ mx=dx/d; my=dy/d; } }
   let maxs=205*(1-Math.min(0.42,Math.log10(p.val+1)*0.045))*(G.dashUntil>G.time?2.15:1)*p.speedMul;
   p.vx+=(mx*maxs-p.vx)*0.16; p.vy+=(my*maxs-p.vy)*0.16;
-  p.x=clamp(p.x+p.vx*dt,10,WORLD_W-10); p.y=clamp(p.y+p.vy*dt,10,WORLD_H-10);
+  p.x+=p.vx*dt; p.y+=p.vy*dt; clampEntity(p,10);
+  // 食物刷新：外面很少，房间里多 500%（6倍）；吃到即按倍率暴涨
+  if(Math.random()<0.02 && G.foods.filter(f=>!f.room).length<6) addFood(40+Math.random()*(WORLD_W-80),40+Math.random()*(WORLD_H-80),false);
+  if(G.room&&G.room.active && Math.random()<0.12 && G.foods.filter(f=>f.room).length<42){ const R=G.room; addFood(R.x0+24+Math.random()*(R.x1-R.x0-48),R.y0+24+Math.random()*(R.y1-R.y0-48),true); }
+  for(let i=G.foods.length-1;i>=0;i--){ const f=G.foods[i]; if(Math.hypot(f.x-p.x,f.y-p.y) < p.r+f.r){ p.val=Math.ceil(p.val*f.mult); p.r=radiusOf(p.val); G.foods.splice(i,1); popup(f.x,f.y,f.label,f.col); if(p.val>G.best)G.best=p.val; checkLevel(); } }
   // 毒圈
   if(G.zone){ if(G.time>=G.zone.next){ G.zone.next=G.time+7; G.zone.r=Math.max(210, G.zone.r*0.82); }
     const zd=Math.hypot(p.x-G.zone.x,p.y-G.zone.y);
@@ -263,6 +316,8 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt;
   if(G.hurtFlash>0) G.hurtFlash-=dt;
   // bots
   for(const b of G.bots) updateBot(b,dt);
+  // 所有数字都能吃食物（食物不动、不吃数字）
+  if(G.foods.length) for(const b of G.bots){ for(let i=G.foods.length-1;i>=0;i--){ const f=G.foods[i]; if(Math.hypot(f.x-b.x,f.y-b.y) < b.r+f.r){ b.val=Math.ceil(b.val*f.mult); b.r=radiusOf(b.val,b.boss); G.foods.splice(i,1); } } }
   // 引力：玩家 ↔ 数字（大小差越大吸力越强，相近则抵消）
   for(const b of G.bots){ const dx=b.x-p.x, dy=b.y-p.y, d=Math.hypot(dx,dy); if(d>=GRAV.range||d<1) continue;
     const fall=1-d/GRAV.range, ratio=(b.val-p.val)/(b.val+p.val);
@@ -302,7 +357,7 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt;
   ensureBots();
 }
 
-function gameOver(){ if(G.over) return; G.over=true; G.running=false;
+function gameOver(cause){ if(G.over) return; G.over=true; G.running=false; G.deathCause=cause;
   const v=G.player.val; const nb=v>loadBest(); saveBest(v); saveBoard(v,G.mode); saveCoins(loadCoins()+G.coins);
   document.getElementById("finalNum").textContent=fmt(v);
   document.getElementById("finalLv").textContent=G.level;
@@ -311,7 +366,7 @@ function gameOver(){ if(G.over) return; G.over=true; G.running=false;
   document.getElementById("finalCoins").textContent=fmt(G.coins);
   document.getElementById("newBest").style.display=nb?"block":"none";
   const surv=G.mode==="survive" && G.player.val<=1;
-  document.getElementById("overTitle").textContent=surv?(LANG==="en"?"WIPED OUT":"被毒圈吞没"):tr("被吞噬了！");
+  document.getElementById("overTitle").textContent = cause==="room"?tr("被困在隐藏房间！") : surv?(LANG==="en"?"WIPED OUT":"被毒圈吞没") : tr("被吞噬了！");
   document.getElementById("overOv").classList.remove("hidden");
 }
 
@@ -324,18 +379,36 @@ function colorFor(b){ const p=G.player;
   if(b.boss) return "#ff5b6e"; if(b.val<p.val) return "#2f7d55"; if(b.val>p.val) return "#7a2f3c"; return "#4a4f70"; }
 function render(){ if(!G) return; const p=G.player;
   const zoom=clamp(0.62/(p.r/46), 0.5, 1);
+  const R=(G.room&&G.room.active)?G.room:null;
   let camx=p.x - VW/2/zoom, camy=p.y - VH/2/zoom;
-  camx=clamp(camx,0,WORLD_W-VW/zoom); camy=clamp(camy,0,WORLD_H-VH/zoom);
-  if(WORLD_W<VW/zoom) camx=(WORLD_W-VW/zoom)/2; if(WORLD_H<VH/zoom) camy=(WORLD_H-VH/zoom)/2;
+  const camMaxX=(R?R.x1:WORLD_W)-VW/zoom;
+  camx=clamp(camx,0,Math.max(0,camMaxX)); camy=clamp(camy,0,Math.max(0,WORLD_H-VH/zoom));
+  if(WORLD_H<VH/zoom) camy=(WORLD_H-VH/zoom)/2;
+  G.view={x0:camx-60,y0:camy-60,x1:camx+VW/zoom+60,y1:camy+VH/zoom+60};   // 供离屏消失判断
   ctx.setTransform(DPR*zoom,0,0,DPR*zoom,-camx*DPR*zoom,-camy*DPR*zoom);
   ctx.clearRect(camx-20,camy-20,VW/zoom+40,VH/zoom+40);
+  ctx.textAlign="center"; ctx.textBaseline="middle";
   // grid
   ctx.strokeStyle="rgba(60,74,130,.18)"; ctx.lineWidth=1; const gs=90;
   for(let x=Math.floor(camx/gs)*gs;x<camx+VW/zoom+gs;x+=gs){ ctx.beginPath();ctx.moveTo(x,camy-20);ctx.lineTo(x,camy+VH/zoom+20);ctx.stroke(); }
   for(let y=Math.floor(camy/gs)*gs;y<camy+VH/zoom+gs;y+=gs){ ctx.beginPath();ctx.moveTo(camx-20,y);ctx.lineTo(camx+VW/zoom+20,y);ctx.stroke(); }
-  // border（醒目发光边框 + 内侧红色警戒虚线）
-  ctx.save(); ctx.shadowColor="rgba(120,180,255,.9)"; ctx.shadowBlur=20; ctx.strokeStyle="rgba(150,195,255,.95)"; ctx.lineWidth=10; ctx.strokeRect(0,0,WORLD_W,WORLD_H); ctx.restore();
-  ctx.setLineDash([26,18]); ctx.strokeStyle="rgba(255,90,120,.55)"; ctx.lineWidth=3; ctx.strokeRect(6,6,WORLD_W-12,WORLD_H-12); ctx.setLineDash([]);
+  // border（发光边框；房间开启时右侧留开口）
+  ctx.save(); ctx.shadowColor="rgba(120,180,255,.9)"; ctx.shadowBlur=20; ctx.strokeStyle="rgba(150,195,255,.95)"; ctx.lineWidth=10; ctx.beginPath();
+  ctx.moveTo(0,0); ctx.lineTo(WORLD_W,0); ctx.lineTo(WORLD_W, R?R.y0:WORLD_H);
+  if(R){ ctx.moveTo(WORLD_W,R.y1); ctx.lineTo(WORLD_W,WORLD_H); }
+  ctx.lineTo(0,WORLD_H); ctx.lineTo(0,0); ctx.stroke(); ctx.restore();
+  ctx.setLineDash([26,18]); ctx.strokeStyle="rgba(255,90,120,.5)"; ctx.lineWidth=3; ctx.strokeRect(6,6,WORLD_W-12,WORLD_H-12); ctx.setLineDash([]);
+  // 隐藏房间（彩色）
+  if(R){ const g2=ctx.createLinearGradient?ctx.createLinearGradient(R.x0,R.y0,R.x1,R.y1):null;
+    if(g2&&g2.addColorStop){ g2.addColorStop(0,"rgba(255,92,138,.16)"); g2.addColorStop(0.5,"rgba(79,227,209,.15)"); g2.addColorStop(1,"rgba(196,107,255,.18)"); ctx.fillStyle=g2; } else ctx.fillStyle="rgba(120,80,180,.16)";
+    ctx.fillRect(R.x0,R.y0,R.x1-R.x0,R.y1-R.y0);
+    ctx.save(); ctx.shadowColor="#ffcf3a"; ctx.shadowBlur=16; ctx.setLineDash([22,14]); ctx.lineWidth=6; ctx.strokeStyle="#ffcf3a"; ctx.strokeRect(R.x0,R.y0,R.x1-R.x0,R.y1-R.y0); ctx.setLineDash([]); ctx.restore();
+    ctx.strokeStyle="#7fffd6"; ctx.lineWidth=5; ctx.beginPath(); ctx.moveTo(R.x0,R.y0+8); ctx.lineTo(R.x0,R.y1-8); ctx.stroke();
+  }
+  // 食物
+  for(const f of G.foods){ if(f.x<camx-40||f.x>camx+VW/zoom+40||f.y<camy-40||f.y>camy+VH/zoom+40) continue;
+    ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,7); ctx.fillStyle=f.col; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle="#fff"; ctx.stroke();
+    ctx.fillStyle="#0b0d16"; ctx.font="900 10px ui-monospace,monospace"; ctx.fillText(f.label,f.x,f.y); }
   // zone
   if(G.zone){ ctx.save(); ctx.beginPath(); ctx.rect(camx-20,camy-20,VW/zoom+40,VH/zoom+40); ctx.arc(G.zone.x,G.zone.y,G.zone.r,0,7,true);
     ctx.fillStyle="rgba(255,60,90,.14)"; ctx.fill("evenodd"); ctx.restore();
@@ -364,6 +437,20 @@ function render(){ if(!G) return; const p=G.player;
   // out-of-zone red vignette
   if(G.zone && Math.hypot(p.x-G.zone.x,p.y-G.zone.y)>G.zone.r){ ctx.fillStyle="rgba(255,40,70,.16)"; ctx.fillRect(0,0,VW,VH); }
   if(G.hurtFlash>0){ ctx.fillStyle="rgba(255,40,70,"+Math.min(0.4,G.hurtFlash*0.7)+")"; ctx.fillRect(0,0,VW,VH); }
+  // 隐藏房间：箭头引导 + 倒计时
+  if(R){ const inside=isInRoom(p), left=Math.ceil(R.closeAt-G.time);
+    if(!inside){ const ang=Math.atan2(R.cy-p.y,R.cx-p.x), rad=Math.min(VW,VH)*0.3;
+      ctx.save(); ctx.translate(VW/2+Math.cos(ang)*rad, VH/2+Math.sin(ang)*rad); ctx.rotate(ang);
+      ctx.fillStyle="#ffcf3a"; ctx.beginPath(); ctx.moveTo(20,0); ctx.lineTo(-12,-12); ctx.lineTo(-12,12); ctx.closePath(); ctx.fill(); ctx.restore(); }
+    ctx.fillStyle=(inside&&left<=ROOM_WARN)?"#ff5b6e":"#ffcf3a"; ctx.font="900 14px ui-monospace,monospace"; ctx.textAlign="center";
+    ctx.fillText("🚪 "+tr("隐藏房间")+" "+left+"s"+((inside&&left<=ROOM_WARN)?" · "+tr("快离开！"):""), VW/2, 40); }
+  // 小地图
+  { const mw=112, mh=Math.max(46,Math.round(mw*WORLD_H/WORLD_W)), mx=10, my=VH-mh-14, sx=mw/WORLD_W, sy=mh/WORLD_H;
+    ctx.fillStyle="rgba(10,14,30,.72)"; ctx.fillRect(mx,my,mw,mh); ctx.strokeStyle="rgba(150,195,255,.7)"; ctx.lineWidth=1.5; ctx.strokeRect(mx,my,mw,mh);
+    ctx.fillStyle="rgba(255,91,110,.85)"; for(const b of G.bots){ if(b.val>p.val && b.x<=WORLD_W){ ctx.fillRect(mx+b.x*sx-1,my+b.y*sy-1,2,2); } }
+    if(R){ ctx.fillStyle="rgba(255,207,58,.95)"; ctx.fillRect(mx+mw-3,my+R.cy*sy-6,5,12); }
+    ctx.fillStyle="#7fd0ff"; ctx.beginPath(); ctx.arc(mx+Math.min(p.x,WORLD_W)*sx,my+p.y*sy,3,0,7); ctx.fill();
+    ctx.fillStyle="rgba(180,200,255,.6)"; ctx.font="700 8px ui-monospace,monospace"; ctx.textAlign="left"; ctx.fillText(tr("小地图"),mx+3,my+9); }
 }
 
 /* ==================== HUD ==================== */
@@ -446,5 +533,6 @@ init();
 
 // 测试钩子
 if(typeof window!=="undefined") window.__ne={ get G(){return G;}, startGame, update, spawnBot, eatBot, fmt, levelOf, radiusOf, freshG, MODES, MAP_SIZES, applyMapSize,
-  get WORLD_W(){return WORLD_W;}, get WORLD_H(){return WORLD_H;}, get EAT_PCT(){return EAT_PCT;}, setG(g){ G=g; }, useSkill };
+  get WORLD_W(){return WORLD_W;}, get WORLD_H(){return WORLD_H;}, get EAT_PCT(){return EAT_PCT;}, setG(g){ G=g; }, useSkill,
+  openRoom, roomTick, isInRoom, addFood, FOOD_TYPES, BOT_SPEED_MUL, ROOM_INTERVAL, ROOM_DURATION, OFFSCREEN_DESPAWN };
 </script>
