@@ -308,6 +308,15 @@ function infectBot(b){ b.zombie=true; b.fighter=false; const z=ZCLASSES[Math.flo
 function applyZClass(g, zid){ const z=ZCLASSES.find(x=>x.id===zid)||ZCLASSES[0]; g.zcls=z.id; g.zspd=z.spd; g.zInfR=z.infR||0; g.zMax=100*ZOMBIE_HP_MUL*z.hp; g.hp=g.zMax; }
 function turnPlayerZombie(zid){ G.zombie=true; G.infected=false; G.player.trailT=0; G.fighter=false; applyZClass(G, zid||ZCLASSES[Math.floor(Math.random()*ZCLASSES.length)].id);
   toast("🧟 "+tr("你变成了丧尸！去感染所有人类")); }
+function assignZombieTargets(){   // 每只丧尸锁定最近的人类；若已被别的丧尸锁定则退而求其次（第2近…）
+  const humans=[], zombies=[]; for(const b of G.bots){ if(b.zombie) zombies.push(b); else humans.push(b); }
+  const includeP=!G.zombie;   // 玩家是人类时也可被锁定
+  const claimed=new Set();
+  for(const z of zombies){ let best=null,bestD=Infinity,fb=null,fbD=Infinity;
+    for(const h of humans){ const d=Math.hypot(h.x-z.x,h.y-z.y); if(d<fbD){fbD=d;fb=h;} if(!claimed.has(h)&&d<bestD){bestD=d;best=h;} }
+    if(includeP){ const p=G.player,d=Math.hypot(p.x-z.x,p.y-z.y); if(d<fbD){fbD=d;fb="P";} if(!claimed.has("P")&&d<bestD){bestD=d;best="P";} }
+    const t=(best!=null)?best:fb; z.tgt=t; if(t!=null) claimed.add(t); }
+}
 function seedVirusPeople(noPZ){ G.bots=[];   // 开局 50 人散布全图，人类永久存在
   for(let i=0;i<50;i++){ const x=60+Math.random()*(WORLD_W-120), y=60+Math.random()*(WORLD_H-120), val=2+Math.floor(Math.random()*7);
     G.bots.push({val,x,y,vx:0,vy:0,kind:"normal",boss:false,r:radiusOf(val),t:Math.random()*3,dir:Math.random()*Math.PI*2,zombie:false,fighter:Math.random()<0.12}); }
@@ -425,11 +434,11 @@ function updateBot(b,dt){ const p=G.player; b.t-=dt; if(b.t<=0){ b.t=1+Math.rand
   let ax=Math.cos(b.dir), ay=Math.sin(b.dir);
   const dx=p.x-b.x, dy=p.y-b.y, d=Math.hypot(dx,dy)||1;
   if(G.mode==="virus"){
-    if(b.zombie){ let cx=0,cy=0,n=0;                                                 // 丧尸奔向人多的地方（不一直跟玩家）
-      for(const h of G.bots){ if(!h.zombie){ const ed=Math.hypot(h.x-b.x,h.y-b.y); if(ed<720){ cx+=h.x; cy+=h.y; n++; } } }
-      const pd=Math.hypot(p.x-b.x,p.y-b.y); if(pd<720 && !G.zombie){ cx+=p.x; cy+=p.y; n++; }   // 玩家是人类时才算目标
-      if(n){ const tx=cx/n-b.x, ty=cy/n-b.y, td=Math.hypot(tx,ty)||1; ax=tx/td*1.7; ay=ty/td*1.7; }
-      else { ax=dx/d*1.0; ay=dy/d*1.0; } }
+    if(b.zombie){ let tx=null,ty=null;                                               // 丧尸锁定最近的人类（被抢则换第2近）
+      if(b.tgt==="P" && !G.zombie){ tx=p.x; ty=p.y; }
+      else if(b.tgt && b.tgt!=="P" && !b.tgt.zombie){ tx=b.tgt.x; ty=b.tgt.y; }
+      if(tx!=null){ const ex=tx-b.x, ey=ty-b.y, ed=Math.hypot(ex,ey)||1; ax=ex/ed*1.7; ay=ey/ed*1.7; }
+      else { ax=dx/d*0.8; ay=dy/d*0.8; } }
     else { let fx=0,fy=0,n=0; for(const z of G.bots){ if(z.zombie){ const ex=b.x-z.x,ey=b.y-z.y,ed=Math.hypot(ex,ey); if(ed<320&&ed>0){ fx+=ex/ed; fy+=ey/ed; n++; } } }
       if(G.zombie){ const ex=b.x-p.x,ey=b.y-p.y,ed=Math.hypot(ex,ey); if(ed<340&&ed>0){ fx+=ex/ed; fy+=ey/ed; n++; } }   // 也躲玩家丧尸
       if(n){ ax=fx; ay=fy; } }
@@ -508,6 +517,7 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
     const zd=Math.hypot(p.x-G.zone.x,p.y-G.zone.y);
     if(zd>G.zone.r){ p._outAcc=(p._outAcc||0)+dt; if(p._outAcc>=0.5){ p._outAcc=0; p.val=Math.max(1,Math.floor(p.val*0.97)-1); p.r=radiusOf(p.val); popup(p.x,p.y-p.r-8,"☠-","#ff5b6e"); if(p.val<=1 && G.time>4){ return gameOver(); } } } else p._outAcc=0; }
   if(G.hurtFlash>0) G.hurtFlash-=dt;
+  if(virus && (G._zNext==null || G.time>=G._zNext)){ assignZombieTargets(); G._zNext=G.time+0.3; }   // 每0.3秒重新分配目标（锁定感）
   // bots
   for(const b of G.bots) updateBot(b,dt);
   // 所有数字都能吃食物（食物不动、不吃数字）
@@ -791,5 +801,5 @@ if(typeof window!=="undefined") window.__ne={ get G(){return G;}, startGame, upd
   openRoom, roomTick, isInRoom, addFood, FOOD_TYPES, BOT_SPEED_MUL, ROOM_INTERVAL, ROOM_DURATION, OFFSCREEN_DESPAWN,
   hitBlock, explode, SPAWN_RATE, SPRINT_MUL, SPEED_BOOST, BOOST_DUR, BOMB_MINUS, BOMB_R,
   virusStep, applyClass, CLASSES, VIRUS_DRAIN, QUARANTINE_AT, QUARANTINE_DUR, ZOMBIE_SPEED, TRAIL_INFECT, seedVirusPeople,
-  placeObstacle, collideObstacles, ZCLASSES, ZOMBIE_HP_MUL, FIGHTER_DPS, infectBot, applyZClass, turnPlayerZombie, BASU_RADIUS, FIXED_ZOOM, ensureBots };
+  placeObstacle, collideObstacles, ZCLASSES, ZOMBIE_HP_MUL, FIGHTER_DPS, infectBot, applyZClass, turnPlayerZombie, BASU_RADIUS, FIXED_ZOOM, ensureBots, assignZombieTargets };
 </script>
