@@ -1151,9 +1151,11 @@ function buildModes(){ const box=document.getElementById("modeList"); if(!box) r
 function helpHTML(){ const en=LANG==="en";
   const H=t=>`<div style="font-weight:900;color:var(--gold);margin:11px 0 3px">${t}</div>`;
   const L=rows=>rows.map(r=>`<div style="margin:2px 0;color:#cdd6ee">• ${r}</div>`).join("");
+  const K=k=>`<span style="display:inline-block;background:#1b2340;border:1px solid #38427a;border-radius:5px;padding:1px 6px;font-weight:800;font-family:ui-monospace,monospace;font-size:12px;color:#eaf1ff">${k}</span>`;
   if(en) return (
     H("🎯 Goal")+L(["Steer your circle. Each mode has its own win condition — grow huge, survive, clear the zombies, or wipe the enemy team."])+
     H("🎮 Controls")+L(["<b>Move</b>: drag / hold toward a point (or WASD·arrows).","<b>Sprint</b>: Space, or long-press on touch.","<b>Attack (fire)</b>: <b>click / tap the screen</b> (hold to keep firing), or the 🔫 button.","<b>Switch weapon</b>: number keys <b>1–9</b>, or tap the weapon bar.","<b>Skills</b> (non-combat modes): 1 ⚡Dash · 2 🧲Magnet · 3 🛡️Shield."])+
+    H("⌨️ Key Bindings")+L([K("W A S D")+" / "+K("↑ ↓ ← →")+" — Move","<b>Mouse move / drag</b> — Aim & move toward the cursor","<b>Left-click / tap</b> — Fire (hold to keep firing)","<b>Long-press</b> (touch) — Sprint",""+K("Space")+" — Sprint (hold)",""+K("1")+" "+K("2")+" "+K("3")+" — Skills ⚡🧲🛡️ (non-combat modes)",""+K("1")+"–"+K("6")+" — Switch weapon (fighter / gunfight)",""+K("Q")+" — Fire, or place square wall (Architect)",""+K("E")+" — Place long wall (Architect)"])+
     H("🍽️ Classic / ⚡ Energy")+L(["Eat any number smaller than you to grow (Energy absorbs more). Touching a bigger one drains you −30% every 0.7s. Fill the screen (霸屏) to win. Hidden rooms 🚪 appear with food."])+
     H("☠️ Survival")+L(["A poison ring keeps shrinking. Stay inside or your number drains. Last as long as you can."])+
     H("🦠 Virus")+L(["Zombies infect on contact — you lose HP gradually (−30%/0.7s) and turn if it empties. Pick a class (some are armed 'fighters').","💊 Cures turn you back to human at full HP.","🛡️ Quarantine repels zombies & heals you (20s windows).","🏠 <b>Shelter</b>: anyone can enter; zombies inside move 80% slower — a great place to hide/hold.","🚗 Vehicles: board to get speed, crush zombies, and immunity.","🚨 When a human is attacked, ALL police/soldiers rush there.","Win by killing every zombie. You can also play AS a zombie and infect the whole map."])+
@@ -1164,6 +1166,7 @@ function helpHTML(){ const en=LANG==="en";
   return (
     H("🎯 目标")+L(["操控你的圆圈。每个模式有各自的胜利条件——长大霸屏、活到最后、清光丧尸、或消灭对方队伍。"])+
     H("🎮 操作")+L(["<b>移动</b>：拖动/按住朝一个方向（或 WASD·方向键）。","<b>加速</b>：空格，或手机长按。","<b>攻击（开火）</b>：<b>点击/点按屏幕</b>（按住持续开火），或点 🔫 按钮。","<b>换武器</b>：数字键 <b>1–9</b>，或点右侧武器栏。","<b>技能</b>（非战斗模式）：1 ⚡冲刺 · 2 🧲磁铁 · 3 🛡️护盾。"])+
+    H("⌨️ 键位")+L([K("W A S D")+" / "+K("↑ ↓ ← →")+" — 移动",""+K("鼠标移动/拖动")+" — 朝光标瞄准并移动",""+K("鼠标左键/点屏幕")+" — 开火（按住=持续开火）",""+K("长按")+"（手机）— 加速",""+K("空格")+" — 加速（按住）",""+K("1")+" "+K("2")+" "+K("3")+" — 技能 ⚡🧲🛡️（非战斗模式）",""+K("1")+"–"+K("6")+" — 切换武器（攻击兵种/枪战）",""+K("Q")+" — 开火，或放正方形墙（建筑师）",""+K("E")+" — 放长墙（建筑师）"])+
     H("🍽️ 经典 / ⚡ 能量")+L(["吃掉比你小的数字来变大（能量吸收更多）。碰到更大的不会秒死，而是每0.7秒−30%。长到填满屏幕（霸屏）即胜。🚪隐藏房间会出现，里面全是食物。"])+
     H("☠️ 生存")+L(["毒圈不断缩小，待在圈内，圈外会掉数字。活得越久越好。"])+
     H("🦠 病毒")+L(["丧尸接触会感染——你渐进掉血（−30%/0.7秒），血空就变丧尸。开局选职业（部分是持枪的攻击兵种）。","💊 解药：立刻变回人类并满血。","🛡️ 隔离带：排斥丧尸并回血（每次20秒）。","🏠 <b>庇护所</b>：所有人都能进；丧尸进入后速度减80%——躲避/据守的好地方。","🚗 车辆：上车后加速、碾压丧尸、免疫感染。","🚨 有人被袭击时，所有警察/士兵都会赶去。","消灭所有丧尸即胜。你也可以选择当丧尸去感染全城。"])+
