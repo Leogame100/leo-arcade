@@ -105,6 +105,8 @@
     <p data-i18n="控制你的数字，吞噬比你小的数字不断变大——别碰比你大的！">控制你的数字，吞噬比你小的数字不断变大——别碰比你大的！</p>
     <div style="font-size:12px;color:var(--muted);margin:4px 0 5px"><span data-i18n="选择地图大小">选择地图大小</span></div>
     <div id="mapSel" style="display:flex;gap:8px;justify-content:center;margin-bottom:8px"></div>
+    <div style="font-size:12px;color:var(--muted);margin:2px 0 5px"><span data-i18n="病毒模式人数">病毒模式人数</span></div>
+    <div id="popSel" style="display:flex;gap:8px;justify-content:center;margin-bottom:8px"></div>
     <div class="modes" id="modeList"></div>
     <div class="stat"><span data-i18n="历史最大">历史最大</span> <b id="startBest">1</b> · <span data-i18n="金币">金币</span> <b id="startCoins">0</b></div>
     <div class="board" id="boardBox"></div>
@@ -164,7 +166,7 @@ const TR={
   "吃解药后 8 秒免疫":"8s immunity after a cure","解药更常出现·小地图显示丧尸":"More cures · zombies on minimap","血量上限 150":"Max HP 150",
   "数字>6 可击杀丧尸":"Kill zombies when your number >6","可击杀丧尸(>6)·移速略快":"Kills zombies (>6) · a bit faster","可击杀丧尸(>6)·小地图显示丧尸":"Kills zombies (>6) · zombies on minimap",
   "免疫尾迹感染":"Immune to trail infection","移动速度 +35%":"Move speed +35%","血上限120·感染掉血 -30%":"120 max HP · infection −30%",
-  "建筑师":"Architect","放置方形/长方形障碍墙，挡住丧尸":"Places square/rectangle walls to block zombies","砖块不足，等它回充":"Out of bricks — wait for recharge","数字>6才能开枪":"Need number > 6 to shoot",
+  "建筑师":"Architect","放置方形/长方形障碍墙，挡住丧尸":"Places square/rectangle walls to block zombies","砖块不足，等它回充":"Out of bricks — wait for recharge","病毒模式人数":"Virus population","上车！加速·碾压丧尸·防感染":"Boarded! Speed · crush zombies · infection-proof","车没油了，下车":"Out of fuel — dismounted","有人被袭击！警察出动":"Someone attacked! Police responding",
   "你变成了丧尸！去感染所有人类":"You turned into a zombie — go infect everyone!","你被消灭了":"YOU WERE DESTROYED","全城沦陷！你赢了":"CITY OVERRUN — YOU WIN!","丧尸":"Zombie",
   "人类职业（求生）":"Human classes (survive)","丧尸职业（感染全城）":"Zombie classes (infect all)",
   "普通丧尸":"Walker","疾行丧尸":"Runner","巨型丧尸":"Brute","剧毒丧尸":"Toxic","潜伏丧尸":"Stalker","尸王":"Zombie King",
@@ -172,8 +174,9 @@ const TR={
   "🏆 霸屏！你统治了全屏":"🏆 SCREEN DOMINATED — YOU WIN!",
 };
 function tr(s){ return LANG==="en"?(TR[s]||s):s; }
+function nm(o){ return o?(LANG==="en"?(o.en||o.zh):o.zh):""; }   // 职业/对象名（按语言）
 function applyLang(){ document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=tr(el.getAttribute("data-i18n")));
-  document.getElementById("langBtn").textContent=LANG==="en"?"中":"EN"; buildMapSel(); buildModes(); buildClasses(); renderBoard(); if(G) hud(); }
+  document.getElementById("langBtn").textContent=LANG==="en"?"中":"EN"; buildMapSel(); buildPopSel(); buildModes(); buildClasses(); renderBoard(); if(G) hud(); }
 function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("neLang",LANG);}catch(e){} applyLang(); }
 
 /* ==================== 数字格式化（近乎无限）==================== */
@@ -194,6 +197,15 @@ const MAP_SIZES=[
 ];
 let mapSizeId=(function(){try{return localStorage.getItem("neMap")||"m";}catch(e){return "m";}})();
 function applyMapSize(id){ const m=MAP_SIZES.find(x=>x.id===id)||MAP_SIZES[1]; WORLD_W=m.w; WORLD_H=m.h; mapSizeId=m.id; try{localStorage.setItem("neMap",m.id);}catch(e){} }
+const POP_SIZES=[  // 病毒模式人数（玩家可选）
+  {id:"p50", n:50,  zh:"少",   en:"50"},
+  {id:"p120",n:120, zh:"中",   en:"120"},
+  {id:"p250",n:250, zh:"多",   en:"250"},
+  {id:"p400",n:400, zh:"超多", en:"400"},
+];
+let popId=(function(){try{return localStorage.getItem("nePop")||"p250";}catch(e){return "p250";}})();
+function popCount(){ return (POP_SIZES.find(x=>x.id===popId)||POP_SIZES[2]).n; }
+const RIDE_DUR=14, RIDE_MUL=1.85;   // 车辆：乘坐时长与加速倍率
 const TIERS=[10,30,60,100,300,1000,3000,1e4,3e4,1e5,3e5,1e6,1e8,1e12];
 const LV_NAMES=["新手","新手","学徒","高手","大师","宗师","传奇","神话","超越"];
 function levelOf(v){ let lv=1; for(const t of TIERS){ if(v>t) lv++; else break; } return lv; }
@@ -257,6 +269,7 @@ function freshG(mode){ return {
   hp:100, maxHp:100, infected:false, cureImmuneUntil:0, humanClass:"civilian", drainMul:1, cureImmuneDur:4, cureRateMul:1, showZombiesMap:false,
   trails:[], cures:[], quarantine:null, quarantineAt:(mode==="virus"?QUARANTINE_AT:Infinity), survTime:0,
   obstacles:[], architect:false, bricks:0, brickMax:0, bullets:[], shootCool:0,
+  vehicles:[], riding:false, rideUntil:0, alarm:null,   // 🚗车辆 / 🚨警报（丧尸袭击点）
   zombie:false, zcls:null, zspd:1, zInfR:0, zMax:0,   // 玩家变丧尸后的状态
   bots:[], coins:0, best:loadBest(), combo:0, comboMax:0, comboT:0, eats:0, bossKills:0, level:1,
   aimX:WORLD_W/2, aimY:WORLD_H/2-1, moving:false, keyx:0, keyy:0,
@@ -321,8 +334,8 @@ function assignZombieTargets(){   // 每只丧尸锁定最近的人类；若已�
     if(includeP){ const p=G.player,d=hyp(p.x-z.x,p.y-z.y); if(d<fbD){fbD=d;fb="P";} if(!claimed.has("P")&&d<bestD){bestD=d;best="P";} }
     const t=(best!=null)?best:fb; z.tgt=t; if(t!=null) claimed.add(t); }
 }
-function seedVirusPeople(noPZ){ G.bots=[];   // 开局 250 人散布全图，人类永久存在
-  for(let i=0;i<250;i++){ const x=60+Math.random()*(WORLD_W-120), y=60+Math.random()*(WORLD_H-120), val=2+Math.floor(Math.random()*7);
+function seedVirusPeople(noPZ){ G.bots=[]; const POP=popCount();   // 开局人数由玩家选择，散布全图，人类永久存在
+  for(let i=0;i<POP;i++){ const x=60+Math.random()*(WORLD_W-120), y=60+Math.random()*(WORLD_H-120), val=2+Math.floor(Math.random()*7);
     G.bots.push({val,x,y,vx:0,vy:0,kind:"normal",boss:false,r:radiusOf(val),t:Math.random()*3,dir:Math.random()*Math.PI*2,zombie:false,fighter:Math.random()<0.12,hp:100,inf:false}); }
   if(!noPZ && G.bots.length) infectBot(G.bots[Math.floor(Math.random()*G.bots.length)]);   // 零号感染者
 }
@@ -356,12 +369,24 @@ function placeObstacle(shape){ if(!G||G.over||G.paused||!G.architect) return; if
   const o={cx:clamp(p.x+dx*off,hw,WORLD_W-hw), cy:clamp(p.y+dy*off,hh,WORLD_H-hh), hw, hh};
   G.obstacles.push(o); if(G.obstacles.length>18) G.obstacles.shift();
   G.bricks--; popup(o.cx,o.cy,"🧱","#c8d0e8"); }
-function seedObstacles(n){ n=n||9; const p=G.player; let tries=0;   // 开局随机障碍物
-  while(G.obstacles.length<n && tries<n*8){ tries++;
+function seedObstacles(n){ n=n||9; const p=G.player; let tries=0;   // 开局随机障碍物（分散摆放）
+  const gap=Math.max(150, Math.min(WORLD_W,WORLD_H)/7);   // 障碍物之间的最小间距（分散一点）
+  while(G.obstacles.length<n && tries<n*30){ tries++;
     const hw=38+Math.random()*80, hh=38+Math.random()*80;
     const cx=clamp(60+Math.random()*(WORLD_W-120), hw+16, WORLD_W-hw-16), cy=clamp(60+Math.random()*(WORLD_H-120), hh+16, WORLD_H-hh-16);
-    if(hyp(cx-p.x,cy-p.y) < 280) continue;   // 别压在出生点
+    if(hyp(cx-p.x,cy-p.y) < 300) continue;   // 别压在出生点
+    let clash=false; for(const o of G.obstacles){ if(hyp(o.cx-cx,o.cy-cy) < gap+Math.max(o.hw,o.hh)+Math.max(hw,hh)){ clash=true; break; } }
+    if(clash) continue;   // 与已有障碍保持距离
     G.obstacles.push({cx,cy,hw,hh}); } }
+function seedVehicles(n){ n=n||6; const p=G.player; let tries=0;   // 🚗 开局散布可乘坐的车辆
+  const gap=Math.max(260, Math.min(WORLD_W,WORLD_H)/3);
+  while(G.vehicles.length<n && tries<n*16){ tries++;
+    const x=clamp(80+Math.random()*(WORLD_W-160),40,WORLD_W-40), y=clamp(80+Math.random()*(WORLD_H-160),40,WORLD_H-40);
+    if(hyp(x-p.x,y-p.y) < 240) continue;
+    let clash=false; for(const v of G.vehicles){ if(hyp(v.x-x,v.y-y)<gap){ clash=true; break; } }
+    if(!clash) for(const o of G.obstacles){ if(Math.abs(o.cx-x)<o.hw+40 && Math.abs(o.cy-y)<o.hh+40){ clash=true; break; } }
+    if(clash) continue;
+    G.vehicles.push({x,y,r:30}); } }
 function separateVirus(){ const bots=G.bots, p=G.player, n=bots.length; if(!n) return;   // 人类/丧尸互不重叠
   const cell=150, grid=new Map();
   for(let i=0;i<n;i++){ const b=bots[i]; const k=(Math.floor(b.x/cell))*4096+Math.floor(b.y/cell); let a=grid.get(k); if(!a){a=[];grid.set(k,a);} a.push(i); }
@@ -373,13 +398,17 @@ function separateVirus(){ const bots=G.bots, p=G.player, n=bots.length; if(!n) r
   for(let i=0;i<n;i++){ const b=bots[i]; let dx=b.x-p.x, dy=b.y-p.y, d=hyp(dx,dy); const min=p.r+b.r;   // 玩家不被推动，只推开数字
     if(d<min){ if(d<0.01){dx=1;dy=0.3;d=hyp(dx,dy);} const ux=dx/d, uy=dy/d, push=(min-d); b.x+=ux*push; b.y+=uy*push; }
     b.x=clamp(b.x,b.r,WORLD_W-b.r); b.y=clamp(b.y,b.r,WORLD_H-b.r); } }
+const NBR_CELL=380;   // 邻居网格：≥最大交互半径，让人数很多时也不卡
+function buildBotGrid(){ const grid=new Map(), bots=G.bots;   // 每帧一次，供人类AI就近扫描（O(n)）
+  for(let i=0;i<bots.length;i++){ const b=bots[i]; const k=Math.floor(b.x/NBR_CELL)*4096+Math.floor(b.y/NBR_CELL); let a=grid.get(k); if(!a){a=[];grid.set(k,a);} a.push(b); }
+  return grid; }
 function freeXY(r){ let x=0,y=0;   // 找一个不与其他物品重叠的位置
   for(let k=0;k<8;k++){ x=r+20+Math.random()*(WORLD_W-2*r-40); y=r+20+Math.random()*(WORLD_H-2*r-40); let good=true;
     for(const f of G.foods){ if(hyp(f.x-x,f.y-y)<f.r+r+6){ good=false; break; } }
     if(good) for(const c of G.cures){ if(hyp(c.x-x,c.y-y)<c.r+r+6){ good=false; break; } }
     if(good) break; } return {x,y}; }
 function fireGun(){ if(!G||G.over||G.paused||G.mode!=="virus"||!G.fighter) return; const p=G.player;
-  if(p.val<=6){ toast(tr("数字>6才能开枪")); return; } if(G.time<(G.shootCool||0)) return; G.shootCool=G.time+0.26;
+  if(G.time<(G.shootCool||0)) return; G.shootCool=G.time+0.26;
   let best=null,bd=1e9; for(const b of G.bots){ if(!b.zombie) continue; const dd=hyp(b.x-p.x,b.y-p.y); if(dd<bd){bd=dd;best=b;} }
   let ax,ay; if(best){ ax=best.x-p.x; ay=best.y-p.y; } else { ax=G.aimX-p.x; ay=G.aimY-p.y; if(hyp(ax,ay)<1){ax=p.vx;ay=p.vy;} if(hyp(ax,ay)<1){ax=1;ay=0;} }
   const d=hyp(ax,ay)||1; ax/=d; ay/=d;
@@ -391,14 +420,24 @@ function collideObstacles(e){ if(!G.obstacles||!G.obstacles.length) return; for(
       else { const L=e.x-(o.cx-o.hw), Rr=(o.cx+o.hw)-e.x, T=e.y-(o.cy-o.hh), B=(o.cy+o.hh)-e.y, m=Math.min(L,Rr,T,B);
         if(m===L) e.x=o.cx-o.hw-e.r; else if(m===Rr) e.x=o.cx+o.hw+e.r; else if(m===T) e.y=o.cy-o.hh-e.r; else e.y=o.cy+o.hh+e.r; }
     } } }
+function rideStep(dt){ const p=G.player;   // 🚗 车辆：上车→加速+免疫+碾压丧尸；油量耗尽下车
+  if(!G.riding){ for(let i=G.vehicles.length-1;i>=0;i--){ const v=G.vehicles[i]; if(hyp(v.x-p.x,v.y-p.y) < p.r+v.r){
+    G.riding=true; G.rideUntil=G.time+RIDE_DUR; G.vehicles.splice(i,1); popup(p.x,p.y,"🚗","#ffd76a"); toast("🚗 "+tr("上车！加速·碾压丧尸·防感染")); break; } } }
+  if(G.riding){ if(G.time>=G.rideUntil){ G.riding=false; toast("🚗 "+tr("车没油了，下车")); return; }
+    if(!G.zombie){ for(let i=G.bots.length-1;i>=0;i--){ const z=G.bots[i]; if(!z.zombie) continue; if(hyp(z.x-p.x,z.y-p.y) < p.r+z.r+14){   // 碾压
+      z.hp=(z.hp||100)-460*dt; const kx=z.x-p.x, ky=z.y-p.y, kd=hyp(kx,ky)||1; z.vx+=kx/kd*260; z.vy+=ky/kd*260;
+      if(z.hp<=0){ G.bots.splice(i,1); popup(z.x,z.y,"💥","#ffcf3a"); } } } } } }
+function raiseAlarm(x,y){ const fresh=!(G.alarm && G.time<G.alarm.t); G.alarm={x,y,t:G.time+6};   // 🚨丧尸袭击人类 → 所有警察赶来
+  if(fresh) toast("🚨 "+tr("有人被袭击！警察出动")); }
 /* -------- 🦠 病毒模式 -------- */
 function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
   separateVirus();   // 人类/丧尸互不重叠
+  rideStep(dt);      // 🚗 车辆：上车/加速/碾压丧尸
   // 隔离带：只持续 20 秒，关闭后 30 秒再出现
   if(!G.quarantine && G.time>=G.quarantineAt){ const qr=Math.min(WORLD_W,WORLD_H)*0.17;
     G.quarantine={x:clamp(p.x,qr+40,WORLD_W-qr-40),y:clamp(p.y,qr+40,WORLD_H-qr-40),r:qr,closeAt:G.time+QUARANTINE_DUR}; toast("🛡️ "+tr("隔离带出现！20秒内进去回血")); }
   if(G.quarantine && G.time>=G.quarantine.closeAt){ G.quarantine=null; G.quarantineAt=G.time+30; toast("🛡️ "+tr("隔离带关闭了")); }
-  const Q=G.quarantine, inQ=!!(Q && !G.zombie && hyp(p.x-Q.x,p.y-Q.y)<Q.r-p.r*0.4), immune=(G.time<G.cureImmuneUntil)||inQ;
+  const Q=G.quarantine, inQ=!!(Q && !G.zombie && hyp(p.x-Q.x,p.y-Q.y)<Q.r-p.r*0.4), immune=(G.time<G.cureImmuneUntil)||inQ||(G.riding&&!G.zombie);
   // 子弹（玩家士兵用Q/🔫开枪）：击中丧尸造成伤害
   if(G.bullets.length){ const BD=170;
     for(let i=G.bullets.length-1;i>=0;i--){ const bl=G.bullets[i]; bl.x+=bl.vx*dt; bl.y+=bl.vy*dt; bl.life-=dt;
@@ -418,7 +457,7 @@ function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
   } else {          // ===== 玩家是丧尸 =====
     if(p.val>G.best) G.best=p.val;
     for(let i=G.bots.length-1;i>=0;i--){ const h=G.bots[i]; if(h.zombie) continue; const d=hyp(h.x-p.x,h.y-p.y);
-      if(d < p.r+h.r+6 || (G.zInfR && d<G.zInfR+h.r)){ if(h.fighter) G.hp-=FIGHTER_DPS*dt; h.inf=true; } }   // 感染人类（渐进）；士兵会反伤但也会被感染
+      if(d < p.r+h.r+6 || (G.zInfR && d<G.zInfR+h.r)){ if(h.fighter) G.hp-=FIGHTER_DPS*dt; if(!h.inf){ h.inf=true; raiseAlarm(h.x,h.y); } } }   // 感染人类（渐进）；士兵会反伤但也会被感染
     if(G.hp<=0){ G.hp=0; return gameOver("killed"); }   // 被士兵击杀才算死
     if(!G.bots.some(b=>!b.zombie)){ return gameOver("domination"); }   // 全城沦陷 → 胜利
     if(Math.random()<dt*10) G.trails.push({x:p.x,y:p.y,r:Math.max(14,p.r*0.7),t:0});   // 玩家丧尸也留尾迹
@@ -430,7 +469,7 @@ function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
   // 数字之间：丧尸感染人类（可范围）；碰到士兵人类 → 士兵造成伤害（丧尸互不吞噬、丧尸不因感染掉血）
   for(let i=G.bots.length-1;i>=0;i--){ const z=G.bots[i]; if(!z.zombie) continue; const rng=z.infR||0;
     for(const h of G.bots){ if(h.zombie) continue; const d=hyp(h.x-z.x,h.y-z.y);
-      if(d < z.r+h.r+6 || (rng && d<rng+h.r)){ h.inf=true; if(h.fighter){ z.hp=(z.hp||100)-FIGHTER_DPS*dt; if(z.hp<=0){ z.dead=true; break; } } } } }   // 士兵反伤丧尸，但也会被感染
+      if(d < z.r+h.r+6 || (rng && d<rng+h.r)){ if(!h.inf){ h.inf=true; raiseAlarm(h.x,h.y); } if(h.fighter){ z.hp=(z.hp||100)-FIGHTER_DPS*dt; if(z.hp<=0){ z.dead=true; break; } } } } }   // 士兵反伤丧尸，但也会被感染
   if(G.bots.some(x=>x.dead)) G.bots=G.bots.filter(x=>!x.dead);
   // 被咬的人类（含NPC士兵）：像玩家一样每0.7秒-30%血，掉光才变丧尸（不是秒变，给反应时间）
   for(const h of G.bots){ if(h.zombie || !h.inf) continue; if(G.time>=(h.hurtNext||0)){ h.hurtNext=G.time+0.7; h.hp=Math.max(1,Math.floor((h.hp||100)*0.7)); if(h.hp<=1) infectBot(h); } }
@@ -490,13 +529,16 @@ function updateBot(b,dt){ const p=G.player; b.t-=dt; if(b.t<=0){ b.t=1+Math.rand
     }
     else {   // 人类：躲丧尸 + 靠近士兵(安全) + 往人少的方向
       let ax2=0,ay2=0, sf=null,sfd=1e9, cx=0,cy=0,cn=0;
-      for(const o of G.bots){ if(o===b) continue; const ex=b.x-o.x, ey=b.y-o.y, ed=hyp(ex,ey); if(ed<=0) continue;
-        if(o.zombie){ if(ed<340){ ax2+=ex/ed*1.7; ay2+=ey/ed*1.7; } }
-        else { if(o.fighter && ed<520 && ed<sfd){ sfd=ed; sf=o; } if(ed<200){ cx+=o.x; cy+=o.y; cn++; } } }
+      const grid=G._grid, bcx=Math.floor(b.x/NBR_CELL), bcy=Math.floor(b.y/NBR_CELL);   // 只扫描邻近网格
+      if(grid) for(let gx=bcx-1;gx<=bcx+1;gx++) for(let gy=bcy-1;gy<=bcy+1;gy++){ const arr=grid.get(gx*4096+gy); if(!arr) continue;
+        for(const o of arr){ if(o===b) continue; const ex=b.x-o.x, ey=b.y-o.y, ed=hyp(ex,ey); if(ed<=0) continue;
+          if(o.zombie){ if(ed<340){ ax2+=ex/ed*1.7; ay2+=ey/ed*1.7; } }
+          else { if(o.fighter && ed<360 && ed<sfd){ sfd=ed; sf=o; } if(ed<200){ cx+=o.x; cy+=o.y; cn++; } } } }
       if(G.zombie){ const ex=b.x-p.x,ey=b.y-p.y,ed=hyp(ex,ey); if(ed<360&&ed>0){ ax2+=ex/ed*1.7; ay2+=ey/ed*1.7; } }   // 躲玩家丧尸
       if(sf){ const ex=sf.x-b.x,ey=sf.y-b.y,ed=hyp(ex,ey)||1; ax2+=ex/ed*0.9; ay2+=ey/ed*0.9; }   // 往士兵靠
       if(cn){ const mx=cx/cn,my=cy/cn, ex=b.x-mx,ey=b.y-my, ed=hyp(ex,ey)||1; ax2+=ex/ed*0.5; ay2+=ey/ed*0.5; }   // 往人少处
       if(ax2||ay2){ ax=ax2; ay=ay2; }
+      if(b.fighter && G.alarm && G.time<G.alarm.t){ const ex=G.alarm.x-b.x, ey=G.alarm.y-b.y, ed=hyp(ex,ey)||1; if(ed>b.r+40){ ax=ex/ed*2; ay=ey/ed*2; } }   // 🚨警报：所有警察赶往袭击点
     }
   }
   else if(b.toRoom && G.room && G.room.active){ const rx=G.room.cx-b.x, ry=G.room.cy-b.y, rd=hyp(rx,ry)||1; ax=rx/rd*1.7; ay=ry/rd*1.7; }
@@ -550,7 +592,7 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
   let mx=0,my=0;
   if(G.keyx||G.keyy){ mx=G.keyx; my=G.keyy; const m=hyp(mx,my)||1; mx/=m; my/=m; }
   else if(G.moving){ const dx=G.aimX-p.x, dy=G.aimY-p.y, d=hyp(dx,dy); if(d>5){ mx=dx/d; my=dy/d; } }
-  let maxs=205*(1-Math.min(0.42,Math.log10(p.val+1)*0.045))*(G.dashUntil>G.time?2.15:1)*p.speedMul*(G.sprint?SPRINT_MUL:1)*((p.boostUntil||0)>G.time?SPEED_BOOST:1)*(G.zombie?ZOMBIE_SPEED*(G.zspd||1):1);
+  let maxs=205*(1-Math.min(0.42,Math.log10(p.val+1)*0.045))*(G.dashUntil>G.time?2.15:1)*p.speedMul*(G.sprint?SPRINT_MUL:1)*((p.boostUntil||0)>G.time?SPEED_BOOST:1)*(G.zombie?ZOMBIE_SPEED*(G.zspd||1):1)*(G.riding?RIDE_MUL:1);
   p.vx+=(mx*maxs-p.vx)*0.16; p.vy+=(my*maxs-p.vy)*0.16;
   p.x+=p.vx*dt; p.y+=p.vy*dt; clampEntity(p,10); collideObstacles(p);
   if(G.architect && G.brickMax) G.bricks=Math.min(G.brickMax,(G.bricks||0)+dt*0.28);   // 砖块回充
@@ -574,6 +616,7 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
     if(zd>G.zone.r){ p._outAcc=(p._outAcc||0)+dt; if(p._outAcc>=0.5){ p._outAcc=0; p.val=Math.max(1,Math.floor(p.val*0.97)-1); p.r=radiusOf(p.val); popup(p.x,p.y-p.r-8,"☠-","#ff5b6e"); if(p.val<=1 && G.time>4){ return gameOver(); } } } else p._outAcc=0; }
   if(G.hurtFlash>0) G.hurtFlash-=dt;
   if(virus && (G._zNext==null || G.time>=G._zNext)){ assignZombieTargets(); G._zNext=G.time+0.3; }   // 每0.3秒重新分配目标（锁定感）
+  if(virus) G._grid=buildBotGrid();   // 邻居网格：人类AI就近扫描，人数多也不卡
   // bots
   for(const b of G.bots) updateBot(b,dt);
   // 所有数字都能吃食物（食物不动、不吃数字）
@@ -657,10 +700,14 @@ function render(){ if(!G) return; const p=G.player;
   ctx.setTransform(DPR*zoom,0,0,DPR*zoom,-camx*DPR*zoom,-camy*DPR*zoom);
   ctx.clearRect(camx-20,camy-20,VW/zoom+40,VH/zoom+40);
   ctx.textAlign="center"; ctx.textBaseline="middle";
-  // grid
-  ctx.strokeStyle="rgba(60,74,130,.18)"; ctx.lineWidth=1; const gs=90;
-  for(let x=Math.floor(camx/gs)*gs;x<camx+VW/zoom+gs;x+=gs){ ctx.beginPath();ctx.moveTo(x,camy-20);ctx.lineTo(x,camy+VH/zoom+20);ctx.stroke(); }
-  for(let y=Math.floor(camy/gs)*gs;y<camy+VH/zoom+gs;y+=gs){ ctx.beginPath();ctx.moveTo(camx-20,y);ctx.lineTo(camx+VW/zoom+20,y);ctx.stroke(); }
+  // 地面（新风格：暗青绿末日地表 + 点阵网格）
+  const x0=Math.max(0,camx-20), y0=Math.max(0,camy-20), x1=Math.min(WORLD_W,camx+VW/zoom+20), y1=Math.min(WORLD_H,camy+VH/zoom+20);
+  const gg=ctx.createLinearGradient?ctx.createLinearGradient(0,y0,0,y1):null;
+  if(gg&&gg.addColorStop){ gg.addColorStop(0,"#0f1a1c"); gg.addColorStop(1,"#0b1220"); ctx.fillStyle=gg; } else ctx.fillStyle="#0d151c";
+  ctx.fillRect(x0,y0,Math.max(0,x1-x0),Math.max(0,y1-y0));
+  const gs=96; ctx.fillStyle="rgba(94,168,132,.16)";   // 点阵
+  for(let x=Math.floor(camx/gs)*gs;x<camx+VW/zoom+gs;x+=gs){ if(x<0||x>WORLD_W) continue;
+    for(let y=Math.floor(camy/gs)*gs;y<camy+VH/zoom+gs;y+=gs){ if(y<0||y>WORLD_H) continue; ctx.fillRect(x-1.5,y-1.5,3,3); } }
   // border（发光边框；房间开启时右侧留开口）
   ctx.save(); ctx.shadowColor="rgba(120,180,255,.9)"; ctx.shadowBlur=20; ctx.strokeStyle="rgba(150,195,255,.95)"; ctx.lineWidth=10; ctx.beginPath();
   ctx.moveTo(0,0); ctx.lineTo(WORLD_W,0); ctx.lineTo(WORLD_W, R?R.y0:WORLD_H);
@@ -679,6 +726,13 @@ function render(){ if(!G) return; const p=G.player;
     ctx.fillStyle="rgba(118,128,158,.92)"; ctx.fillRect(o.cx-o.hw,o.cy-o.hh,o.hw*2,o.hh*2);
     ctx.strokeStyle="rgba(205,214,240,.95)"; ctx.lineWidth=3; ctx.strokeRect(o.cx-o.hw,o.cy-o.hh,o.hw*2,o.hh*2);
     ctx.strokeStyle="rgba(0,0,0,.18)"; ctx.lineWidth=1; for(let yy=o.cy-o.hh+11;yy<o.cy+o.hh;yy+=12){ ctx.beginPath(); ctx.moveTo(o.cx-o.hw,yy); ctx.lineTo(o.cx+o.hw,yy); ctx.stroke(); } }
+  // 🚗 车辆
+  for(const v of G.vehicles){ if(v.x+v.r<camx||v.x-v.r>camx+VW/zoom||v.y+v.r<camy||v.y-v.r>camy+VH/zoom) continue;
+    ctx.beginPath(); ctx.arc(v.x,v.y,v.r,0,7); ctx.fillStyle="rgba(255,210,90,.14)"; ctx.fill();
+    ctx.font="900 "+Math.round(v.r*1.5)+"px ui-monospace,monospace"; ctx.fillText("🚗",v.x,v.y); }
+  // 🚨 警报点（丧尸袭击处）
+  if(G.alarm && G.time<G.alarm.t){ const a=G.alarm, pr=18+((G.time*3)%1)*22; ctx.strokeStyle="rgba(255,90,120,.8)"; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.arc(a.x,a.y,pr,0,7); ctx.stroke(); ctx.font="900 20px ui-monospace,monospace"; ctx.fillText("🚨",a.x,a.y-pr-12); }
   // 🔫 子弹
   if(G.bullets && G.bullets.length){ ctx.fillStyle="#ffe37a";
     for(const bl of G.bullets){ ctx.beginPath(); ctx.arc(bl.x,bl.y,5,0,7); ctx.fill();
@@ -724,6 +778,8 @@ function render(){ if(!G) return; const p=G.player;
   if(sh){ ctx.beginPath(); ctx.arc(p.x,p.y,p.r+7,0,7); ctx.strokeStyle="rgba(127,208,255,.7)"; ctx.lineWidth=3; ctx.stroke(); }
   if(G.magnetUntil>G.time){ ctx.beginPath(); ctx.arc(p.x,p.y,330,0,7); ctx.strokeStyle="rgba(196,107,255,.25)"; ctx.lineWidth=2; ctx.stroke(); }
   ctx.fillStyle="#fff"; ctx.font="900 "+Math.max(13,Math.min(p.r*0.85,34))+"px ui-monospace,monospace"; ctx.fillText(fmt(p.val),p.x,p.y);
+  if(G.riding){ ctx.font="900 "+Math.round(p.r*1.3)+"px ui-monospace,monospace"; ctx.fillText("🚗",p.x,p.y-p.r-12);   // 🚗 乘坐中
+    const fl=Math.max(0,(G.rideUntil-G.time)/RIDE_DUR); ctx.fillStyle="rgba(255,210,90,.9)"; ctx.fillRect(p.x-p.r,p.y-p.r-6,p.r*2*fl,4); }
   // level flash rings
   for(const f of G.flashes){ if(f.boom){ ctx.beginPath(); ctx.arc(f.x,f.y,20+f.t*BOMB_R,0,7); ctx.fillStyle="rgba(255,91,110,"+Math.max(0,0.28-f.t*0.28)+")"; ctx.fill(); ctx.strokeStyle="rgba(255,120,140,"+(0.8-f.t*0.8)+")"; ctx.lineWidth=6; ctx.stroke(); }
     else { ctx.beginPath(); ctx.arc(p.x,p.y,p.r+f.t*160,0,7); ctx.strokeStyle="rgba(255,207,58,"+(0.6-f.t*0.6)+")"; ctx.lineWidth=4; ctx.stroke(); } }
@@ -829,7 +885,8 @@ function startGame(mode, sizeId, classId, asZombie){ applyMapSize(sizeId||mapSiz
   G=freshG(mode);
   if(mode==="virus"){ if(asZombie){ applyClass(G,"civilian"); seedVirusPeople(true); turnPlayerZombie(classId); } else { applyClass(G, classId||"civilian"); seedVirusPeople(); } }
   else ensureBots();
-  seedObstacles(mode==="virus"?11:8);   // 开局随机障碍物
+  seedObstacles(mode==="virus"?11:8);   // 开局随机障碍物（分散）
+  seedVehicles(mode==="virus"?7:5);      // 🚗 开局车辆
   lastT=0; if(!raf) raf=requestAnimationFrame(loop); hud();
   document.getElementById("pauseBtn").textContent="⏸️"; }
 function mkClass(c, fn){ const el=document.createElement("div"); el.className="mode";
@@ -849,6 +906,11 @@ function buildMapSel(){ const box=document.getElementById("mapSel"); if(!box) re
     el.style.cssText="flex:1;max-width:92px;padding:8px 4px;border-radius:10px;border:1px solid "+(on?"var(--blue)":"var(--line)")+";cursor:pointer;font-weight:800;font-size:14px;text-align:center;background:"+(on?"#4a90ff":"rgba(18,24,52,.8)")+";color:"+(on?"#04122e":"var(--ink)");
     el.innerHTML=(LANG==="en"?m.en:m.zh)+"<br><small style='font-weight:600;opacity:.7;font-size:9px'>"+m.w+"×"+m.h+"</small>";
     el.onclick=()=>{ mapSizeId=m.id; try{localStorage.setItem("neMap",m.id);}catch(e){} buildMapSel(); }; box.appendChild(el); }); }
+function buildPopSel(){ const box=document.getElementById("popSel"); if(!box) return; box.innerHTML="";
+  POP_SIZES.forEach(m=>{ const on=m.id===popId; const el=document.createElement("div");
+    el.style.cssText="flex:1;max-width:92px;padding:8px 4px;border-radius:10px;border:1px solid "+(on?"var(--green)":"var(--line)")+";cursor:pointer;font-weight:800;font-size:14px;text-align:center;background:"+(on?"#31e07a":"rgba(18,24,52,.8)")+";color:"+(on?"#04220f":"var(--ink)");
+    el.innerHTML=(LANG==="en"?m.en:m.zh)+"<br><small style='font-weight:600;opacity:.7;font-size:9px'>"+m.n+"</small>";
+    el.onclick=()=>{ popId=m.id; try{localStorage.setItem("nePop",m.id);}catch(e){} buildPopSel(); }; box.appendChild(el); }); }
 function backToStart(){ document.getElementById("overOv").classList.add("hidden"); renderBoard(); document.getElementById("startOv").classList.remove("hidden"); }
 function togglePause(){ if(!G||G.over) return; G.paused=!G.paused; document.getElementById("pauseBtn").textContent=G.paused?"▶️":"⏸️"; if(G.paused) toast(tr("暂停中")); }
 function goHome(){ try{ if(window.parent!==window) window.parent.postMessage("leo-arcade-home","*"); }catch(e){} }
@@ -864,5 +926,6 @@ if(typeof window!=="undefined") window.__ne={ get G(){return G;}, startGame, upd
   openRoom, roomTick, isInRoom, addFood, FOOD_TYPES, BOT_SPEED_MUL, ROOM_INTERVAL, ROOM_DURATION, OFFSCREEN_DESPAWN,
   hitBlock, explode, SPAWN_RATE, SPRINT_MUL, SPEED_BOOST, BOOST_DUR, BOMB_MINUS, BOMB_R,
   virusStep, applyClass, CLASSES, VIRUS_DRAIN, QUARANTINE_AT, QUARANTINE_DUR, ZOMBIE_SPEED, TRAIL_INFECT, seedVirusPeople,
-  placeObstacle, collideObstacles, ZCLASSES, ZOMBIE_HP_MUL, FIGHTER_DPS, infectBot, applyZClass, turnPlayerZombie, BASU_RADIUS, FIXED_ZOOM, ensureBots, assignZombieTargets, fireGun, seedObstacles, separateVirus, freeXY, get ROOM_FIRST(){return ROOM_FIRST;} };
+  placeObstacle, collideObstacles, ZCLASSES, ZOMBIE_HP_MUL, FIGHTER_DPS, infectBot, applyZClass, turnPlayerZombie, BASU_RADIUS, FIXED_ZOOM, ensureBots, assignZombieTargets, fireGun, seedObstacles, separateVirus, freeXY, get ROOM_FIRST(){return ROOM_FIRST;},
+  seedVehicles, rideStep, raiseAlarm, buildBotGrid, popCount, get popId(){return popId;}, set popId(v){ popId=v; }, POP_SIZES, get RIDE_DUR(){return RIDE_DUR;}, get RIDE_MUL(){return RIDE_MUL;} };
 </script>
