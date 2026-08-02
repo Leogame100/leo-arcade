@@ -109,12 +109,23 @@
     <div style="font-size:12px;color:var(--muted);margin:2px 0 5px"><span data-i18n="病毒模式人数">病毒模式人数</span></div>
     <div id="popSel" style="display:flex;gap:8px;justify-content:center;margin-bottom:8px"></div>
     <div class="modes" id="modeList"></div>
-    <button class="tiny" style="margin:2px 0 6px" onclick="openHelp()">📖 <span data-i18n="说明书">说明书</span></button>
+    <div style="display:flex;gap:8px;margin:2px 0 6px">
+      <button class="tiny" style="flex:1" onclick="openTalents()">🌳 <span data-i18n="天赋树">天赋树</span></button>
+      <button class="tiny" style="flex:1" onclick="openHelp()">📖 <span data-i18n="说明书">说明书</span></button>
+    </div>
     <div class="stat"><span data-i18n="历史最大">历史最大</span> <b id="startBest">1</b> · <span data-i18n="金币">金币</span> <b id="startCoins">0</b></div>
     <div class="board" id="boardBox"></div>
     <div class="foot" data-i18n="拖动移动 · 空格/长按=加速 · 点击屏幕=开火 · 数字键换武器">拖动移动 · 空格/长按=加速 · 点击屏幕=开火 · 数字键换武器</div>
   </div>
 </div>
+<!-- 天赋树 -->
+<div class="ov hidden" id="talentOv"><div class="card" style="text-align:left">
+  <h1 style="text-align:center" data-i18n="天赋树">天赋树</h1>
+  <div class="en" style="text-align:center">TALENT TREE · 🌳</div>
+  <div style="text-align:center;margin:6px 0;font-weight:800">🪙 <span data-i18n="金币">金币</span>: <b id="talentCoins" style="color:var(--gold)">0</b></div>
+  <div id="talentList" style="max-height:56vh;overflow-y:auto;touch-action:pan-y;margin:6px 0"></div>
+  <button class="tiny" style="margin-top:4px;width:100%" onclick="document.getElementById('talentOv').classList.add('hidden');document.getElementById('startOv').classList.remove('hidden')" data-i18n="返回">返回</button>
+</div></div>
 <!-- 说明书 -->
 <div class="ov hidden" id="helpOv"><div class="card" style="text-align:left">
   <h1 style="text-align:center" data-i18n="说明书">说明书</h1>
@@ -191,6 +202,8 @@ const TR={
   "单挑":"Duel","我要打十个":"Fight Ten","拳击台1v1·四周有观众（可打观众）":"1v1 boxing ring · spectators around (you can hit them)","你 vs 10个敌人·全灭获胜":"You vs 10 foes · wipe them all",
   "上载具！子弹打载具·防护你":"Boarded! Bullets hit the vehicle, not you","医疗包！回血":"Medkit! Healed","载具被摧毁！":"Vehicle destroyed!",
   "准备！丧尸8秒后出动":"Get ready! Zombies release in 8s","丧尸出动了！":"The zombies are loose!","丧尸出动倒计时·快准备":"Zombies release in… get ready",
+  "天赋树":"Talents","金币不足":"Not enough coins",
+  "移速 +5%/级":"Move speed +5%/lvl","最大血量 +12%/级":"Max HP +12%/lvl","吞噬吸收 +4%/级":"Absorb +4%/lvl","金币 +15%/级":"Coins +15%/lvl","感染掉血 -8%/级":"Infection −8%/lvl","子弹伤害 +8%/级":"Bullet damage +8%/lvl","技能冷却 -6%/级":"Skill cooldown −6%/lvl","解药更常出现 +20%/级":"More cures +20%/lvl",
   "免疫尾迹感染":"Immune to trail infection","移动速度 +35%":"Move speed +35%","血上限120·感染掉血 -30%":"120 max HP · infection −30%",
   "建筑师":"Architect","放置方形/长方形障碍墙，挡住丧尸":"Places square/rectangle walls to block zombies","砖块不足，等它回充":"Out of bricks — wait for recharge","病毒模式人数":"Virus population","上车！加速·碾压丧尸·防感染":"Boarded! Speed · crush zombies · infection-proof","车没油了，下车":"Out of fuel — dismounted","有人被袭击！警察出动":"Someone attacked! Police responding",
   "你变成了丧尸！去感染所有人类":"You turned into a zombie — go infect everyone!","你被消灭了":"YOU WERE DESTROYED","全城沦陷！你赢了":"CITY OVERRUN — YOU WIN!","丧尸":"Zombie",
@@ -202,7 +215,7 @@ const TR={
 function tr(s){ return LANG==="en"?(TR[s]||s):s; }
 function nm(o){ return o?(LANG==="en"?(o.en||o.zh):o.zh):""; }   // 职业/对象名（按语言）
 function applyLang(){ document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=tr(el.getAttribute("data-i18n")));
-  document.getElementById("langBtn").textContent=LANG==="en"?"中":"EN"; buildMapSel(); buildPopSel(); buildModes(); buildClasses(); buildGunfight(); buildWeaponBar(); buildHelp(); renderBoard(); if(G) hud(); }
+  document.getElementById("langBtn").textContent=LANG==="en"?"中":"EN"; buildMapSel(); buildPopSel(); buildModes(); buildClasses(); buildGunfight(); buildWeaponBar(); buildHelp(); buildTalents(); renderBoard(); if(G) hud(); }
 function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("neLang",LANG);}catch(e){} applyLang(); }
 
 /* ==================== 数字格式化（近乎无限）==================== */
@@ -261,6 +274,26 @@ const EAT_PCT={ classic:0.75, energy:0.90, survive:0.75 };   // 吃数字时吸�
 const HURT_INTERVAL=0.7, HURT_LOSS=0.30;                     // 碰到更大数字：每0.7秒-30%（不立即死）
 const BOT_SPEED_MUL=0.6;         // 其他数字速度 -40%
 const OFFSCREEN_DESPAWN=4;       // 离开视野 4 秒后消失
+// 🌳 天赋树：用金币永久升级（跨局生效）
+const TALENTS=[
+  {id:"speed",  ico:"👟", zh:"疾风",   en:"Swift",     d:"移速 +5%/级",      max:5, base:120, apply:(g,l)=>{ g.player.speedMul*=(1+0.05*l); }},
+  {id:"hp",     ico:"❤️", zh:"强健",   en:"Vitality",  d:"最大血量 +12%/级", max:5, base:160, apply:(g,l)=>{ g.maxHp*=(1+0.12*l); g.hp=g.maxHp; }},
+  {id:"absorb", ico:"🍽️", zh:"贪食",   en:"Glutton",   d:"吞噬吸收 +4%/级",  max:5, base:180, apply:(g,l)=>{ g.eatBonus=(g.eatBonus||0)+0.04*l; }},
+  {id:"coin",   ico:"🪙", zh:"财运",   en:"Fortune",   d:"金币 +15%/级",     max:5, base:120, apply:(g,l)=>{ g.coinMul=(g.coinMul||1)*(1+0.15*l); }},
+  {id:"resist", ico:"🧪", zh:"抗体",   en:"Antibody",  d:"感染掉血 -8%/级",  max:5, base:160, apply:(g,l)=>{ g.drainMul*=(1-0.08*l); }},
+  {id:"dmg",    ico:"🔫", zh:"火力",   en:"Firepower", d:"子弹伤害 +8%/级",  max:5, base:180, apply:(g,l)=>{ g.dmgMul=(g.dmgMul||1)*(1+0.08*l); }},
+  {id:"cool",   ico:"⚡", zh:"专注",   en:"Focus",     d:"技能冷却 -6%/级",  max:5, base:150, apply:(g,l)=>{ g.skillCdMul=(g.skillCdMul||1)*(1-0.06*l); }},
+  {id:"cure",   ico:"💊", zh:"药剂师", en:"Chemist",   d:"解药更常出现 +20%/级", max:3, base:200, apply:(g,l)=>{ g.cureRateMul*=(1+0.2*l); }},
+];
+function loadTalents(){ try{ return JSON.parse(localStorage.getItem("neTalents")||"{}")||{}; }catch(e){ return {}; } }
+function saveTalents(t){ try{ localStorage.setItem("neTalents",JSON.stringify(t)); }catch(e){} }
+function talentLvl(id){ return loadTalents()[id]||0; }
+function talentCost(t){ const l=talentLvl(t.id); return l>=t.max?null:t.base*(l+1); }
+function buyTalent(id){ const t=TALENTS.find(x=>x.id===id); if(!t) return; const cost=talentCost(t); if(cost==null) return;
+  const coins=loadCoins(); if(coins<cost){ toast(tr("金币不足")); return; }
+  saveCoins(coins-cost); const tl=loadTalents(); tl[id]=(tl[id]||0)+1; saveTalents(tl);
+  buildTalents(); renderBoard(); }
+function applyTalents(g){ const tl=loadTalents(); for(const t of TALENTS){ const l=tl[t.id]||0; if(l>0) t.apply(g,l); } }
 const FOOD_TYPES=[               // 食物：吃到即按倍率暴涨（高倍更稀有）
   {mult:1.2,label:"+20%",col:"#7fd0ff",w:34},{mult:1.5,label:"+50%",col:"#31e07a",w:24},{mult:1.8,label:"+80%",col:"#ffcf3a",w:16},
   {mult:2,label:"×2",col:"#ff9f3a",w:10},{mult:3,label:"×3",col:"#c46bff",w:5},{mult:5,label:"×5",col:"#ff5b6e",w:2},
@@ -318,6 +351,7 @@ function freshG(mode){ return {
   mode, running:true, over:false, paused:false, time:0,
   player:{ val:(mode==="virus"?5:2), x:WORLD_W/2, y:WORLD_H/2, vx:0, vy:0, r:radiusOf(mode==="virus"?5:2), speedMul:1, boostUntil:0, trailT:0 },
   sprint:false, spawnAcc:0, blocks:[],
+  coinMul:1, dmgMul:1, skillCdMul:1, eatBonus:0,   // 🌳 天赋加成
   // 🦠 病毒模式
   hp:100, maxHp:100, infected:false, cureImmuneUntil:0, humanClass:"civilian", drainMul:1, cureImmuneDur:4, cureRateMul:1, showZombiesMap:false,
   trails:[], cures:[], quarantine:null, quarantineAt:(mode==="virus"?QUARANTINE_AT:Infinity), survTime:0, graceUntil:(mode==="virus"?8:0),   // 🧟 开局8秒准备期，丧尸不动不感染
@@ -492,8 +526,8 @@ function explodeAt(x,y,r,dmg,team){ G.flashes.push({x,y,t:0,boom:true,br:r*2.6})
     for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(!z.zombie) continue; if(hyp(z.x-x,z.y-y)<r+z.r){ z.hp=(z.hp||100)-dmg; if(z.hp<=0){ G.bots.splice(j,1); popup(z.x,z.y,"💥","#ffcf3a"); } } }
   }
   popup(x,y,"💥","#ff8f3a"); }
-function spawnProjectile(x,y,ax,ay,w,team){ const sp=w.spd*BULLET_SLOW;   // 子弹速度-40%
-  const proj={x,y,vx:ax*sp,vy:ay*sp,life:2.1,dmg:w.dmg||0,aoe:w.aoe||0,aoeDmg:w.aoeDmg||0,ico:(w.type!=="bullet"?w.ico:null),team};
+function spawnProjectile(x,y,ax,ay,w,team,dmgMul){ const sp=w.spd*BULLET_SLOW, dm=dmgMul||1;   // 子弹速度-40%；dmgMul=玩家火力天赋
+  const proj={x,y,vx:ax*sp,vy:ay*sp,life:2.1,dmg:(w.dmg||0)*dm,aoe:w.aoe||0,aoeDmg:(w.aoeDmg||0)*dm,ico:(w.type!=="bullet"?w.ico:null),team};
   if(w.type==="rocket") proj.rocket=true;
   if(w.type==="grenade"){ proj.fuse=G.time+(w.fuse||0.9); proj.life=2.2; }
   if(w.type==="smoke"){ proj.smoke=true; proj.smokeR=w.r; proj.smokeDur=w.dur; proj.fuse=G.time+(w.fuse||0.5); proj.life=2.2; }
@@ -505,7 +539,7 @@ function fireGun(){ if(!G||G.over||G.paused) return; const gf=G.mode==="gunfight
   let best=null,bd=1e9; for(const b of G.bots){ if(gf?(b.dead||b.crowd||b.team===G.team):!b.zombie) continue; const dd=hyp(b.x-p.x,b.y-p.y); if(dd<bd){bd=dd;best=b;} }
   let ax,ay; if(best){ ax=best.x-p.x; ay=best.y-p.y; } else { ax=G.aimX-p.x; ay=G.aimY-p.y; if(hyp(ax,ay)<1){ax=p.vx;ay=p.vy;} if(hyp(ax,ay)<1){ax=1;ay=0;} }
   const d=hyp(ax,ay)||1; ax/=d; ay/=d; const rr=(G.gv?G.gv.r:p.r);
-  spawnProjectile(p.x+ax*(rr+6), p.y+ay*(rr+6), ax, ay, w, gf?G.team:null);
+  spawnProjectile(p.x+ax*(rr+6), p.y+ay*(rr+6), ax, ay, w, gf?G.team:null, G.dmgMul||1);
   popup(p.x+ax*rr, p.y+ay*rr, w.ico, "#ffd76a"); }
 function collideObstacles(e){ if(!G.obstacles||!G.obstacles.length) return; for(const o of G.obstacles){
     const nx=clamp(e.x,o.cx-o.hw,o.cx+o.hw), ny=clamp(e.y,o.cy-o.hh,o.cy+o.hh), dx=e.x-nx, dy=e.y-ny, d2=dx*dx+dy*dy;
@@ -770,16 +804,16 @@ function toast(txt){ if(!toastEl){ toastEl=document.createElement("div"); toastE
   toastEl.textContent=txt; toastEl.style.opacity="1"; clearTimeout(toastEl._t); toastEl._t=setTimeout(()=>toastEl.style.opacity="0",1200); }
 function eatBot(b){ const p=G.player; const dbl=G.crownUntil>G.time?2:1;
   if(b.kind==="bomb"){ p.val=Math.max(1, Math.floor(p.val*0.9)-1); G.combo=0; p.r=radiusOf(p.val); popup(b.x,b.y,"💥","#ff5b6e"); toast(tr("💥 炸弹！掉了一截")); return; }
-  let g=Math.max(1, Math.ceil(b.val*(EAT_PCT[G.mode]||0.75)));   // 吸收对方数值的 75%（能量 90%）
+  let g=Math.max(1, Math.ceil(b.val*((EAT_PCT[G.mode]||0.75)+(G.eatBonus||0))));   // 吸收对方数值（🌳贪食+）
   if(b.kind==="gold"){ g+=2; popup(b.x,b.y,"+"+ (g), "#ffcf3a"); }
   else if(b.kind==="rainbow"){ g+=5; popup(b.x,b.y,"🌈+"+g,"#c46bff"); }
-  else if(b.kind==="lucky7"){ if(Math.random()<0.45){ g+=3+Math.floor(Math.random()*8); } else { const c=50+Math.floor(Math.random()*220); G.coins+=c*dbl; popup(b.x,b.y,"🍀🪙+"+(c*dbl),"#31e07a"); } }
+  else if(b.kind==="lucky7"){ if(Math.random()<0.45){ g+=3+Math.floor(Math.random()*8); } else { const c=Math.round((50+Math.floor(Math.random()*220))*dbl*(G.coinMul||1)); G.coins+=c; popup(b.x,b.y,"🍀🪙+"+c,"#31e07a"); } }
   else if(b.kind==="crown"){ G.crownUntil=G.time+8; toast(tr("👑 双倍金币")); }
   else if(b.kind==="freeze"){ G.frozenUntil=G.time+3; toast(tr("❄️ 冰冻！")); }
-  if(b.boss){ g+=Math.max(2,Math.round(b.val*0.25)); const c=Math.round(b.val*0.8)*dbl; G.coins+=c; G.bossKills++; popup(b.x,b.y,"💀+"+fmt(g),"#ffcf3a"); toast(tr("💀 击败Boss！")+" 🎁 +"+fmt(c)); }
+  if(b.boss){ g+=Math.max(2,Math.round(b.val*0.25)); const c=Math.round(b.val*0.8*dbl*(G.coinMul||1)); G.coins+=c; G.bossKills++; popup(b.x,b.y,"💀+"+fmt(g),"#ffcf3a"); toast(tr("💀 击败Boss！")+" 🎁 +"+fmt(c)); }
   G.combo++; G.comboT=G.time+1.6; if(G.combo>G.comboMax) G.comboMax=G.combo;
   if(G.combo>=3){ g+=Math.floor(G.combo/3); showCombo(); }
-  p.val+=g; G.eats++; G.coins+=(b.boss?0:1)*dbl; p.r=radiusOf(p.val);
+  p.val+=g; G.eats++; G.coins+=(b.boss?0:1)*dbl*(G.coinMul||1); p.r=radiusOf(p.val);
   if(p.val>G.best) G.best=p.val;
   if(!b.boss && b.kind==="normal") popup(b.x,b.y,"+"+fmt(g),"#31e07a");
   checkLevel();
@@ -794,7 +828,7 @@ function useSkill(k){ if(!G||G.over||G.paused) return; if(G.time<G.cool[k]){ ret
   if(k==="dash"){ G.dashUntil=G.time+0.45; toast(tr("⚡ 冲刺！")); }
   else if(k==="magnet"){ G.magnetUntil=G.time+4; toast(tr("🧲 磁铁！")); }
   else if(k==="shield"){ G.shieldUntil=G.time+6; toast(tr("🛡️ 护盾就绪")); }
-  G.cool[k]=G.time+SKILLS[k].cd; }
+  G.cool[k]=G.time+SKILLS[k].cd*(G.skillCdMul||1); }
 
 /* ==================== 更新 ==================== */
 function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
@@ -1161,6 +1195,7 @@ function helpHTML(){ const en=LANG==="en";
     H("🦠 Virus")+L(["Zombies infect on contact — you lose HP gradually (−30%/0.7s) and turn if it empties. Pick a class (some are armed 'fighters').","💊 Cures turn you back to human at full HP.","🛡️ Quarantine repels zombies & heals you (20s windows).","🏠 <b>Shelter</b>: anyone can enter; zombies inside move 80% slower — a great place to hide/hold.","🚗 Vehicles: board to get speed, crush zombies, and immunity.","🚨 When a human is attacked, ALL police/soldiers rush there.","Win by killing every zombie. You can also play AS a zombie and infect the whole map."])+
     H("🔫 Gunfight")+L(["🔴 50 red vs 🔵 50 blue, everyone armed. A side hitting 0 loses.","<b>Positional</b> 🚩: infinite respawn, capture all 5 flags.","<b>Deathmatch</b> 💥: random melee, wipe the enemy.","<b>Numbers War</b> ⚔️: two armies clash, empty the enemy first.","You get a health bar + 3s spawn protection."])+
     H("🔫 Weapons (fighters only)")+L(["1 🔫 Pistol · balanced","2 💥 SMG · very fast, low damage","3 🎯 Rifle · fast, solid damage","4 🚀 RPG · explosive area blast","5 💣 Grenade · lobbed area blast","6 💨 Smoke · zombies can't see/lock humans inside"])+
+    H("🌳 Talents")+L(["Coins you earn buy permanent upgrades in the 🌳 Talent Tree (speed, HP, absorb, firepower, coins, infection resist, skill cooldown, cures). They apply to every run."])+
     H("💡 Tips")+L(["Use shelters + vehicles to survive swarms.","Smoke to break a chase; RPG/grenade for clusters.","In gunfight, use cover (walls) and pick your weapon for the range."])
   );
   return (
@@ -1172,11 +1207,25 @@ function helpHTML(){ const en=LANG==="en";
     H("🦠 病毒")+L(["丧尸接触会感染——你渐进掉血（−30%/0.7秒），血空就变丧尸。开局选职业（部分是持枪的攻击兵种）。","💊 解药：立刻变回人类并满血。","🛡️ 隔离带：排斥丧尸并回血（每次20秒）。","🏠 <b>庇护所</b>：所有人都能进；丧尸进入后速度减80%——躲避/据守的好地方。","🚗 车辆：上车后加速、碾压丧尸、免疫感染。","🚨 有人被袭击时，所有警察/士兵都会赶去。","消灭所有丧尸即胜。你也可以选择当丧尸去感染全城。"])+
     H("🔫 枪战")+L(["🔴红50 vs 🔵蓝50，全员持枪。某方人数清零则该方失败。","<b>阵地战</b> 🚩：无限复活，占领全部5面旗子。","<b>大乱战</b> 💥：随机混战，消灭对方全部。","<b>人数战</b> ⚔️：两军对垒，先清空对方。","你有血条 + 3秒出生保护。"])+
     H("🔫 武器（仅攻击兵种）")+L(["1 🔫 手枪 · 均衡","2 💥 冲锋枪 · 极快、伤害低","3 🎯 突击步枪 · 快、伤害不错","4 🚀 火箭筒 · 范围爆炸","5 💣 手雷 · 抛投范围爆炸","6 💨 烟雾弹 · 云里的丧尸看不见/锁不住人类"])+
+    H("🌳 天赋树")+L(["赚到的金币可在 🌳 天赋树买永久升级（移速、血量、吸收、火力、金币、抗感染、技能冷却、解药），对每一局都生效。"])+
     H("💡 技巧")+L(["用庇护所+车辆熬过尸潮。","烟雾弹甩掉追击；火箭筒/手雷打成堆的敌人。","枪战中善用掩体（墙），按距离选武器。"])
   );
 }
 function buildHelp(){ const b=document.getElementById("helpBody"); if(b) b.innerHTML=helpHTML(); }
 function openHelp(){ document.getElementById("startOv").classList.add("hidden"); buildHelp(); document.getElementById("helpOv").classList.remove("hidden"); }
+function buildTalents(){ const box=document.getElementById("talentList"); if(!box) return; const coins=loadCoins();
+  const cc=document.getElementById("talentCoins"); if(cc) cc.textContent=fmt(coins);
+  box.innerHTML=TALENTS.map(t=>{ const l=talentLvl(t.id), cost=talentCost(t), maxed=cost==null, afford=!maxed&&coins>=cost;
+    const dots=Array.from({length:t.max},(_,i)=>`<span style="color:${i<l?'var(--gold)':'#39406a'}">●</span>`).join("");
+    const btn=maxed?`<span style="color:var(--gold);font-weight:800;font-size:12px">MAX</span>`
+      :`<button class="tiny" style="padding:5px 10px;${afford?'':'opacity:.45'}" onclick="buyTalent('${t.id}')">🪙${cost}</button>`;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--line)">
+      <div style="font-size:22px">${t.ico}</div>
+      <div style="flex:1;min-width:0"><div style="font-weight:800">${LANG==="en"?t.en:t.zh} <span style="font-size:11px;color:var(--muted)">Lv${l}/${t.max}</span></div>
+      <div style="font-size:11px;color:#cdd6ee">${tr(t.d)}</div><div style="font-size:11px;letter-spacing:2px">${dots}</div></div>
+      <div>${btn}</div></div>`; }).join("");
+}
+function openTalents(){ document.getElementById("startOv").classList.add("hidden"); buildTalents(); document.getElementById("talentOv").classList.remove("hidden"); }
 function renderBoard(){ const box=document.getElementById("boardBox"); if(!box) return; const b=loadBoard();
   let h=`<div style="font-weight:900;margin-bottom:4px">🏆 ${tr("排行榜")}</div>`;
   if(!b.length) h+=`<div style="color:#4a5480">${tr("暂无记录")}</div>`;
@@ -1190,6 +1239,7 @@ function startGame(mode, sizeId, classId, asZombie){ applyMapSize(sizeId||mapSiz
   const co=document.getElementById("classOv"); if(co) co.classList.add("hidden");
   const go=document.getElementById("gunOv"); if(go) go.classList.add("hidden");
   const ho=document.getElementById("helpOv"); if(ho) ho.classList.add("hidden");
+  const to=document.getElementById("talentOv"); if(to) to.classList.add("hidden");
   G=freshG(mode);
   if(mode==="virus"){ if(asZombie){ applyClass(G,"civilian"); seedVirusPeople(true); turnPlayerZombie(classId); } else { applyClass(G, classId||"civilian"); seedVirusPeople(); } }
   else if(mode==="gunfight"){ seedGunfight(classId||"chaos", "blue"); }
@@ -1197,6 +1247,7 @@ function startGame(mode, sizeId, classId, asZombie){ applyMapSize(sizeId||mapSiz
   seedObstacles(mode==="virus"?11:(mode==="gunfight"?14:8));   // 开局随机障碍物（分散，枪战多些掩体）
   if(mode!=="gunfight") seedVehicles(mode==="virus"?7:5);      // 🚗 开局车辆
   if(mode==="virus") seedShelters(2);   // 🏠 庇护所
+  applyTalents(G);   // 🌳 天赋加成
   buildWeaponBar();
   lastT=0; if(!raf) raf=requestAnimationFrame(loop); hud();
   document.getElementById("pauseBtn").textContent="⏸️"; }
@@ -1252,5 +1303,6 @@ if(typeof window!=="undefined") window.__ne={ get G(){return G;}, startGame, upd
   WEAPONS, currentWeapon, selectWeapon, explodeAt, inSmoke, FIGHTER_ICO,
   seedGunfight, gunfightStep, updateGunBot, stepBullets, spawnProjectile, teamCount, gameOver, GF_SUBMODES, GF_TEAM_SIZE,
   seedShelters, inShelter, SHELTER_ZSLOW, updateBot,
-  seedGunItems, teamSpawn, hurtPlayerGun, pointInObstacle, GV_TYPES, TANK_WEAPON, GF_HP, BULLET_SLOW };
+  seedGunItems, teamSpawn, hurtPlayerGun, pointInObstacle, GV_TYPES, TANK_WEAPON, GF_HP, BULLET_SLOW,
+  TALENTS, loadTalents, saveTalents, talentLvl, talentCost, buyTalent, applyTalents, loadCoins, saveCoins };
 </script>
