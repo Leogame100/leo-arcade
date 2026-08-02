@@ -33,7 +33,8 @@
   .cbtn{background:rgba(14,18,38,.85);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-size:18px;padding:7px 10px;cursor:pointer;}
   #topleftBtns{position:fixed;top:8px;left:50%;transform:translateX(-50%);display:none;}
   /* overlays */
-  .ov{position:fixed;inset:0;background:radial-gradient(700px 460px at 50% 20%,#131a3a,#070a16 70%);display:flex;align-items:center;justify-content:center;padding:18px;z-index:20;}
+  .ov{position:fixed;inset:0;background:radial-gradient(700px 460px at 50% 20%,#131a3a,#070a16 70%);display:flex;padding:18px;z-index:20;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
+  .ov .card{margin:auto;}   /* 内容超高时可上下滑动、不裁切 */
   .ov.hidden{display:none;}
   .card{width:100%;max-width:440px;text-align:center;}
   .card h1{font-size:34px;margin:0 0 4px;font-weight:900;background:linear-gradient(90deg,#7fd0ff,#c46bff,#ffcf3a);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:1px;}
