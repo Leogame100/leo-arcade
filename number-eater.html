@@ -76,6 +76,7 @@
   <div class="sk" id="skShield" onclick="useSkill('shield')"><div class="si">🛡️</div><div class="sn" data-i18n="护盾">护盾</div><div class="cool" id="coolShield"></div></div>
 </div>
 <div id="corner">
+  <button class="cbtn" onclick="toggleFullscreen()" title="霸屏/全屏">⛶</button>
   <button class="cbtn" onclick="togglePause()" id="pauseBtn">⏸️</button>
   <button class="cbtn" onclick="goHome()">🏠</button>
 </div>
@@ -87,6 +88,8 @@
     <h1 data-i18n="数字吞噬">数字吞噬</h1>
     <div class="en">NUMBER EATER</div>
     <p data-i18n="控制你的数字，吞噬比你小的数字不断变大——别碰比你大的！">控制你的数字，吞噬比你小的数字不断变大——别碰比你大的！</p>
+    <div style="font-size:12px;color:var(--muted);margin:4px 0 5px"><span data-i18n="选择地图大小">选择地图大小</span></div>
+    <div id="mapSel" style="display:flex;gap:8px;justify-content:center;margin-bottom:8px"></div>
     <div class="modes" id="modeList"></div>
     <div class="stat"><span data-i18n="历史最大">历史最大</span> <b id="startBest">1</b> · <span data-i18n="金币">金币</span> <b id="startCoins">0</b></div>
     <div class="board" id="boardBox"></div>
@@ -124,11 +127,11 @@ const TR={
   "排行榜":"Leaderboard","暂无记录":"No records yet","连击":"COMBO",
   "⚡ 冲刺！":"⚡ Dash!","🧲 磁铁！":"🧲 Magnet!","🛡️ 护盾就绪":"🛡️ Shield armed","🛡️ 护盾挡下一击！":"🛡️ Shield saved you!","技能冷却中":"On cooldown",
   "💥 炸弹！掉了一截":"💥 Bomb! shrank","❄️ 冰冻！":"❄️ Freeze!","👑 双倍金币":"👑 Double coins","⭐ 升级！":"⭐ Level up!","💀 击败Boss！":"💀 Boss down!","🎁 宝箱":"🎁 Chest",
-  "暂停中":"Paused","继续":"Resume",
+  "暂停中":"Paused","继续":"Resume","选择地图大小":"Choose map size",
 };
 function tr(s){ return LANG==="en"?(TR[s]||s):s; }
 function applyLang(){ document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=tr(el.getAttribute("data-i18n")));
-  document.getElementById("langBtn").textContent=LANG==="en"?"中":"EN"; buildModes(); renderBoard(); if(G) hud(); }
+  document.getElementById("langBtn").textContent=LANG==="en"?"中":"EN"; buildMapSel(); buildModes(); renderBoard(); if(G) hud(); }
 function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("neLang",LANG);}catch(e){} applyLang(); }
 
 /* ==================== 数字格式化（近乎无限）==================== */
@@ -140,15 +143,26 @@ function fmt(n){ if(!isFinite(n)) return "∞"; n=Math.floor(n);
   return (x<100?x.toFixed(2):x<1000?x.toFixed(1):Math.floor(x)).replace(/\.?0+$/,"")+SUF[u]; }
 
 /* ==================== 常量 ==================== */
-const WORLD_W=2600, WORLD_H=1900;
+let WORLD_W=2600, WORLD_H=1900;   // 由所选地图大小设定
+const MAP_SIZES=[
+  {id:"s", zh:"小", en:"S", w:1700, h:1250},
+  {id:"m", zh:"中", en:"M", w:2600, h:1900},
+  {id:"l", zh:"大", en:"L", w:4200, h:3000},
+  {id:"xl",zh:"超大", en:"XL", w:6400, h:4600},
+];
+let mapSizeId=(function(){try{return localStorage.getItem("neMap")||"m";}catch(e){return "m";}})();
+function applyMapSize(id){ const m=MAP_SIZES.find(x=>x.id===id)||MAP_SIZES[1]; WORLD_W=m.w; WORLD_H=m.h; mapSizeId=m.id; try{localStorage.setItem("neMap",m.id);}catch(e){} }
 const TIERS=[10,30,60,100,300,1000,3000,1e4,3e4,1e5,3e5,1e6,1e8,1e12];
 const LV_NAMES=["新手","新手","学徒","高手","大师","宗师","传奇","神话","超越"];
 function levelOf(v){ let lv=1; for(const t of TIERS){ if(v>t) lv++; else break; } return lv; }
 function lvName(lv){ return LV_NAMES[Math.min(lv, LV_NAMES.length-1)]; }
-function radiusOf(v, boss){ let r=14+22*Math.log10(v+1); r=Math.min(r, 78); return boss? r*1.5 : r; }
+// 数字越大体积越大（更陡的成长 + 更高上限），大数字会「霸屏」
+function radiusOf(v, boss){ let r=16+27*Math.log10(v+1); r=Math.min(r, 210); return boss? r*1.5 : r; }
 const SKILLS={ dash:{cd:4}, magnet:{cd:12}, shield:{cd:20} };
-// 引力：力 ∝ 大小差 /(和)，越大引力越强，大小相近则抵消。大的把小的往自己吸，你会被更大的数字拉过去。
-const GRAV={ range:520, pull:220, suck:240 };
+// 引力（高强度）：力 ∝ 大小差/(和)，越大引力越强，大小相近则抵消；大的把小的吸过来，你也会被更大的拉过去。
+const GRAV={ range:720, pull:480, suck:520 };
+const EAT_PCT={ classic:0.75, energy:0.90, survive:0.75 };   // 吃数字时吸收对方数值的比例
+const HURT_INTERVAL=0.7, HURT_LOSS=0.30;                     // 碰到更大数字：每0.7秒-30%（不立即死）
 
 /* ==================== 状态 ==================== */
 let G=null, cv, ctx, DPR=1, VW=0, VH=0, raf=0, lastT=0;
@@ -158,7 +172,7 @@ function freshG(mode){ return {
   player:{ val:2, x:WORLD_W/2, y:WORLD_H/2, vx:0, vy:0, r:radiusOf(2), speedMul:1 },
   bots:[], coins:0, best:loadBest(), combo:0, comboMax:0, comboT:0, eats:0, bossKills:0, level:1,
   aimX:WORLD_W/2, aimY:WORLD_H/2-1, moving:false, keyx:0, keyy:0,
-  dashUntil:0, magnetUntil:0, shieldUntil:0, invUntil:0, crownUntil:0, frozenUntil:0,
+  dashUntil:0, magnetUntil:0, shieldUntil:0, invUntil:0, crownUntil:0, frozenUntil:0, hurtNext:0, hurtFlash:0,
   cool:{dash:0, magnet:0, shield:0}, flashes:[], popups:[],
   zone:(mode==="survive"?{x:WORLD_W/2,y:WORLD_H/2,r:Math.max(WORLD_W,WORLD_H)/2, next:0}:null),
 }; }
@@ -204,9 +218,9 @@ function flashMsg(txt){ toast(txt); }
 let toastEl=null;
 function toast(txt){ if(!toastEl){ toastEl=document.createElement("div"); toastEl.style.cssText="position:fixed;top:120px;left:50%;transform:translateX(-50%);background:rgba(12,16,34,.9);border:1px solid #26305a;color:#eef4ff;padding:8px 15px;border-radius:11px;font-weight:800;font-size:14px;z-index:18;opacity:0;transition:opacity .2s;pointer-events:none;text-align:center;max-width:86%;"; document.body.appendChild(toastEl); }
   toastEl.textContent=txt; toastEl.style.opacity="1"; clearTimeout(toastEl._t); toastEl._t=setTimeout(()=>toastEl.style.opacity="0",1200); }
-function eatBot(b){ const p=G.player; let g=1; const dbl=G.crownUntil>G.time?2:1;
+function eatBot(b){ const p=G.player; const dbl=G.crownUntil>G.time?2:1;
   if(b.kind==="bomb"){ p.val=Math.max(1, Math.floor(p.val*0.9)-1); G.combo=0; p.r=radiusOf(p.val); popup(b.x,b.y,"💥","#ff5b6e"); toast(tr("💥 炸弹！掉了一截")); return; }
-  if(G.mode==="energy") g=Math.max(1, Math.ceil(b.val*0.5));
+  let g=Math.max(1, Math.ceil(b.val*(EAT_PCT[G.mode]||0.75)));   // 吸收对方数值的 75%（能量 90%）
   if(b.kind==="gold"){ g+=2; popup(b.x,b.y,"+"+ (g), "#ffcf3a"); }
   else if(b.kind==="rainbow"){ g+=5; popup(b.x,b.y,"🌈+"+g,"#c46bff"); }
   else if(b.kind==="lucky7"){ if(Math.random()<0.45){ g+=3+Math.floor(Math.random()*8); } else { const c=50+Math.floor(Math.random()*220); G.coins+=c*dbl; popup(b.x,b.y,"🍀🪙+"+(c*dbl),"#31e07a"); } }
@@ -246,21 +260,43 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt;
   if(G.zone){ if(G.time>=G.zone.next){ G.zone.next=G.time+7; G.zone.r=Math.max(210, G.zone.r*0.82); }
     const zd=Math.hypot(p.x-G.zone.x,p.y-G.zone.y);
     if(zd>G.zone.r){ p._outAcc=(p._outAcc||0)+dt; if(p._outAcc>=0.5){ p._outAcc=0; p.val=Math.max(1,Math.floor(p.val*0.97)-1); p.r=radiusOf(p.val); popup(p.x,p.y-p.r-8,"☠-","#ff5b6e"); if(p.val<=1 && G.time>4){ return gameOver(); } } } else p._outAcc=0; }
+  if(G.hurtFlash>0) G.hurtFlash-=dt;
   // bots
   for(const b of G.bots) updateBot(b,dt);
-  // 引力：大小差越大吸力越强，相近则抵消
+  // 引力：玩家 ↔ 数字（大小差越大吸力越强，相近则抵消）
   for(const b of G.bots){ const dx=b.x-p.x, dy=b.y-p.y, d=Math.hypot(dx,dy); if(d>=GRAV.range||d<1) continue;
-    const fall=1-d/GRAV.range, ratio=(b.val-p.val)/(b.val+p.val);   // >0 对方更大
-    if(ratio>0){ p.vx+=(dx/d)*GRAV.pull*ratio*fall*dt; p.vy+=(dy/d)*GRAV.pull*ratio*fall*dt; }   // 被更大的拉过去
-    else if(ratio<0){ const m=-ratio; b.vx+=(-dx/d)*GRAV.suck*m*fall*dt; b.vy+=(-dy/d)*GRAV.suck*m*fall*dt; } // 把更小的吸过来
+    const fall=1-d/GRAV.range, ratio=(b.val-p.val)/(b.val+p.val);
+    if(ratio>0){ p.vx+=(dx/d)*GRAV.pull*ratio*fall*dt; p.vy+=(dy/d)*GRAV.pull*ratio*fall*dt; }
+    else if(ratio<0){ const m=-ratio; b.vx+=(-dx/d)*GRAV.suck*m*fall*dt; b.vy+=(-dy/d)*GRAV.suck*m*fall*dt; }
   }
-  // 碰撞吞噬
+  // 数字 ↔ 数字：也互相吸引与吸收
+  const N=G.bots.length;
+  for(let i=0;i<N;i++){ const a=G.bots[i]; if(a.dead) continue;
+    for(let j=i+1;j<N;j++){ const b=G.bots[j]; if(b.dead) continue;
+      const dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy); if(d>=GRAV.range) continue;
+      if(d>=1 && a.val!==b.val){ const fall=1-d/GRAV.range, big=a.val>b.val?a:b, sm=a.val>b.val?b:a;
+        const m=(big.val-sm.val)/(big.val+sm.val), ux=(big.x-sm.x)/d, uy=(big.y-sm.y)/d;
+        sm.vx+=ux*GRAV.suck*m*fall*dt*0.7; sm.vy+=uy*GRAV.suck*m*fall*dt*0.7; }
+      if(d < a.r + b.r*0.5){                                   // 互相吸收：明显更大的吃掉小的
+        if(a.val>b.val*1.08){ a.val+=Math.max(1,Math.ceil(b.val*0.5)); a.r=radiusOf(a.val,a.boss); b.dead=true; }
+        else if(b.val>a.val*1.08){ b.val+=Math.max(1,Math.ceil(a.val*0.5)); b.r=radiusOf(b.val,b.boss); a.dead=true; break; }
+      }
+    }
+  }
+  if(G.bots.some(x=>x.dead)) G.bots=G.bots.filter(x=>!x.dead);
+  // 玩家碰撞：吃小的；碰到大的不立即死，每0.7秒-30%
+  let bigContact=false;
   for(let i=G.bots.length-1;i>=0;i--){ const b=G.bots[i]; const d=Math.hypot(b.x-p.x,b.y-p.y);
     if(d < p.r + b.r*0.5){
       if(b.val < p.val){ eatBot(b); G.bots.splice(i,1); spawnBot(true); }
-      else if(b.val > p.val){ if(G.invUntil>G.time){ /* 无敌 */ } else if(!tryShield()){ return gameOver(); } }
+      else if(b.val > p.val){ bigContact=true; }
       else { const nx=(p.x-b.x)/(d||1), ny=(p.y-b.y)/(d||1); p.vx+=nx*30; p.vy+=ny*30; }
     }
+  }
+  if(bigContact && G.invUntil<=G.time){
+    if(G.shieldUntil>G.time){ tryShield(); }
+    else if(G.time>=G.hurtNext){ G.hurtNext=G.time+HURT_INTERVAL; p.val=Math.max(1,Math.floor(p.val*(1-HURT_LOSS))); p.r=radiusOf(p.val); G.combo=0; G.hurtFlash=0.5;
+      popup(p.x,p.y-p.r-8,"-30%","#ff5b6e"); if(p.val<=1){ return gameOver(); } }
   }
   if(G.combo>0 && G.time>G.comboT) G.combo=0;
   ensureBots();
@@ -297,8 +333,9 @@ function render(){ if(!G) return; const p=G.player;
   ctx.strokeStyle="rgba(60,74,130,.18)"; ctx.lineWidth=1; const gs=90;
   for(let x=Math.floor(camx/gs)*gs;x<camx+VW/zoom+gs;x+=gs){ ctx.beginPath();ctx.moveTo(x,camy-20);ctx.lineTo(x,camy+VH/zoom+20);ctx.stroke(); }
   for(let y=Math.floor(camy/gs)*gs;y<camy+VH/zoom+gs;y+=gs){ ctx.beginPath();ctx.moveTo(camx-20,y);ctx.lineTo(camx+VW/zoom+20,y);ctx.stroke(); }
-  // border
-  ctx.strokeStyle="rgba(120,140,220,.5)"; ctx.lineWidth=6; ctx.strokeRect(0,0,WORLD_W,WORLD_H);
+  // border（醒目发光边框 + 内侧红色警戒虚线）
+  ctx.save(); ctx.shadowColor="rgba(120,180,255,.9)"; ctx.shadowBlur=20; ctx.strokeStyle="rgba(150,195,255,.95)"; ctx.lineWidth=10; ctx.strokeRect(0,0,WORLD_W,WORLD_H); ctx.restore();
+  ctx.setLineDash([26,18]); ctx.strokeStyle="rgba(255,90,120,.55)"; ctx.lineWidth=3; ctx.strokeRect(6,6,WORLD_W-12,WORLD_H-12); ctx.setLineDash([]);
   // zone
   if(G.zone){ ctx.save(); ctx.beginPath(); ctx.rect(camx-20,camy-20,VW/zoom+40,VH/zoom+40); ctx.arc(G.zone.x,G.zone.y,G.zone.r,0,7,true);
     ctx.fillStyle="rgba(255,60,90,.14)"; ctx.fill("evenodd"); ctx.restore();
@@ -326,6 +363,7 @@ function render(){ if(!G) return; const p=G.player;
   ctx.setTransform(DPR,0,0,DPR,0,0);
   // out-of-zone red vignette
   if(G.zone && Math.hypot(p.x-G.zone.x,p.y-G.zone.y)>G.zone.r){ ctx.fillStyle="rgba(255,40,70,.16)"; ctx.fillRect(0,0,VW,VH); }
+  if(G.hurtFlash>0){ ctx.fillStyle="rgba(255,40,70,"+Math.min(0.4,G.hurtFlash*0.7)+")"; ctx.fillRect(0,0,VW,VH); }
 }
 
 /* ==================== HUD ==================== */
@@ -376,7 +414,7 @@ const MODES=[
 function buildModes(){ const box=document.getElementById("modeList"); if(!box) return; box.innerHTML="";
   MODES.forEach(m=>{ const el=document.createElement("div"); el.className="mode"+(m.pri?" pri":"");
     el.innerHTML=`<div class="mi">${m.ico}</div><div class="mt"><div class="mn">${LANG==="en"?m.en:m.zh}</div><div class="md">${tr(m.d)}</div></div>`;
-    el.onclick=()=>startGame(m.id); box.appendChild(el); }); }
+    el.onclick=()=>startGame(m.id, mapSizeId); box.appendChild(el); }); }
 function renderBoard(){ const box=document.getElementById("boardBox"); if(!box) return; const b=loadBoard();
   let h=`<div style="font-weight:900;margin-bottom:4px">🏆 ${tr("排行榜")}</div>`;
   if(!b.length) h+=`<div style="color:#4a5480">${tr("暂无记录")}</div>`;
@@ -385,9 +423,18 @@ function renderBoard(){ const box=document.getElementById("boardBox"); if(!box) 
   document.getElementById("startBest").textContent=fmt(loadBest());
   document.getElementById("startCoins").textContent=fmt(loadCoins());
 }
-function startGame(mode){ document.getElementById("startOv").classList.add("hidden"); document.getElementById("overOv").classList.add("hidden");
+function startGame(mode, sizeId){ applyMapSize(sizeId||mapSizeId);
+  document.getElementById("startOv").classList.add("hidden"); document.getElementById("overOv").classList.add("hidden");
   G=freshG(mode); ensureBots(); lastT=0; if(!raf) raf=requestAnimationFrame(loop); hud();
   document.getElementById("pauseBtn").textContent="⏸️"; }
+function toggleFullscreen(){ try{ const d=document, el=d.documentElement;
+  if(!d.fullscreenElement && !d.webkitFullscreenElement){ (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el); }
+  else { (d.exitFullscreen||d.webkitExitFullscreen||function(){}).call(d); } }catch(e){} }
+function buildMapSel(){ const box=document.getElementById("mapSel"); if(!box) return; box.innerHTML="";
+  MAP_SIZES.forEach(m=>{ const on=m.id===mapSizeId; const el=document.createElement("div");
+    el.style.cssText="flex:1;max-width:92px;padding:8px 4px;border-radius:10px;border:1px solid "+(on?"var(--blue)":"var(--line)")+";cursor:pointer;font-weight:800;font-size:14px;text-align:center;background:"+(on?"#4a90ff":"rgba(18,24,52,.8)")+";color:"+(on?"#04122e":"var(--ink)");
+    el.innerHTML=(LANG==="en"?m.en:m.zh)+"<br><small style='font-weight:600;opacity:.7;font-size:9px'>"+m.w+"×"+m.h+"</small>";
+    el.onclick=()=>{ mapSizeId=m.id; try{localStorage.setItem("neMap",m.id);}catch(e){} buildMapSel(); }; box.appendChild(el); }); }
 function backToStart(){ document.getElementById("overOv").classList.add("hidden"); renderBoard(); document.getElementById("startOv").classList.remove("hidden"); }
 function togglePause(){ if(!G||G.over) return; G.paused=!G.paused; document.getElementById("pauseBtn").textContent=G.paused?"▶️":"⏸️"; if(G.paused) toast(tr("暂停中")); }
 function goHome(){ try{ if(window.parent!==window) window.parent.postMessage("leo-arcade-home","*"); }catch(e){} }
@@ -398,6 +445,6 @@ function init(){ cv=document.getElementById("cv"); ctx=cv.getContext("2d"); resi
 init();
 
 // 测试钩子
-if(typeof window!=="undefined") window.__ne={ get G(){return G;}, startGame, update, spawnBot, eatBot, fmt, levelOf, radiusOf, freshG, MODES,
-  setG(g){ G=g; }, useSkill };
+if(typeof window!=="undefined") window.__ne={ get G(){return G;}, startGame, update, spawnBot, eatBot, fmt, levelOf, radiusOf, freshG, MODES, MAP_SIZES, applyMapSize,
+  get WORLD_W(){return WORLD_W;}, get WORLD_H(){return WORLD_H;}, get EAT_PCT(){return EAT_PCT;}, setG(g){ G=g; }, useSkill };
 </script>
