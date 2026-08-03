@@ -35,9 +35,12 @@
   #topleftBtns{position:fixed;top:8px;left:50%;transform:translateX(-50%);display:none;}
   /* overlays */
   .ov{position:fixed;inset:0;background:radial-gradient(700px 460px at 50% 20%,#131a3a,#070a16 70%);display:flex;align-items:center;justify-content:center;padding:18px;z-index:20;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-  /* 职业太多：把卡片限制在屏内，让职业列表自己上下滑动 */
-  #classOv .card{max-height:calc(100vh - 36px);display:flex;flex-direction:column;}
+  /* 内容太多：把卡片限制在屏内，让列表自己上下滑动（地图/人数选择器始终可见） */
+  #classOv .card{max-height:calc(100vh - 20px);display:flex;flex-direction:column;}
   #classList{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-right:4px;}
+  #startOv .card{max-height:calc(100vh - 12px);display:flex;flex-direction:column;}
+  #startOv #modeList{flex:1 1 auto;min-height:96px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-right:2px;}
+  #startOv .board{max-height:96px;overflow-y:auto;}
   .ov.hidden{display:none;}
   .card{width:100%;max-width:440px;text-align:center;}
   .card h1{font-size:34px;margin:0 0 4px;font-weight:900;background:linear-gradient(90deg,#7fd0ff,#c46bff,#ffcf3a);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:1px;}
@@ -230,6 +233,7 @@ const TR={
   "密码机破译完成！":"Cipher machine decoded!","大门已通电，快逃！":"Gates powered — RUN!","撑住":"Hold","开门啦":"open",
   "你被击倒！等队友救援":"You're down! Wait for a rescue","被队友救起！":"Rescued by a teammate!",
   "海龟汤":"Turtle Soup","AI汤主出题·你问是非题推理真相（和朋友一起玩）":"AI host sets a riddle · ask yes/no questions to deduce the truth (play with friends)","提示":"Hint","揭晓汤底":"Reveal","换一题":"New riddle",
+  "王者峡谷":"MOBA Rift","推塔MOBA·小兵/防御塔/草丛/野怪·摧毁敌方水晶获胜（王者荣耀式）":"Tower-push MOBA · minions/towers/bushes/jungle · destroy the enemy crystal to win","阵亡·5秒后回城复活":"Slain — respawning at base in 5s",
   "🔦 你撑过来了！":"🔦 YOU SURVIVED!","🚪 逃出生天！":"🚪 ESCAPED!","👺 你被抓住了…":"👺 You were caught…",
   "移速 +5%/级":"Move speed +5%/lvl","最大血量 +12%/级":"Max HP +12%/lvl","吞噬吸收 +4%/级":"Absorb +4%/lvl","金币 +15%/级":"Coins +15%/lvl","感染掉血 -8%/级":"Infection −8%/lvl","子弹伤害 +8%/级":"Bullet damage +8%/lvl","技能冷却 -6%/级":"Skill cooldown −6%/lvl","解药更常出现 +20%/级":"More cures +20%/lvl",
   "免疫尾迹感染":"Immune to trail infection","移动速度 +35%":"Move speed +35%","血上限120·感染掉血 -30%":"120 max HP · infection −30%",
@@ -277,6 +281,8 @@ const SHELTER_R=175, SHELTER_ZSLOW=0.2;   // 🏠庇护所：半径 / 丧尸进�
 // 🔦 恐怖模式 / 🎭 庄园逃生
 const HORROR_DUR=90, HORROR_MONSTERS=6, HORROR_LIGHT=280;   // 撑90秒获胜；6只怪；手电视野
 const ID_MACHINES=5, ID_SURVIVORS=4, ID_LIGHT=440;   // 5台密码机、4个求生者、视野
+// ⚔️ 王者峡谷（王者荣耀式推塔 MOBA）
+const MOBA_CRYSTAL_HP=2600, MOBA_TOWER_HP=1400, MOBA_MINION_HP=140, MOBA_HERO_HP=340, MOBA_WAVE=13;
 // 🔫 枪战模式：红蓝双方各 50 人
 const GF_TEAM_SIZE=50, GF_BOT_SPD=150, GF_HP=480, BULLET_SLOW=0.6;   // 血量×2；子弹速度-40%
 const GF_SUBMODES=[
@@ -415,6 +421,7 @@ function freshG(mode){ return {
   team:null, sub:null, flags:[], bases:null, spawns:null, ring:null, playerDead:false, respawnAt:0, spawnProtect:0,
   items:[], gvehicles:[], gv:null,   // 🔫 枪战：医疗包/炸药包 · 坦克/装甲车 · 当前所乘载具
   machines:[], gates:[], horrorEnd:0, escaped:false,   // 🔦恐怖 / 🎭庄园逃生
+  bushes:[], jbuffs:[], waveNext:0,   // ⚔️王者峡谷：草丛 / 野怪水晶 / 兵线
   zombie:false, zcls:null, zspd:1, zInfR:0, zMax:0,   // 玩家变丧尸后的状态
   bots:[], coins:0, best:loadBest(), combo:0, comboMax:0, comboT:0, eats:0, bossKills:0, level:1,
   aimX:WORLD_W/2, aimY:WORLD_H/2-1, moving:false, keyx:0, keyy:0,
@@ -618,8 +625,8 @@ function rideStep(dt){ const p=G.player;   // 🚗 车辆：上车→加速+免�
 function raiseAlarm(x,y){ const fresh=!(G.alarm && G.time<G.alarm.t); G.alarm={x,y,t:G.time+6};   // 🚨丧尸袭击人类 → 所有警察赶来
   if(fresh) toast("🚨 "+tr("有人被袭击！警察出动")); }
 // ==================== 🔫 弹药 / 枪战模式 ====================
-function isTeamMode(){ return G.mode==="gunfight"||G.mode==="horror"||G.mode==="identity"; }   // 队伍+血条模式
-function isShootMode(){ return G.mode==="gunfight"||G.mode==="horror"; }   // 玩家可开枪的模式
+function isTeamMode(){ return G.mode==="gunfight"||G.mode==="horror"||G.mode==="identity"||G.mode==="moba"; }   // 队伍+血条模式
+function isShootMode(){ return G.mode==="gunfight"||G.mode==="horror"||G.mode==="moba"; }   // 玩家可开枪的模式
 function pointInObstacle(x,y){ if(!G.obstacles) return false; for(const o of G.obstacles){ if(x>o.cx-o.hw&&x<o.cx+o.hw&&y>o.cy-o.hh&&y<o.cy+o.hh) return true; } return false; }
 function stepBullets(dt){ if(!G.bullets.length) return; const gf=isShootMode(), p=G.player;
   for(let i=G.bullets.length-1;i>=0;i--){ const bl=G.bullets[i]; bl.x+=bl.vx*dt; bl.y+=bl.vy*dt; bl.life-=dt;
@@ -824,6 +831,65 @@ function identityStep(dt){ const p=G.player;
   if(G.playerDead) return gameOver("caught");
   if(idSurvivorsLeft()===0) return gameOver("caught");   // 全员被抓/倒地淘汰
 }
+/* -------- ⚔️ 王者峡谷（推塔 MOBA） -------- */
+function inBush(x,y){ if(!G.bushes) return false; for(const b of G.bushes){ if(hyp(x-b.x,y-b.y)<b.r) return true; } return false; }
+function seedMoba(){ G.team="blue"; G.maxHp=MOBA_HERO_HP; G.hp=MOBA_HERO_HP; G.weapon="rifle"; G.playerDead=false; G.spawnProtect=2;
+  G.bots=[]; G.items=[]; G.bushes=[]; G.jbuffs=[]; G.obstacles=[]; G.waveNext=G.time+3;
+  const bx=WORLD_W*0.12, by=WORLD_H*0.88, rx=WORLD_W*0.88, ry=WORLD_H*0.12;   // 蓝(左下) / 红(右上) 基地
+  G.bases={ blue:{x:bx,y:by}, red:{x:rx,y:ry} };
+  const P=G.player; P.x=bx; P.y=by+30; P.val=5; P.r=radiusOf(6); P.vx=P.vy=0;
+  function struct(team,x,y,role,hp,r,ico){ return {team,x,y,vx:0,vy:0,r,val:9,hp,maxhp:hp,role,ico,dead:false,struct:true,shootCool:Math.random()*0.6,weapon:"rifle",t:0,dir:0,fighter:false,zombie:false}; }
+  // 水晶 + 两座防御塔（沿对角线）
+  for(const tm of ["blue","red"]){ const B=G.bases[tm];
+    G.bots.push(struct(tm,B.x,B.y,"crystal",MOBA_CRYSTAL_HP,46,"💎"));
+    const ex=G.bases[tm==="blue"?"red":"blue"].x-B.x, ey=G.bases[tm==="blue"?"red":"blue"].y-B.y, el=hyp(ex,ey)||1;
+    for(let k=1;k<=2;k++){ const f=k*0.26; G.bots.push(struct(tm,B.x+ex/el*el*f,B.y+ey/el*el*f,"tower",MOBA_TOWER_HP,34,"🗼")); } }
+  // 草丛（大量，藏身雾）
+  for(let i=0;i<16;i++){ const s={x:120+Math.random()*(WORLD_W-240),y:120+Math.random()*(WORLD_H-240),r:80+Math.random()*60}; G.bushes.push(s); }
+  // 石头（障碍装饰）
+  for(let i=0;i<10;i++){ const x=clamp(120+Math.random()*(WORLD_W-240),60,WORLD_W-60),y=clamp(120+Math.random()*(WORLD_H-240),60,WORLD_H-60);
+    if(hyp(x-bx,y-by)<300||hyp(x-rx,y-ry)<300) continue; const hw=30+Math.random()*40,hh=30+Math.random()*40; G.obstacles.push({cx:x,cy:y,hw,hh,rock:true}); }
+  // 野怪水晶（buff：踩到加速+火力）
+  for(let i=0;i<5;i++){ const x=140+Math.random()*(WORLD_W-280),y=140+Math.random()*(WORLD_H-280); G.jbuffs.push({x,y,r:24,taken:0}); }
+}
+function spawnMinionWave(){ for(const tm of ["blue","red"]){ const B=G.bases[tm], E=G.bases[tm==="blue"?"red":"blue"];
+  for(let i=0;i<4;i++){ const a=Math.atan2(E.y-B.y,E.x-B.x)+(Math.random()-0.5)*0.4, off=40+i*26;
+    G.bots.push({team:tm, minion:true, role:"minion", ico:tm==="blue"?"🔵":"🔴", x:B.x+Math.cos(a)*off, y:B.y+Math.sin(a)*off, vx:0,vy:0, r:radiusOf(4), val:4, hp:MOBA_MINION_HP, maxhp:MOBA_MINION_HP, dead:false, weapon:"pistol", shootCool:Math.random()*0.4, t:0, dir:a, fighter:false, zombie:false}); } } }
+function mobaNearestEnemy(b,range,needLOS){ let best=null,bd=range==null?1e9:range; const grid=G._grid, cell=NBR_CELL, bcx=Math.floor(b.x/cell), bcy=Math.floor(b.y/cell);
+  const scan=(o)=>{ if(!o||o.dead||o.gone||o.team===b.team) return; if(o.role==="crystal"&&o.team===b.team) return; const d=hyp(o.x-b.x,o.y-b.y);
+    if(d<bd){ if(needLOS && inBush(o.x,o.y) && !inBush(b.x,b.y) && d>120) return; bd=d; best=o; } };
+  if(grid) for(let gx=bcx-2;gx<=bcx+2;gx++) for(let gy=bcy-2;gy<=bcy+2;gy++){ const arr=grid.get(gx*4096+gy); if(arr) for(const o of arr) scan(o); }
+  else for(const o of G.bots) scan(o);
+  if(G.team!==b.team && !G.playerDead){ const pp={x:G.player.x,y:G.player.y,team:G.team,role:"hero"}; scan(pp); if(best===pp) best="P"; }
+  return best; }
+function updateMobaBot(b,dt){ if(b.dead||b.gone) return; const p=G.player;
+  if(b.struct){ const e=mobaNearestEnemy(b, b.role==="tower"?400:300); if(e){ const t=(e==="P")?p:e; gunBotShootAt(b,t.x,t.y,b.role==="tower"?1:1.6); } return; }   // 塔/水晶原地攻击
+  // 小兵：推进到敌方水晶；沿途遇敌就打
+  const enemy=mobaNearestEnemy(b,300,true);
+  let ax=0,ay=0;
+  if(enemy){ const t=(enemy==="P")?p:enemy, ex=t.x-b.x,ey=t.y-b.y,ed=hyp(ex,ey)||1; if(ed>230){ ax=ex/ed; ay=ey/ed; } gunBotShootAt(b,t.x,t.y,1.2); }
+  else { const E=G.bases[b.team==="blue"?"red":"blue"], ex=E.x-b.x,ey=E.y-b.y,ed=hyp(ex,ey)||1; ax=ex/ed; ay=ey/ed; }
+  const s=GF_BOT_SPD*0.85; b.vx+=(ax*s-b.vx)*0.1; b.vy+=(ay*s-b.vy)*0.1; b.x+=b.vx*dt; b.y+=b.vy*dt; clampEntity(b,10); collideObstacles(b); }
+function gunBotShootAt(b,tx,ty,cdMul){ if(G.time<(b.shootCool||0)) return; const w=WEAPONS.find(x=>x.id===b.weapon)||WEAPONS[0];
+  b.shootCool=G.time+w.cd*(cdMul||1.4)+Math.random()*0.1; let ax=tx-b.x, ay=ty-b.y; const d=hyp(ax,ay)||1; ax/=d; ay/=d;
+  const sp=(Math.random()-0.5)*0.12, c=Math.cos(sp), s=Math.sin(sp); spawnProjectile(b.x+(ax*c-ay*s)*(b.r+6), b.y+(ax*s+ay*c)*(b.r+6), ax*c-ay*s, ax*s+ay*c, w, b.team); }
+function mobaStep(dt){ const p=G.player;
+  separateVirus();
+  if(G.time>=G.waveNext){ G.waveNext=G.time+MOBA_WAVE; spawnMinionWave(); }
+  for(const b of G.bots) updateMobaBot(b,dt);
+  stepBullets(dt);
+  if(G.bots.some(b=>b.gone)) G.bots=G.bots.filter(b=>!b.gone);
+  // 野怪 buff
+  if(G._baseDmg==null) G._baseDmg=G.dmgMul||1;
+  for(const j of G.jbuffs){ if(G.time<j.taken) continue; if(!G.playerDead && hyp(j.x-p.x,j.y-p.y)<p.r+j.r){ j.taken=G.time+25; p.boostUntil=G.time+12; G.dmgMul=G._baseDmg*1.6; G._buffUntil=G.time+12; popup(j.x,j.y,"💠BUFF","#7fd0ff"); sfx.decode(); } }
+  if(G._buffUntil && G.time>G._buffUntil){ G.dmgMul=G._baseDmg; G._buffUntil=0; }
+  // 玩家阵亡→回城复活
+  if(!G.playerDead && G.hp<=0){ G.playerDead=true; G.respawnAt=G.time+5; sfx.lose(); popup(p.x,p.y,"💀","#fff"); toast("💀 "+tr("阵亡·5秒后回城复活")); }
+  if(G.playerDead && G.time>=G.respawnAt){ G.playerDead=false; G.hp=G.maxHp; G.spawnProtect=G.time+2; const B=G.bases[G.team]; p.x=B.x; p.y=B.y+30; p.vx=p.vy=0; }
+  // 胜负：摧毁敌方水晶
+  const rc=G.bots.find(b=>b.role==="crystal"&&b.team==="red"), bc=G.bots.find(b=>b.role==="crystal"&&b.team==="blue");
+  if(!rc || rc.gone) return gunOver("blue"); if(!bc || bc.gone) return gunOver("red");
+}
 /* -------- 🦠 病毒模式 -------- */
 function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
   separateVirus();   // 人类/丧尸互不重叠
@@ -1000,6 +1066,7 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
   if(G.mode==="gunfight"){ G._grid=buildBotGrid(); for(const b of G.bots) updateGunBot(b,dt); gunfightStep(dt); if(G.over) return; return; }
   if(G.mode==="horror"){ G._grid=buildBotGrid(); for(const b of G.bots) updateGunBot(b,dt); horrorStep(dt); if(G.over) return; return; }
   if(G.mode==="identity"){ G._grid=buildBotGrid(); identityStep(dt); if(G.over) return; return; }
+  if(G.mode==="moba"){ G._grid=buildBotGrid(); mobaStep(dt); if(G.over) return; return; }
   if(G.architect && G.brickMax) G.bricks=Math.min(G.brickMax,(G.bricks||0)+dt*0.28);   // 砖块回充
   // 加速/爆炸方块随机刷新（病毒模式免除）
   if(!virus){
@@ -1132,11 +1199,16 @@ function render(){ if(!G) return; const p=G.player;
     ctx.save(); ctx.shadowColor="#ffcf3a"; ctx.shadowBlur=16; ctx.setLineDash([22,14]); ctx.lineWidth=6; ctx.strokeStyle="#ffcf3a"; ctx.strokeRect(R.x0,R.y0,R.x1-R.x0,R.y1-R.y0); ctx.setLineDash([]); ctx.restore();
     ctx.strokeStyle="#7fffd6"; ctx.lineWidth=5; ctx.beginPath(); ctx.moveTo(R.x0,R.y0+8); ctx.lineTo(R.x0,R.y1-8); ctx.stroke();
   }
-  // 🏗️ 障碍墙
+  // 🏗️ 障碍墙 / 🪨 石头
   for(const o of G.obstacles){ if(o.cx+o.hw<camx||o.cx-o.hw>camx+VW/zoom||o.cy+o.hh<camy||o.cy-o.hh>camy+VH/zoom) continue;
+    if(o.rock){ ctx.fillStyle="rgba(96,92,110,.95)"; ctx.beginPath(); ctx.ellipse?ctx.ellipse(o.cx,o.cy,o.hw,o.hh,0,0,7):ctx.rect(o.cx-o.hw,o.cy-o.hh,o.hw*2,o.hh*2); ctx.fill(); ctx.strokeStyle="rgba(160,155,175,.8)"; ctx.lineWidth=2; ctx.stroke(); ctx.font=Math.round(Math.min(o.hw,o.hh)*1.4)+"px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("🪨",o.cx,o.cy); continue; }
     ctx.fillStyle="rgba(118,128,158,.92)"; ctx.fillRect(o.cx-o.hw,o.cy-o.hh,o.hw*2,o.hh*2);
     ctx.strokeStyle="rgba(205,214,240,.95)"; ctx.lineWidth=3; ctx.strokeRect(o.cx-o.hw,o.cy-o.hh,o.hw*2,o.hh*2);
     ctx.strokeStyle="rgba(0,0,0,.18)"; ctx.lineWidth=1; for(let yy=o.cy-o.hh+11;yy<o.cy+o.hh;yy+=12){ ctx.beginPath(); ctx.moveTo(o.cx-o.hw,yy); ctx.lineTo(o.cx+o.hw,yy); ctx.stroke(); } }
+  // ⚔️ 王者峡谷：野怪水晶 + 基地
+  if(G.mode==="moba"){ ctx.textAlign="center"; ctx.textBaseline="middle";
+    if(G.bases){ for(const tm of ["blue","red"]){ const B=G.bases[tm]; ctx.beginPath(); ctx.arc(B.x,B.y,90,0,7); ctx.fillStyle=tm==="blue"?"rgba(74,144,255,.07)":"rgba(255,91,110,.07)"; ctx.fill(); } }
+    for(const j of G.jbuffs){ if(G.time<j.taken) continue; ctx.font="26px sans-serif"; ctx.fillText("💠",j.x,j.y); } }
   // 🚗 车辆
   for(const v of G.vehicles){ if(v.x+v.r<camx||v.x-v.r>camx+VW/zoom||v.y+v.r<camy||v.y-v.r>camy+VH/zoom) continue;
     ctx.beginPath(); ctx.arc(v.x,v.y,v.r,0,7); ctx.fillStyle="rgba(255,210,90,.14)"; ctx.fill();
@@ -1212,6 +1284,7 @@ function render(){ if(!G) return; const p=G.player;
       ctx.lineWidth=2; ctx.strokeStyle=(b.monster||b.hunter)?"#ff5b6e":"rgba(255,255,255,.35)"; ctx.stroke();
       ctx.font="900 "+Math.round(b.r*1.4)+"px sans-serif"; ctx.fillText(b.downed?"🩸":(b.ico||"👤"), b.x, b.y);
       if(b.downed){ ctx.fillStyle="rgba(255,255,255,.85)"; ctx.fillRect(b.x-b.r,b.y-b.r-6,b.r*2*Math.min(1,(b.rev||0)/1.6),4); }
+      if(b.maxhp && b.hp<b.maxhp){ const hf=Math.max(0,b.hp/b.maxhp); ctx.fillStyle="rgba(0,0,0,.5)"; ctx.fillRect(b.x-b.r,b.y-b.r-7,b.r*2,4); ctx.fillStyle=b.team==="red"?"#ff5b6e":"#4a90ff"; ctx.fillRect(b.x-b.r,b.y-b.r-7,b.r*2*hf,4); }
       continue; }
     ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,7); ctx.fillStyle=colorFor(b); ctx.fill();
     ctx.lineWidth=b.boss?4:2; ctx.strokeStyle=b.boss?"#ffcf3a":"rgba(255,255,255,.25)"; ctx.stroke();
@@ -1231,7 +1304,7 @@ function render(){ if(!G) return; const p=G.player;
   if(G.magnetUntil>G.time){ ctx.beginPath(); ctx.arc(p.x,p.y,330,0,7); ctx.strokeStyle="rgba(196,107,255,.25)"; ctx.lineWidth=2; ctx.stroke(); }
   if(gfr){ if(G.gv){ const gt=GV_TYPES[G.gv.type]; ctx.font="900 "+Math.round(G.gv.r*1.7)+"px sans-serif"; ctx.fillText(gt.ico,p.x,p.y);   // 🛡️载具
       const hf=Math.max(0,G.gv.hp/gt.hp); ctx.fillStyle="rgba(120,200,150,.9)"; ctx.fillRect(p.x-G.gv.r,p.y-G.gv.r-8,G.gv.r*2*hf,5); }
-    else { ctx.font="900 "+Math.round(p.r*1.5)+"px sans-serif"; ctx.fillText(G.playerDown?"🩸":"🙂",p.x,p.y);
+    else { ctx.font="900 "+Math.round(p.r*1.5)+"px sans-serif"; ctx.fillText(G.playerDown?"🩸":(G.mode==="moba"?"🦸":"🙂"),p.x,p.y);
       if(G.playerDown){ const rv=Math.min(1,(G._pRev||0)/1.6); ctx.fillStyle="rgba(255,255,255,.9)"; ctx.fillRect(p.x-p.r,p.y-p.r-7,p.r*2*rv,4); } }
     if(G.time<(G.spawnProtect||0)){ ctx.beginPath(); ctx.arc(p.x,p.y,p.r+8,0,7); ctx.strokeStyle="rgba(255,255,255,.75)"; ctx.lineWidth=3; ctx.stroke(); } }
   else if(G.fighter && !G.zombie){ ctx.font="900 "+Math.round(p.r*1.5)+"px sans-serif"; ctx.fillText(FIGHTER_ICO[G.humanClass]||"👮",p.x,p.y);   // 玩家攻击兵种显眼图标
@@ -1240,6 +1313,10 @@ function render(){ if(!G) return; const p=G.player;
   }
   if(G.riding){ ctx.font="900 "+Math.round(p.r*1.3)+"px ui-monospace,monospace"; ctx.fillText("🚗",p.x,p.y-p.r-12);   // 🚗 乘坐中
     const fl=Math.max(0,(G.rideUntil-G.time)/RIDE_DUR); ctx.fillStyle="rgba(255,210,90,.9)"; ctx.fillRect(p.x-p.r,p.y-p.r-6,p.r*2*fl,4); }
+  // 🌿 草丛：画在单位之上形成迷雾（里面的人被遮住）
+  if(G.mode==="moba" && G.bushes){ for(const bu of G.bushes){ if(bu.x+bu.r<camx||bu.x-bu.r>camx+VW/zoom||bu.y+bu.r<camy||bu.y-bu.r>camy+VH/zoom) continue;
+    const inside=!G.playerDead && hyp(p.x-bu.x,p.y-bu.y)<bu.r; ctx.beginPath(); ctx.arc(bu.x,bu.y,bu.r,0,7); ctx.fillStyle=inside?"rgba(60,150,80,.35)":"rgba(46,120,64,.72)"; ctx.fill();
+    ctx.strokeStyle="rgba(120,200,130,.5)"; ctx.lineWidth=2; ctx.stroke(); ctx.font="20px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("🌿",bu.x,bu.y); } }
   // level flash rings
   for(const f of G.flashes){ if(f.boom){ const br=f.br||BOMB_R; ctx.beginPath(); ctx.arc(f.x,f.y,20+f.t*br,0,7); ctx.fillStyle="rgba(255,143,58,"+Math.max(0,0.30-f.t*0.30)+")"; ctx.fill(); ctx.strokeStyle="rgba(255,160,90,"+(0.8-f.t*0.8)+")"; ctx.lineWidth=6; ctx.stroke(); }
     else { ctx.beginPath(); ctx.arc(p.x,p.y,p.r+f.t*160,0,7); ctx.strokeStyle="rgba(255,207,58,"+(0.6-f.t*0.6)+")"; ctx.lineWidth=4; ctx.stroke(); } }
@@ -1319,6 +1396,11 @@ function hud(){ if(!G) return; document.getElementById("bignum").textContent=fmt
     document.getElementById("hpFill").style.width=(frac*100)+"%"; document.getElementById("hpFill").style.background="linear-gradient(90deg,#4a90ff,#8fc0ff)";
     const dn=G.machines.filter(m=>m.done).length;
     document.getElementById("hpTxt").textContent=(G.playerDead?"💀 ":G.playerDown?"🩸 ":"🙂 ")+Math.ceil(Math.max(0,G.hp))+"/"+G.maxHp+" · ⚙️"+dn+"/"+ID_MACHINES+" · 🙂"+G.bots.filter(b=>b.survivor&&!b.gone).length+(G.gates&&G.gates[0]&&G.gates[0].open?" · 🚪"+tr("开门啦"):"")+" · 👺";
+  } else if(G.mode==="moba"){ hw.style.display="block"; const frac=Math.max(0,G.hp/G.maxHp);
+    document.getElementById("hpFill").style.width=(frac*100)+"%"; document.getElementById("hpFill").style.background="linear-gradient(90deg,#4a90ff,#8fc0ff)";
+    const bc=G.bots.find(b=>b.role==="crystal"&&b.team==="blue"), rc=G.bots.find(b=>b.role==="crystal"&&b.team==="red");
+    const pct=c=>c?Math.max(0,Math.round(c.hp/c.maxhp*100)):0;
+    document.getElementById("hpTxt").textContent=(G.playerDead?"💀 ":"🦸 ")+Math.ceil(Math.max(0,G.hp))+"/"+G.maxHp+" · 💎🔵"+pct(bc)+"% vs 💎🔴"+pct(rc)+"%"+(G._buffUntil>G.time?" · 💠BUFF":"");
   } else hw.style.display="none";
   const bb=document.getElementById("buildBar");
   if(G.mode==="virus" && G.architect){ bb.style.display="flex"; document.getElementById("brickTxt").textContent="🧱 "+Math.floor(G.bricks)+"/"+G.brickMax; }
@@ -1379,6 +1461,7 @@ const MODES=[
   {id:"horror",  ico:"🔦", zh:"恐怖模式", en:"Horror", d:"黑暗中怪物追杀·用枪械撑够90秒（怪会不断出现）"},
   {id:"identity",ico:"🎭", zh:"庄园逃生", en:"Manor Escape", d:"破译5台密码机·开大门逃生·躲开监管者（第五人格式）"},
   {id:"soup",    ico:"🐢", zh:"海龟汤", en:"Turtle Soup", d:"AI汤主出题·你问是非题推理真相（和朋友一起玩）"},
+  {id:"moba",    ico:"⚔️", zh:"王者峡谷", en:"MOBA Rift", d:"推塔MOBA·小兵/防御塔/草丛/野怪·摧毁敌方水晶获胜（王者荣耀式）"},
 ];
 function buildModes(){ const box=document.getElementById("modeList"); if(!box) return; box.innerHTML="";
   MODES.forEach(m=>{ const el=document.createElement("div"); el.className="mode"+(m.pri?" pri":"");
@@ -1496,8 +1579,9 @@ function startGame(mode, sizeId, classId, asZombie){ applyMapSize(sizeId||mapSiz
   else if(mode==="gunfight"){ seedGunfight(classId||"chaos", "blue"); }
   else if(mode==="horror"){ seedHorror(); }
   else if(mode==="identity"){ seedIdentity(); }
+  else if(mode==="moba"){ seedMoba(); }
   else ensureBots();
-  seedObstacles(mode==="virus"?11:(mode==="gunfight"?14:(mode==="horror"?12:(mode==="identity"?16:8))));   // 障碍物/掩体
+  if(mode!=="moba") seedObstacles(mode==="virus"?11:(mode==="gunfight"?14:(mode==="horror"?12:(mode==="identity"?16:8))));   // 障碍物/掩体（moba自带石头）
   if(!isTeamMode()) seedVehicles(mode==="virus"?7:5);      // 🚗 车辆（战斗模式除外）
   if(mode==="virus") seedShelters(2);   // 🏠 庇护所
   applyTalents(G);   // 🌳 天赋加成
@@ -1562,5 +1646,6 @@ if(typeof window!=="undefined") window.__ne={ get G(){return G;}, startGame, upd
   seedGunItems, teamSpawn, hurtPlayerGun, pointInObstacle, GV_TYPES, TANK_WEAPON, GF_HP, BULLET_SLOW,
   TALENTS, loadTalents, saveTalents, talentLvl, talentCost, buyTalent, applyTalents, loadCoins, saveCoins,
   seedHorror, horrorStep, spawnMonster, seedIdentity, identityStep, updateIdBot, isTeamMode, isShootMode, HORROR_DUR, ID_MACHINES,
-  SOUP_PUZZLES, SOUP, soupNew, soupAns, openSoup, dangerBeat };
+  SOUP_PUZZLES, SOUP, soupNew, soupAns, openSoup, dangerBeat,
+  seedMoba, mobaStep, spawnMinionWave, updateMobaBot, inBush, MOBA_CRYSTAL_HP, MOBA_TOWER_HP };
 </script>
