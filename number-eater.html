@@ -95,7 +95,9 @@
 </div>
 <div id="weaponBar" style="position:fixed;right:12px;bottom:246px;pointer-events:auto;display:none;flex-direction:column;gap:5px;align-items:center"></div>
 <div id="fireBar" style="position:fixed;right:12px;bottom:170px;pointer-events:auto;display:none">
-  <button class="cbtn" id="fireBtn" style="width:64px;height:64px;font-size:30px" onclick="fireGun()" title="开枪 (Q)">🔫</button>
+  <button class="cbtn" id="fireBtn" style="width:70px;height:70px;font-size:32px" title="开枪 (Q)"
+    ontouchstart="holdFire(true);event.preventDefault()" ontouchend="holdFire(false)" ontouchcancel="holdFire(false)"
+    onmousedown="holdFire(true)" onmouseup="holdFire(false)" onmouseleave="holdFire(false)">🔫</button>
 </div>
 
 <!-- start -->
@@ -916,7 +918,8 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
   roomTick(); if(G.over) return;   // 隐藏房间开/关（超时死亡）
   // 输入方向
   let mx=0,my=0;
-  if(G.keyx||G.keyy){ mx=G.keyx; my=G.keyy; const m=hyp(mx,my)||1; mx/=m; my/=m; }
+  if(G.keyx||G.keyy){ mx=G.keyx; my=G.keyy; const m=hyp(mx,my); if(m>1){ mx/=m; my/=m; }   // 操控杆/按键：可变速（推得越远越快）
+    if(G._joy){ G.aimX=p.x+mx*220; G.aimY=p.y+my*220; } }   // 操控杆方向也用于开火朝向
   else if(G.moving){ const dx=G.aimX-p.x, dy=G.aimY-p.y, d=hyp(dx,dy); if(d>5){ mx=dx/d; my=dy/d; } }
   if(isTeamMode() && G.playerDead){ mx=0; my=0; }
   let maxs=205*(1-Math.min(0.42,Math.log10(p.val+1)*0.045))*(G.dashUntil>G.time?2.15:1)*p.speedMul*(G.sprint?SPRINT_MUL:1)*((p.boostUntil||0)>G.time?SPEED_BOOST:1)*(G.zombie?ZOMBIE_SPEED*(G.zspd||1):1)*(G.riding?RIDE_MUL:1)*(G.zombie&&inShelter(p.x,p.y)?SHELTER_ZSLOW:1);
@@ -1200,6 +1203,10 @@ function render(){ if(!G) return; const p=G.player;
     if(R){ ctx.fillStyle="rgba(255,207,58,.95)"; ctx.fillRect(mx+mw-3,my+R.cy*sy-6,5,12); }
     ctx.fillStyle="#7fd0ff"; ctx.beginPath(); ctx.arc(mx+Math.min(p.x,WORLD_W)*sx,my+p.y*sy,3,0,7); ctx.fill();
     ctx.fillStyle="rgba(180,200,255,.6)"; ctx.font="700 8px ui-monospace,monospace"; ctx.textAlign="left"; ctx.fillText(tr("小地图"),mx+3,my+9); }
+  // 🕹️ 虚拟操控杆
+  if(G._joy){ const R=64; let dx=G._joy.x-G._joy.ox, dy=G._joy.y-G._joy.oy; const m=Math.hypot(dx,dy); if(m>R){ dx=dx/m*R; dy=dy/m*R; }
+    ctx.beginPath(); ctx.arc(G._joy.ox,G._joy.oy,R,0,7); ctx.fillStyle="rgba(18,24,50,.32)"; ctx.fill(); ctx.strokeStyle="rgba(180,200,255,.4)"; ctx.lineWidth=3; ctx.stroke();
+    ctx.beginPath(); ctx.arc(G._joy.ox+dx,G._joy.oy+dy,28,0,7); ctx.fillStyle="rgba(120,160,255,.72)"; ctx.fill(); ctx.strokeStyle="#cfe0ff"; ctx.lineWidth=2; ctx.stroke(); }
 }
 
 /* ==================== HUD ==================== */
@@ -1257,11 +1264,16 @@ function bindInput(){
   cv.addEventListener("mousemove",e=>{ pointerMove(e.clientX,e.clientY); G.moving=true; });
   cv.addEventListener("mousedown",e=>{ pointerMove(e.clientX,e.clientY); G.moving=true; if(canShootMode()){ G.firing=true; fireGun(); } });   // 点击=开火
   window.addEventListener("mouseup",e=>{ if(G) G.firing=false; });
-  cv.addEventListener("touchstart",e=>{ e.preventDefault(); const t=e.touches[0]; pointerMove(t.clientX,t.clientY); G.moving=true;
-    if(canShootMode()){ G.firing=true; fireGun(); }   // 点按屏幕=开火
-    clearTimeout(G._spT); G._spT=setTimeout(()=>{ if(G&&G.moving) G.sprint=true; },260); },{passive:false});   // 长按加速
-  cv.addEventListener("touchmove",e=>{ e.preventDefault(); const t=e.touches[0]; pointerMove(t.clientX,t.clientY); G.moving=true; },{passive:false});
-  cv.addEventListener("touchend",e=>{ e.preventDefault(); if(!e.touches.length){ G.moving=false; G.sprint=false; G.firing=false; clearTimeout(G._spT); } },{passive:false});
+  // 📱 手机端：悬浮虚拟操控杆（按下处为杆心，拖动方向=移动方向，推得越远越快）
+  cv.addEventListener("touchstart",e=>{ e.preventDefault(); const t=e.changedTouches[0];
+    G._joy={ox:t.clientX, oy:t.clientY, x:t.clientX, y:t.clientY, id:t.identifier}; G.moving=true;
+    clearTimeout(G._spT); G._spT=setTimeout(()=>{ if(G&&G._joy) G.sprint=true; },320); },{passive:false});   // 长按加速
+  cv.addEventListener("touchmove",e=>{ e.preventDefault(); if(!G._joy) return;
+    for(const t of e.changedTouches){ if(t.identifier===G._joy.id){ G._joy.x=t.clientX; G._joy.y=t.clientY; break; } }
+    const dx=G._joy.x-G._joy.ox, dy=G._joy.y-G._joy.oy, mag=Math.hypot(dx,dy)||1, R=64, s=Math.min(1,mag/R);
+    G.keyx=dx/mag*s; G.keyy=dy/mag*s; },{passive:false});
+  cv.addEventListener("touchend",e=>{ e.preventDefault();
+    for(const t of e.changedTouches){ if(G._joy && t.identifier===G._joy.id){ G._joy=null; G.keyx=0; G.keyy=0; G.moving=false; G.sprint=false; clearTimeout(G._spT); } } },{passive:false});
   window.addEventListener("keydown",e=>{ if(!G) return; const k=e.key.toLowerCase();
     if(k==="a"||k==="arrowleft") G.keyx=-1; else if(k==="d"||k==="arrowright") G.keyx=1;
     else if(k==="w"||k==="arrowup") G.keyy=-1; else if(k==="s"||k==="arrowdown") G.keyy=1;
@@ -1394,7 +1406,10 @@ function buildWeaponBar(){ const box=document.getElementById("weaponBar"); if(!b
     b.title=nm(w)+" ("+(i+1)+")"; b.onclick=()=>selectWeapon(w.id); box.appendChild(b); }); }
 function backToStart(){ document.getElementById("overOv").classList.add("hidden"); renderBoard(); document.getElementById("startOv").classList.remove("hidden"); }
 function togglePause(){ if(!G||G.over) return; G.paused=!G.paused; document.getElementById("pauseBtn").textContent=G.paused?"▶️":"⏸️"; if(G.paused) toast(tr("暂停中")); }
-function goHome(){ try{ if(window.parent!==window) window.parent.postMessage("leo-arcade-home","*"); }catch(e){} }
+function holdFire(on){ if(!G) return; G.firing=!!on; if(on) fireGun(); }
+function goHome(){ try{ if(window.parent!==window){ window.parent.postMessage("leo-arcade-home","*"); return; } }catch(e){}
+  try{ location.href="index.html"; }catch(e){}   // 独立打开时：回到游戏厅首页
+}
 
 /* ==================== 启动 ==================== */
 function init(){ cv=document.getElementById("cv"); ctx=cv.getContext("2d"); resize(); window.addEventListener("resize",resize);
