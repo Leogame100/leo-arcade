@@ -87,6 +87,7 @@
 <div id="corner">
   <button class="cbtn" onclick="toggleFullscreen()" title="霸屏/全屏">⛶</button>
   <button class="cbtn" onclick="togglePause()" id="pauseBtn">⏸️</button>
+  <button class="cbtn" id="sndBtn" onclick="toggleSound()" title="音效开关">🔊</button>
   <button class="cbtn" onclick="goHome()">🏠</button>
 </div>
 <button class="tiny" id="langBtn" onclick="toggleLang()">EN</button>
@@ -136,6 +137,23 @@
   <div class="en" style="text-align:center">HOW TO PLAY · 📖</div>
   <div id="helpBody" style="font-size:13px;line-height:1.55;max-height:60vh;overflow-y:auto;touch-action:pan-y;margin:8px 0"></div>
   <button class="tiny" style="margin-top:4px;width:100%" onclick="document.getElementById('helpOv').classList.add('hidden');document.getElementById('startOv').classList.remove('hidden')" data-i18n="返回">返回</button>
+</div></div>
+<!-- 🐢 海龟汤 -->
+<div class="ov hidden" id="soupOv"><div class="card" style="text-align:left;max-width:520px">
+  <h1 style="text-align:center">🐢 <span data-i18n="海龟汤">海龟汤</span></h1>
+  <div class="en" style="text-align:center;margin-bottom:4px">TURTLE SOUP · 🐢 AI 汤主</div>
+  <div id="soupSurface" style="background:rgba(20,26,52,.7);border:1px solid var(--line);border-radius:11px;padding:11px;font-size:14px;line-height:1.5;font-weight:700"></div>
+  <div id="soupLog" style="max-height:34vh;overflow-y:auto;touch-action:pan-y;margin:8px 0;font-size:13px;line-height:1.5"></div>
+  <div style="display:flex;gap:6px">
+    <input id="soupInput" placeholder="问一个「是非题」…" style="flex:1;min-width:0;background:rgba(10,14,30,.9);border:1px solid var(--line);border-radius:9px;color:var(--ink);font-size:14px;padding:8px 10px" onkeydown="if(event.key==='Enter')soupAsk()">
+    <button class="tiny" onclick="soupAsk()">提问</button>
+  </div>
+  <div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap">
+    <button class="tiny" style="flex:1" onclick="soupHint()">💡 <span data-i18n="提示">提示</span></button>
+    <button class="tiny" style="flex:1" onclick="soupReveal()">🥣 <span data-i18n="揭晓汤底">揭晓汤底</span></button>
+    <button class="tiny" style="flex:1" onclick="soupNew()">🎲 <span data-i18n="换一题">换一题</span></button>
+  </div>
+  <button class="tiny" style="margin-top:7px;width:100%" onclick="document.getElementById('soupOv').classList.add('hidden');document.getElementById('startOv').classList.remove('hidden')" data-i18n="返回">返回</button>
 </div></div>
 <!-- class picker (virus) -->
 <div class="ov hidden" id="classOv"><div class="card">
@@ -209,6 +227,8 @@ const TR={
   "天赋树":"Talents","金币不足":"Not enough coins",
   "恐怖模式":"Horror","庄园逃生":"Manor Escape","黑暗中怪物追杀·用枪械撑够90秒（怪会不断出现）":"Monsters hunt you in the dark — survive 90s with guns (they keep coming)","破译5台密码机·开大门逃生·躲开监管者（第五人格式）":"Decode 5 cipher machines, open a gate & escape — dodge the Hunter (Identity-V style)",
   "密码机破译完成！":"Cipher machine decoded!","大门已通电，快逃！":"Gates powered — RUN!","撑住":"Hold","开门啦":"open",
+  "你被击倒！等队友救援":"You're down! Wait for a rescue","被队友救起！":"Rescued by a teammate!",
+  "海龟汤":"Turtle Soup","AI汤主出题·你问是非题推理真相（和朋友一起玩）":"AI host sets a riddle · ask yes/no questions to deduce the truth (play with friends)","提示":"Hint","揭晓汤底":"Reveal","换一题":"New riddle",
   "🔦 你撑过来了！":"🔦 YOU SURVIVED!","🚪 逃出生天！":"🚪 ESCAPED!","👺 你被抓住了…":"👺 You were caught…",
   "移速 +5%/级":"Move speed +5%/lvl","最大血量 +12%/级":"Max HP +12%/lvl","吞噬吸收 +4%/级":"Absorb +4%/lvl","金币 +15%/级":"Coins +15%/lvl","感染掉血 -8%/级":"Infection −8%/lvl","子弹伤害 +8%/级":"Bullet damage +8%/lvl","技能冷却 -6%/级":"Skill cooldown −6%/lvl","解药更常出现 +20%/级":"More cures +20%/lvl",
   "免疫尾迹感染":"Immune to trail infection","移动速度 +35%":"Move speed +35%","血上限120·感染掉血 -30%":"120 max HP · infection −30%",
@@ -353,6 +373,29 @@ const ZCLASSES=[
   {id:"king",    zh:"尸王",     en:"Zombie King",  ico:"👑",  spd:1.1, hp:3,   infR:170, d:"血王·范围感染"},
 ];
 
+/* ==================== 🔊 音效（Web Audio 合成，无外部文件） ==================== */
+const SND={ctx:null, on:(()=>{try{return localStorage.getItem("neSound")!=="0";}catch(e){return true;}})(), _scared:false};
+function sndInit(){ if(SND.ctx) return; try{ SND.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+function sndResume(){ try{ if(SND.ctx&&SND.ctx.state==="suspended") SND.ctx.resume(); }catch(e){} }
+function tone(freq,dur,type,vol,slideTo){ if(!SND.on||!SND.ctx) return; const c=SND.ctx,t=c.currentTime,o=c.createOscillator(),g=c.createGain();
+  o.type=type||"sine"; o.frequency.setValueAtTime(freq,t); if(slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(20,slideTo),t+dur);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol||0.2,t+0.008); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(c.destination); o.start(t); o.stop(t+dur+0.02); }
+function noise(dur,vol,lp){ if(!SND.on||!SND.ctx) return; const c=SND.ctx,t=c.currentTime,n=c.createBufferSource(),buf=c.createBuffer(1,Math.max(1,c.sampleRate*dur),c.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; n.buffer=buf; const g=c.createGain(); g.gain.setValueAtTime(vol||0.2,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  const f=c.createBiquadFilter(); f.type="lowpass"; f.frequency.value=lp||1200; n.connect(f).connect(g).connect(c.destination); n.start(t); n.stop(t+dur); }
+const sfx={
+  beat(v){ tone(58,0.12,"sine",0.26*(v||1),40); setTimeout(()=>tone(46,0.15,"sine",0.2*(v||1),34),140); },
+  shoot(){ noise(0.05,0.14,2600); tone(240,0.04,"square",0.05,120); },
+  hit(){ tone(150,0.07,"square",0.1,80); },
+  boom(){ noise(0.32,0.32,600); tone(70,0.28,"sawtooth",0.18,38); },
+  growl(){ tone(88,0.5,"sawtooth",0.16,52); noise(0.5,0.1,380); },
+  decode(){ tone(880,0.05,"square",0.06); },
+  scare(){ noise(0.5,0.38,3200); tone(1300,0.5,"sawtooth",0.14,180); tone(85,0.6,"square",0.2,58); },
+  win(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,0.18,"triangle",0.18),i*110)); },
+  lose(){ [400,300,210,120].forEach((f,i)=>setTimeout(()=>tone(f,0.24,"sawtooth",0.18,f*0.7),i*150)); },
+};
+function toggleSound(){ SND.on=!SND.on; try{localStorage.setItem("neSound",SND.on?"1":"0");}catch(e){} const b=document.getElementById("sndBtn"); if(b) b.textContent=SND.on?"🔊":"🔇"; if(SND.on){ sndInit(); sndResume(); sfx.decode(); } }
 /* ==================== 状态 ==================== */
 let G=null, cv, ctx, DPR=1, VW=0, VH=0, raf=0, lastT=0, SAFE_TOP=0;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -528,7 +571,7 @@ function inSmoke(x,y){ const s=G.smoke; return !!(s && G.time<s.until && hyp(x-s
 function hurtPlayerGun(dmg){ const p=G.player;   // 玩家受伤：乘载具时伤害载具，否则扣血
   if(G.gv){ G.gv.hp-=dmg; popup(p.x,p.y-p.r,"🛡−","#ffd76a"); if(G.gv.hp<=0){ G.gv=null; toast("💥 "+tr("载具被摧毁！")); explodeAt(p.x,p.y,190,380,"__ALL__"); } }
   else { G.hp-=dmg; G.hurtFlash=0.3; } }
-function explodeAt(x,y,r,dmg,team){ G.flashes.push({x,y,t:0,boom:true,br:r*2.6});   // 爆炸：范围伤害
+function explodeAt(x,y,r,dmg,team){ G.flashes.push({x,y,t:0,boom:true,br:r*2.6}); sfx.boom();   // 爆炸：范围伤害
   if(team==="__ALL__"){   // 🧨炸药包：无差别范围伤害
     for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(z.dead) continue; if(hyp(z.x-x,z.y-y)<r+z.r){ z.hp=(z.hp||100)-dmg; if(z.hp<=0) killGunBot(z); } }
     const p=G.player; if(!G.playerDead && G.time>=(G.spawnProtect||0) && hyp(p.x-x,p.y-y)<r+p.r) hurtPlayerGun(dmg);
@@ -553,7 +596,7 @@ function fireGun(){ if(!G||G.over||G.paused) return; const gf=isShootMode(); if(
   let ax,ay; if(best){ ax=best.x-p.x; ay=best.y-p.y; } else { ax=G.aimX-p.x; ay=G.aimY-p.y; if(hyp(ax,ay)<1){ax=p.vx;ay=p.vy;} if(hyp(ax,ay)<1){ax=1;ay=0;} }
   const d=hyp(ax,ay)||1; ax/=d; ay/=d; const rr=(G.gv?G.gv.r:p.r);
   spawnProjectile(p.x+ax*(rr+6), p.y+ay*(rr+6), ax, ay, w, gf?G.team:null, G.dmgMul||1);
-  popup(p.x+ax*rr, p.y+ay*rr, w.ico, "#ffd76a"); }
+  popup(p.x+ax*rr, p.y+ay*rr, w.ico, "#ffd76a"); sfx.shoot(); }
 function collideObstacles(e){ if(!G.obstacles||!G.obstacles.length) return; for(const o of G.obstacles){
     const nx=clamp(e.x,o.cx-o.hw,o.cx+o.hw), ny=clamp(e.y,o.cy-o.hh,o.cy+o.hh), dx=e.x-nx, dy=e.y-ny, d2=dx*dx+dy*dy;
     if(d2 < e.r*e.r){
@@ -701,61 +744,80 @@ function seedHorror(){ G.team="blue"; G.maxHp=220; G.hp=220; G.weapon="pistol"; 
 }
 function spawnMonster(){ const a=Math.random()*Math.PI*2, R=Math.min(WORLD_W,WORLD_H)*0.46, cx=WORLD_W/2, cy=WORLD_H/2;
   G.bots.push({team:"red", melee:true, monster:true, ico:"👹", x:clamp(cx+Math.cos(a)*R,30,WORLD_W-30), y:clamp(cy+Math.sin(a)*R,30,WORLD_H-30), vx:0,vy:0, r:radiusOf(8), val:8, hp:520, dead:false, weapon:null, mspd:1.05+Math.random()*0.25, t:Math.random()*3, dir:Math.random()*6.28, fighter:false, zombie:false}); }
+function dangerBeat(danger){ if(danger<=0.06) { G._terror=Math.max(0,(G._terror||0)-0.06); return; }   // 心跳随危险加快加响
+  G._terror=danger;
+  if(G.time>=(G._beatNext||0)){ G._beatNext=G.time+Math.max(0.32,1.15-danger*0.85); sfx.beat(0.4+danger*0.95); } }
 function horrorStep(dt){ const p=G.player;
   separateVirus(); gunItems(dt); stepBullets(dt);
   if(G.bots.some(b=>b.gone)) G.bots=G.bots.filter(b=>!b.gone);
-  for(const b of G.bots){ if(b.dead||b.team===G.team) continue; if(hyp(b.x-p.x,b.y-p.y)<p.r+b.r+8 && G.time>=(G.spawnProtect||0)){ G.hp-=48*dt; G.hurtFlash=0.3; } }   // 怪物近战
+  let near=1e9;
+  for(const b of G.bots){ if(b.dead||b.team===G.team) continue; const d=hyp(b.x-p.x,b.y-p.y); if(d<near) near=d;
+    if(d<p.r+b.r+8 && G.time>=(G.spawnProtect||0)){ G.hp-=48*dt; G.hurtFlash=0.3; if(!SND._scared){ SND._scared=true; sfx.scare(); } } }
+  dangerBeat(clamp(1-near/640,0,1));
+  if(near<300 && G.time>=(G._growlNext||0)){ G._growlNext=G.time+1.4+Math.random(); sfx.growl(); }
   const mon=G.bots.filter(b=>!b.dead&&!b.gone).length;
   if(mon<HORROR_MONSTERS && G.time>=(G._monNext||0)){ spawnMonster(); G._monNext=G.time+4; }   // 怪物不断补充
   if(G.hp<=0) return gameOver("caught");
   if(G.time>=G.horrorEnd) return gameOver("survived");
 }
 /* -------- 🎭 庄园逃生（第五人格式） -------- */
-function seedIdentity(){ G.team="blue"; G.maxHp=120; G.hp=120; G.playerDead=false; G.weapon="pistol"; G.spawnProtect=3;
-  G.bots=[]; G.items=[]; G.machines=[]; G.gates=[]; G.gv=null; G.escaped=false;
+function seedIdentity(){ G.team="blue"; G.maxHp=110; G.hp=110; G.playerDead=false; G.playerDown=false; G.weapon="pistol"; G.spawnProtect=3;
+  G.bots=[]; G.items=[]; G.machines=[]; G.gates=[]; G.gv=null; G.escaped=false; SND._scared=false;
   const P=G.player; P.x=WORLD_W*0.5; P.y=WORLD_H*0.8; P.val=5; P.r=radiusOf(5); P.vx=P.vy=0;
-  for(let i=0;i<ID_MACHINES;i++){ const s=freeXY(20); G.machines.push({x:s.x,y:s.y,r:60,prog:0,done:false}); }
-  for(let i=0;i<ID_SURVIVORS;i++){ const s=freeXY(20); G.bots.push({team:"blue", survivor:true, ico:"🙂", x:s.x,y:s.y, vx:0,vy:0, r:radiusOf(5), val:5, hp:120, dead:false, t:Math.random()*3, dir:Math.random()*6.28, fighter:false, zombie:false}); }
-  // 监管者
-  G.bots.push({team:"red", melee:true, hunter:true, ico:"👺", x:WORLD_W*0.5, y:WORLD_H*0.1, vx:0,vy:0, r:radiusOf(9), val:9, hp:9999, dead:false, weapon:null, mspd:1.32, t:0, dir:0, fighter:false, zombie:false});
-  // 大门（两侧，破译够了才开）
-  G.gates.push({x:40, y:WORLD_H*0.5, r:70, open:false}); G.gates.push({x:WORLD_W-40, y:WORLD_H*0.5, r:70, open:false});
+  for(let i=0;i<ID_MACHINES;i++){ const s=freeXY(20); G.machines.push({x:s.x,y:s.y,r:62,prog:0,done:false}); }
+  for(let i=0;i<ID_SURVIVORS;i++){ const s=freeXY(20); G.bots.push({team:"blue", survivor:true, ico:"🙂", x:s.x,y:s.y, vx:0,vy:0, r:radiusOf(5), val:5, hp:110, dead:false, downed:false, downT:0, rev:0, t:Math.random()*3, dir:Math.random()*6.28, fighter:false, zombie:false}); }
+  G.bots.push({team:"red", melee:true, hunter:true, ico:"👺", x:WORLD_W*0.5, y:WORLD_H*0.08, vx:0,vy:0, r:radiusOf(10), val:10, hp:9999, dead:false, weapon:null, mspd:1.22, lungeUntil:0, lungeCd:0, t:0, dir:0, fighter:false, zombie:false});   // 监管者
+  G.gates.push({x:46, y:WORLD_H*0.5, r:72, open:false}); G.gates.push({x:WORLD_W-46, y:WORLD_H*0.5, r:72, open:false});
 }
-function idSurvivorsLeft(){ let n=G.playerDead||G.escaped?0:1; for(const b of G.bots){ if(b.survivor&&!b.dead&&!b.gone) n++; } return n; }
-function updateIdBot(b,dt){ if(b.dead||b.gone) return; const p=G.player; b.t-=dt; if(b.t<=0){ b.t=1+Math.random()*2; b.dir=Math.random()*6.28; }
-  const hunter=G.bots.find(z=>z.hunter&&!z.dead);
-  if(b.hunter){   // 监管者：扑向最近的求生者（含玩家）
+function idSurvivorsLeft(){ let n=(G.playerDead||G.escaped)?0:1; for(const b of G.bots){ if(b.survivor&&!b.gone) n++; } return n; }
+function updateIdBot(b,dt){ if(b.gone) return; const p=G.player; b.t-=dt; if(b.t<=0){ b.t=1+Math.random()*2; b.dir=Math.random()*6.28; }
+  if(b.hunter){   // 👺 监管者：锁定最近可追的求生者，靠近突进(lunge)
     let tx=null,ty=null,td=1e9;
-    if(!G.playerDead&&!G.escaped){ const d=hyp(p.x-b.x,p.y-b.y); if(d<td){td=d;tx=p.x;ty=p.y;} }
-    for(const s of G.bots){ if(s.survivor&&!s.dead&&!s.gone){ const d=hyp(s.x-b.x,s.y-b.y); if(d<td){td=d;tx=s.x;ty=s.y;} } }
+    if(!G.playerDead&&!G.escaped){ const d=hyp(p.x-b.x,p.y-b.y)*(G.playerDown?1.5:1); if(d<td){td=d;tx=p.x;ty=p.y;} }
+    for(const s of G.bots){ if(s.survivor&&!s.gone){ const d=hyp(s.x-b.x,s.y-b.y)*(s.downed?1.5:1); if(d<td){td=d;tx=s.x;ty=s.y;} } }
     let ax=Math.cos(b.dir), ay=Math.sin(b.dir); if(tx!=null){ const ex=tx-b.x,ey=ty-b.y,ed=hyp(ex,ey)||1; ax=ex/ed; ay=ey/ed; }
-    const ms=GF_BOT_SPD*b.mspd; b.vx+=(ax*ms-b.vx)*0.1; b.vy+=(ay*ms-b.vy)*0.1; b.x+=b.vx*dt; b.y+=b.vy*dt; clampEntity(b,10); collideObstacles(b);
-    if(tx!=null){ if(!G.playerDead&&!G.escaped&&hyp(p.x-b.x,p.y-b.y)<p.r+b.r+8 && G.time>=(G.spawnProtect||0)){ G.hp-=40*dt; G.hurtFlash=0.3; }
-      for(const s of G.bots){ if(s.survivor&&!s.dead&&hyp(s.x-b.x,s.y-b.y)<s.r+b.r+8){ s.hp-=40*dt; if(s.hp<=0) s.gone=true; } } }
+    if(td<210 && G.time>=b.lungeCd){ b.lungeUntil=G.time+0.45; b.lungeCd=G.time+2.2; }
+    const ms=GF_BOT_SPD*b.mspd*(G.time<b.lungeUntil?1.8:1); b.vx+=(ax*ms-b.vx)*0.12; b.vy+=(ay*ms-b.vy)*0.12; b.x+=b.vx*dt; b.y+=b.vy*dt; clampEntity(b,10); collideObstacles(b);
+    if(!G.playerDead&&!G.escaped&&!G.playerDown&&hyp(p.x-b.x,p.y-b.y)<p.r+b.r+8 && G.time>=(G.spawnProtect||0)){ G.hp-=46*dt; G.hurtFlash=0.4; }
+    if(G.playerDown&&hyp(p.x-b.x,p.y-b.y)<p.r+b.r+10) G.playerDead=true;   // 补刀倒地玩家
+    for(const s of G.bots){ if(!s.survivor||s.gone) continue; const d=hyp(s.x-b.x,s.y-b.y);
+      if(!s.downed && d<s.r+b.r+8){ s.hp-=46*dt; if(s.hp<=0){ s.downed=true; s.downT=G.time; s.rev=0; } }
+      else if(s.downed && d<s.r+b.r+10){ s.gone=true; } }   // 补刀倒地队友
     return; }
-  // 求生者：躲监管者 → 破译最近未完成密码机 →（开门后）冲最近的门
-  let ax=0,ay=0;
-  if(hunter){ const ex=b.x-hunter.x, ey=b.y-hunter.y, ed=hyp(ex,ey); if(ed<300&&ed>0){ ax+=ex/ed*1.6; ay+=ey/ed*1.6; } }
-  const gatesOpen=G.gates.some(g=>g.open);
-  if(gatesOpen){ let gt=null,gd=1e9; for(const g of G.gates){ if(!g.open) continue; const d=hyp(g.x-b.x,g.y-b.y); if(d<gd){gd=d;gt=g;} } if(gt){ const ex=gt.x-b.x,ey=gt.y-b.y,ed=hyp(ex,ey)||1; ax+=ex/ed; ay+=ey/ed; if(ed<gt.r){ b.gone=true; return; } } }
-  else { let m=null,md=1e9; for(const mm of G.machines){ if(mm.done) continue; const d=hyp(mm.x-b.x,mm.y-b.y); if(d<md){md=d;m=mm;} }
-    if(m){ const ex=m.x-b.x,ey=m.y-b.y,ed=hyp(ex,ey)||1; if(ed>m.r*0.6){ ax+=ex/ed; ay+=ey/ed; } if(ed<m.r){ if(!hunter||hyp(hunter.x-m.x,hunter.y-m.y)>m.r) m.prog=Math.min(100,m.prog+dt*11); } } }
-  if(ax||ay){ const s=GF_BOT_SPD*1.05; b.vx+=(ax*s-b.vx)*0.1; b.vy+=(ay*s-b.vy)*0.1; }
+  if(b.downed){ b.vx*=0.8; b.vy*=0.8; if(G.time-b.downT>16) b.gone=true; return; }   // 倒地16秒无人救→淘汰
+  const hunter=G.bots.find(z=>z.hunter);
+  let ax=0,ay=0; const hd=hunter?hyp(b.x-hunter.x,b.y-hunter.y):1e9;
+  if(hunter && hd<320){ ax+=(b.x-hunter.x)/(hd||1)*2; ay+=(b.y-hunter.y)/(hd||1)*2; }   // 躲监管者优先
+  else {
+    let dn=null,dnd=1e9; for(const s of G.bots){ if(s!==b&&s.survivor&&s.downed&&!s.gone){ const d=hyp(s.x-b.x,s.y-b.y); if(d<dnd){dnd=d;dn=s;} } }
+    if(G.playerDown){ const d=hyp(p.x-b.x,p.y-b.y); if(d<dnd){ dnd=d; dn="P"; } }
+    if(dn && dnd<900){ const t=(dn==="P")?p:dn; const ex=t.x-b.x,ey=t.y-b.y,ed=hyp(ex,ey)||1; ax+=ex/ed; ay+=ey/ed;   // 去救人
+      if(ed<(dn==="P"?p.r:dn.r)+b.r+14){ if(dn==="P"){ G._pRev=(G._pRev||0)+dt; if(G._pRev>=1.6){ G.playerDown=false; G.hp=Math.max(G.hp,55); G._pRev=0; toast("💪 "+tr("被队友救起！")); } } else { dn.rev+=dt; if(dn.rev>=1.6){ dn.downed=false; dn.hp=55; } } } }
+    else { const gatesOpen=G.gates.some(g=>g.open);
+      if(gatesOpen){ let gt=null,gd=1e9; for(const g of G.gates){ if(!g.open) continue; const d=hyp(g.x-b.x,g.y-b.y); if(d<gd){gd=d;gt=g;} } if(gt){ const ex=gt.x-b.x,ey=gt.y-b.y,ed=hyp(ex,ey)||1; ax+=ex/ed; ay+=ey/ed; if(ed<gt.r){ b.gone=true; return; } } }
+      else { let m=null,md=1e9; for(const mm of G.machines){ if(mm.done) continue; const d=hyp(mm.x-b.x,mm.y-b.y); if(d<md){md=d;m=mm;} }
+        if(m){ const ex=m.x-b.x,ey=m.y-b.y,ed=hyp(ex,ey)||1; if(ed>m.r*0.6){ ax+=ex/ed; ay+=ey/ed; } if(ed<m.r && (!hunter||hyp(hunter.x-m.x,hunter.y-m.y)>m.r)) m.prog=Math.min(100,m.prog+dt*10); } } }
+  }
+  if(ax||ay){ const s=GF_BOT_SPD*1.08; b.vx+=(ax*s-b.vx)*0.1; b.vy+=(ay*s-b.vy)*0.1; }
   b.x+=b.vx*dt; b.y+=b.vy*dt; clampEntity(b,10); collideObstacles(b); }
 function identityStep(dt){ const p=G.player;
   separateVirus();
   for(const b of G.bots) updateIdBot(b,dt);
   if(G.bots.some(b=>b.gone)) G.bots=G.bots.filter(b=>!b.gone);
-  // 玩家破译（站在未完成密码机上、附近无监管者）
-  const hunter=G.bots.find(z=>z.hunter&&!z.dead);
-  if(!G.playerDead&&!G.escaped) for(const m of G.machines){ if(m.done) continue; if(hyp(m.x-p.x,m.y-p.y)<m.r){ if(!hunter||hyp(hunter.x-m.x,hunter.y-m.y)>m.r){ m.prog=Math.min(100,m.prog+dt*16); } } }
-  for(const m of G.machines){ if(!m.done && m.prog>=100){ m.done=true; toast("⚙️ "+tr("密码机破译完成！")+" "+G.machines.filter(x=>x.done).length+"/"+ID_MACHINES); } }
+  const hunter=G.bots.find(z=>z.hunter);
+  const hdist=hunter?hyp(hunter.x-p.x,hunter.y-p.y):1e9, danger=clamp(1-hdist/560,0,1); dangerBeat(danger);   // 恐怖气氛：心跳/红屏
+  if(danger>0.72 && !SND._scared){ SND._scared=true; sfx.scare(); } if(danger<0.4) SND._scared=false;
+  if(hunter && hdist<340 && G.time>=(G._growlNext||0)){ G._growlNext=G.time+1.6+Math.random(); sfx.growl(); }
+  // 玩家破译（未倒地、站密码机上、监管者不在旁）
+  if(!G.playerDead&&!G.escaped&&!G.playerDown) for(const m of G.machines){ if(m.done) continue; if(hyp(m.x-p.x,m.y-p.y)<m.r){ if(!hunter||hyp(hunter.x-m.x,hunter.y-m.y)>m.r){ const b4=m.prog; m.prog=Math.min(100,m.prog+dt*15); if(Math.floor(m.prog/20)>Math.floor(b4/20)) sfx.decode(); } } }
+  for(const m of G.machines){ if(!m.done && m.prog>=100){ m.done=true; sfx.win(); toast("⚙️ "+tr("密码机破译完成！")+" "+G.machines.filter(x=>x.done).length+"/"+ID_MACHINES); } }
   const doneN=G.machines.filter(m=>m.done).length;
-  if(doneN>=ID_MACHINES && !G.gates[0].open){ for(const g of G.gates) g.open=true; toast("🚪 "+tr("大门已通电，快逃！")); }
-  // 玩家逃出
-  if(!G.escaped && !G.playerDead){ for(const g of G.gates){ if(g.open && hyp(g.x-p.x,g.y-p.y)<g.r){ G.escaped=true; return gameOver("escaped"); } } }
-  if(!G.playerDead && G.hp<=0){ G.playerDead=true; return gameOver("caught"); }
-  if(idSurvivorsLeft()===0) return gameOver("caught");   // 全员被抓
+  if(doneN>=ID_MACHINES && !G.gates[0].open){ for(const g of G.gates) g.open=true; sfx.win(); toast("🚪 "+tr("大门已通电，快逃！")); }
+  if(!G.playerDead&&!G.escaped&&!G.playerDown){ for(const g of G.gates){ if(g.open && hyp(g.x-p.x,g.y-p.y)<g.r){ G.escaped=true; return gameOver("escaped"); } } }
+  if(!G.playerDead && !G.playerDown && G.hp<=0){ G.playerDown=true; G._downAt=G.time; G._pRev=0; toast("🩸 "+tr("你被击倒！等队友救援")); }
+  if(G.playerDown && G.time-(G._downAt||0)>16) G.playerDead=true;   // 太久没被救 → 被抓
+  if(G.playerDead) return gameOver("caught");
+  if(idSurvivorsLeft()===0) return gameOver("caught");   // 全员被抓/倒地淘汰
 }
 /* -------- 🦠 病毒模式 -------- */
 function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
@@ -925,7 +987,7 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
   if(G.keyx||G.keyy){ mx=G.keyx; my=G.keyy; const m=hyp(mx,my); if(m>1){ mx/=m; my/=m; }   // 操控杆/按键：可变速（推得越远越快）
     if(G._joy){ G.aimX=p.x+mx*220; G.aimY=p.y+my*220; } }   // 操控杆方向也用于开火朝向
   else if(G.moving){ const dx=G.aimX-p.x, dy=G.aimY-p.y, d=hyp(dx,dy); if(d>5){ mx=dx/d; my=dy/d; } }
-  if(isTeamMode() && G.playerDead){ mx=0; my=0; }
+  if(isTeamMode() && (G.playerDead||G.playerDown)){ mx=0; my=0; }
   let maxs=205*(1-Math.min(0.42,Math.log10(p.val+1)*0.045))*(G.dashUntil>G.time?2.15:1)*p.speedMul*(G.sprint?SPRINT_MUL:1)*((p.boostUntil||0)>G.time?SPEED_BOOST:1)*(G.zombie?ZOMBIE_SPEED*(G.zspd||1):1)*(G.riding?RIDE_MUL:1)*(G.zombie&&inShelter(p.x,p.y)?SHELTER_ZSLOW:1);
   if(G.gv) maxs=GV_TYPES[G.gv.type].spd;   // 🛡️载具移动速度
   p.vx+=(mx*maxs-p.vx)*0.16; p.vy+=(my*maxs-p.vy)*0.16;
@@ -1018,6 +1080,8 @@ function gameOver(cause){ if(G.over) return; G.over=true; G.running=false; G.dea
     : cause==="room"?tr("被困在隐藏房间！") : surv?(LANG==="en"?"WIPED OUT":"被毒圈吞没") : tr("被吞噬了！");
   if(cause==="basu") document.getElementById("overEn").textContent="SCREEN DOMINATED";
   if(G.mode==="virus") document.getElementById("overEn").textContent=tr("存活")+" "+Math.floor(G.survTime||0)+"s";
+  const won=(cause==="basu"||cause==="domination"||cause==="cleared"||cause==="gf_win"||cause==="survived"||cause==="escaped");
+  if(cause==="caught"||cause==="zombie") sfx.scare(); (won?sfx.win:sfx.lose)();
   document.getElementById("overOv").classList.remove("hidden");
 }
 
@@ -1140,9 +1204,11 @@ function render(){ if(!G) return; const p=G.player;
   const gfr=isTeamMode();
   for(const b of G.bots){ if(b.x<camx-80||b.x>camx+VW/zoom+80||b.y<camy-80||b.y>camy+VH/zoom+80) continue;
     if(gfr){ if(b.dead||b.gone) continue;
-      ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,7); ctx.fillStyle=TEAM_COL[b.team]||"#7a2f3c"; ctx.fill();
+      ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,7); ctx.fillStyle=b.downed?"#5a3a3a":(TEAM_COL[b.team]||"#7a2f3c"); ctx.fill();
       ctx.lineWidth=2; ctx.strokeStyle=(b.monster||b.hunter)?"#ff5b6e":"rgba(255,255,255,.35)"; ctx.stroke();
-      ctx.font="900 "+Math.round(b.r*1.4)+"px sans-serif"; ctx.fillText(b.ico||"👤", b.x, b.y); continue; }
+      ctx.font="900 "+Math.round(b.r*1.4)+"px sans-serif"; ctx.fillText(b.downed?"🩸":(b.ico||"👤"), b.x, b.y);
+      if(b.downed){ ctx.fillStyle="rgba(255,255,255,.85)"; ctx.fillRect(b.x-b.r,b.y-b.r-6,b.r*2*Math.min(1,(b.rev||0)/1.6),4); }
+      continue; }
     ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,7); ctx.fillStyle=colorFor(b); ctx.fill();
     ctx.lineWidth=b.boss?4:2; ctx.strokeStyle=b.boss?"#ffcf3a":"rgba(255,255,255,.25)"; ctx.stroke();
     if(!b.zombie && b.fighter){ ctx.font="900 "+Math.round(b.r*1.6)+"px sans-serif"; ctx.fillText(b.fico||"👮", b.x, b.y);   // 攻击兵种：显眼图标替换小球
@@ -1161,7 +1227,8 @@ function render(){ if(!G) return; const p=G.player;
   if(G.magnetUntil>G.time){ ctx.beginPath(); ctx.arc(p.x,p.y,330,0,7); ctx.strokeStyle="rgba(196,107,255,.25)"; ctx.lineWidth=2; ctx.stroke(); }
   if(gfr){ if(G.gv){ const gt=GV_TYPES[G.gv.type]; ctx.font="900 "+Math.round(G.gv.r*1.7)+"px sans-serif"; ctx.fillText(gt.ico,p.x,p.y);   // 🛡️载具
       const hf=Math.max(0,G.gv.hp/gt.hp); ctx.fillStyle="rgba(120,200,150,.9)"; ctx.fillRect(p.x-G.gv.r,p.y-G.gv.r-8,G.gv.r*2*hf,5); }
-    else ctx.font="900 "+Math.round(p.r*1.5)+"px sans-serif", ctx.fillText("🙂",p.x,p.y);
+    else { ctx.font="900 "+Math.round(p.r*1.5)+"px sans-serif"; ctx.fillText(G.playerDown?"🩸":"🙂",p.x,p.y);
+      if(G.playerDown){ const rv=Math.min(1,(G._pRev||0)/1.6); ctx.fillStyle="rgba(255,255,255,.9)"; ctx.fillRect(p.x-p.r,p.y-p.r-7,p.r*2*rv,4); } }
     if(G.time<(G.spawnProtect||0)){ ctx.beginPath(); ctx.arc(p.x,p.y,p.r+8,0,7); ctx.strokeStyle="rgba(255,255,255,.75)"; ctx.lineWidth=3; ctx.stroke(); } }
   else if(G.fighter && !G.zombie){ ctx.font="900 "+Math.round(p.r*1.5)+"px sans-serif"; ctx.fillText(FIGHTER_ICO[G.humanClass]||"👮",p.x,p.y);   // 玩家攻击兵种显眼图标
     ctx.fillStyle="#eaf1ff"; ctx.font="900 11px ui-monospace,monospace"; ctx.fillText(fmt(p.val),p.x,p.y+p.r-4); }
@@ -1188,6 +1255,10 @@ function render(){ if(!G) return; const p=G.player;
   // out-of-zone red vignette
   if(G.zone && hyp(p.x-G.zone.x,p.y-G.zone.y)>G.zone.r){ ctx.fillStyle="rgba(255,40,70,.16)"; ctx.fillRect(0,0,VW,VH); }
   if(G.hurtFlash>0){ ctx.fillStyle="rgba(255,40,70,"+Math.min(0.4,G.hurtFlash*0.7)+")"; ctx.fillRect(0,0,VW,VH); }
+  // 🫀 恐怖气氛：监管者/怪物近时红屏脉动
+  if((G.mode==="identity"||G.mode==="horror") && (G._terror||0)>0.25){ const pulse=0.5+0.5*Math.sin(G.time*7); const a=(G._terror-0.25)*0.5*(0.5+0.5*pulse);
+    ctx.fillStyle="rgba(180,10,30,"+a.toFixed(3)+")"; ctx.fillRect(0,0,VW,VH); }
+  if(G.mode==="identity" && (G.playerDown||G.playerDead)){ ctx.fillStyle="rgba(120,0,20,.28)"; ctx.fillRect(0,0,VW,VH); }
   // 🧟 准备期倒计时
   if(G.mode==="virus" && G.time<(G.graceUntil||0)){ const left=Math.ceil(G.graceUntil-G.time);
     ctx.textAlign="center"; ctx.fillStyle="#7bbf5a"; ctx.font="900 30px ui-monospace,monospace"; ctx.fillText("🧟 "+left, VW/2, 64+SAFE_TOP);
@@ -1243,7 +1314,7 @@ function hud(){ if(!G) return; document.getElementById("bignum").textContent=fmt
   } else if(G.mode==="identity"){ hw.style.display="block"; const frac=Math.max(0,G.hp/G.maxHp);
     document.getElementById("hpFill").style.width=(frac*100)+"%"; document.getElementById("hpFill").style.background="linear-gradient(90deg,#4a90ff,#8fc0ff)";
     const dn=G.machines.filter(m=>m.done).length;
-    document.getElementById("hpTxt").textContent=(G.playerDead?"💀 ":"🙂 ")+Math.ceil(Math.max(0,G.hp))+"/"+G.maxHp+" · ⚙️"+dn+"/"+ID_MACHINES+(G.gates&&G.gates[0]&&G.gates[0].open?" · 🚪"+tr("开门啦"):"")+" · 👺";
+    document.getElementById("hpTxt").textContent=(G.playerDead?"💀 ":G.playerDown?"🩸 ":"🙂 ")+Math.ceil(Math.max(0,G.hp))+"/"+G.maxHp+" · ⚙️"+dn+"/"+ID_MACHINES+" · 🙂"+G.bots.filter(b=>b.survivor&&!b.gone).length+(G.gates&&G.gates[0]&&G.gates[0].open?" · 🚪"+tr("开门啦"):"")+" · 👺";
   } else hw.style.display="none";
   const bb=document.getElementById("buildBar");
   if(G.mode==="virus" && G.architect){ bb.style.display="flex"; document.getElementById("brickTxt").textContent="🧱 "+Math.floor(G.bricks)+"/"+G.brickMax; }
@@ -1266,6 +1337,8 @@ function toWorld(cx,cy){ const p=G.player; const zoom=FIXED_ZOOM; let camx=p.x-V
 function pointerMove(cx,cy){ if(!G) return; const w=toWorld(cx,cy); G.aimX=w.x; G.aimY=w.y; }
 function canShootMode(){ return G && (G.mode==="gunfight" || G.mode==="horror" || (G.mode==="virus" && G.fighter)); }
 function bindInput(){
+  const wake=()=>{ sndInit(); sndResume(); };   // 首次手势解锁音频
+  window.addEventListener("pointerdown",wake,{once:false}); window.addEventListener("keydown",wake,{once:false});
   cv.addEventListener("mousemove",e=>{ pointerMove(e.clientX,e.clientY); G.moving=true; });
   cv.addEventListener("mousedown",e=>{ pointerMove(e.clientX,e.clientY); G.moving=true; if(canShootMode()){ G.firing=true; fireGun(); } });   // 点击=开火
   window.addEventListener("mouseup",e=>{ if(G) G.firing=false; });
@@ -1301,11 +1374,12 @@ const MODES=[
   {id:"gunfight",ico:"🔫", zh:"枪战模式", en:"Gunfight", d:"红蓝各50人开枪对战·某方清零即胜（阵地战/大乱战/人数战）"},
   {id:"horror",  ico:"🔦", zh:"恐怖模式", en:"Horror", d:"黑暗中怪物追杀·用枪械撑够90秒（怪会不断出现）"},
   {id:"identity",ico:"🎭", zh:"庄园逃生", en:"Manor Escape", d:"破译5台密码机·开大门逃生·躲开监管者（第五人格式）"},
+  {id:"soup",    ico:"🐢", zh:"海龟汤", en:"Turtle Soup", d:"AI汤主出题·你问是非题推理真相（和朋友一起玩）"},
 ];
 function buildModes(){ const box=document.getElementById("modeList"); if(!box) return; box.innerHTML="";
   MODES.forEach(m=>{ const el=document.createElement("div"); el.className="mode"+(m.pri?" pri":"");
     el.innerHTML=`<div class="mi">${m.ico}</div><div class="mt"><div class="mn">${LANG==="en"?m.en:m.zh}</div><div class="md">${tr(m.d)}</div></div>`;
-    el.onclick=()=> m.id==="virus"?openClassPicker():(m.id==="gunfight"?openGunPicker():startGame(m.id, mapSizeId)); box.appendChild(el); }); }
+    el.onclick=()=> m.id==="virus"?openClassPicker():(m.id==="gunfight"?openGunPicker():(m.id==="soup"?openSoup():startGame(m.id, mapSizeId))); box.appendChild(el); }); }
 function helpHTML(){ const en=LANG==="en";
   const H=t=>`<div style="font-weight:900;color:var(--gold);margin:11px 0 3px">${t}</div>`;
   const L=rows=>rows.map(r=>`<div style="margin:2px 0;color:#cdd6ee">• ${r}</div>`).join("");
@@ -1337,6 +1411,54 @@ function helpHTML(){ const en=LANG==="en";
 }
 function buildHelp(){ const b=document.getElementById("helpBody"); if(b) b.innerHTML=helpHTML(); }
 function openHelp(){ document.getElementById("startOv").classList.add("hidden"); buildHelp(); document.getElementById("helpOv").classList.remove("hidden"); }
+/* ==================== 🐢 海龟汤（AI 汤主·是非题推理） ==================== */
+const SOUP_PUZZLES=[
+  { q:"一名男子在海边餐厅点了一份「海龟汤」，喝了一口后回到家便自杀了。发生了什么？",
+    a:"多年前他与同伴海难漂流，饥饿时同伴说煮了『海龟汤』给他喝，其实那是死去船员的肉。今天他第一次尝到真正的海龟汤，发现味道完全不同，终于明白当年吃的是人肉，无法承受而自杀。",
+    hints:["和他的『过去』有关","他其实以前『喝过』海龟汤","当年那碗汤，并不是真的海龟汤"],
+    facts:[{kw:["以前","曾经","从前","过去","喝过"],r:"yes"},{kw:["味道","不一样","不同","一样","记忆"],r:"yes"},{kw:["海难","船难","遇难","漂流","海上","沉船"],r:"yes"},{kw:["同伴","船员","别人","尸体","肉"],r:"yes"},{kw:["中毒","下毒","毒"],r:"no"},{kw:["老板","餐厅","仇人"],r:"no"},{kw:["自己做的","他杀","被杀"],r:"no"}],
+    solve:[["人肉"],["同伴","肉"],["吃","人"],["死人","肉"]] },
+  { q:"女人买了一份和昨天一模一样的报纸，看完后却痛哭起来。为什么？",
+    a:"报纸上是寻人启事/讣告。她的亲人失踪，她每天买同一份报纸看寻人栏；今天上面登出的是找到遗体的消息。",
+    hints:["报纸上有一则特定的『讯息』","和她失踪/离开的『亲人』有关"],
+    facts:[{kw:["报纸","内容","讯息","消息","登","刊"],r:"yes"},{kw:["亲人","家人","失踪","寻人","找人","离开"],r:"yes"},{kw:["死","遗体","去世","讣告","坏消息"],r:"yes"},{kw:["中奖","彩票","开心事"],r:"no"},{kw:["她自己","犯罪"],r:"no"}],
+    solve:[["寻人"],["亲人","死"],["失踪","找到"],["讣告"]] },
+  { q:"房间里只有他一个人，他关了灯，然后就死了。为什么？",
+    a:"他是灯塔看守员。他关掉的是灯塔的灯，导致附近海域的船只失去指引触礁，而他所在的岛随后… 更常见版本：他是灯塔守卫，关灯后船只触礁，船上的人上岸后杀了他/或他因愧疚，但经典汤底是：关灯导致一艘船触礁沉没，他良心不安。",
+    hints:["那盏『灯』不普通","关灯会影响到『别人』","和大海/船有关"],
+    facts:[{kw:["灯塔","塔","海","船","航"],r:"yes"},{kw:["别人","船","影响","触礁","撞","沉"],r:"yes"},{kw:["普通","卧室","家里"],r:"no"},{kw:["自然死","生病","心脏病"],r:"no"},{kw:["鬼","超自然"],r:"no"}],
+    solve:[["灯塔"],["船","触礁"],["船","撞"]] },
+  { q:"他每天走同样的路上班。有一天下雨，他却提前一站下车走路，因此活了下来。为什么？",
+    a:"他平时坐到的那一站，那天发生了事故/爆炸/坍塌。下雨让他改变了习惯提前下车，恰好避开了灾难。",
+    hints:["和他『平常』会到的地方有关","那天那个地方发生了事"],
+    facts:[{kw:["平常","平时","习惯","往常"],r:"yes"},{kw:["事故","爆炸","灾难","坍塌","出事","危险"],r:"yes"},{kw:["下雨","天气","改变","提前"],r:"yes"},{kw:["凶手","他杀人"],r:"no"}],
+    solve:[["事故"],["爆炸"],["灾难"],["出事"]] },
+  { q:"男人在满是水的房间里死去，房间门窗紧闭，地上没有任何容器。为什么？",
+    a:"他是被『冰』杀的——凶手用一大块冰吊起或制造溺水环境，冰融化成水后不留容器痕迹；或他站在冰块上上吊，冰化后成谜。",
+    hints:["注意『水』是哪来的","水原本不是液体"],
+    facts:[{kw:["冰","冻","融化","化了","固体"],r:"yes"},{kw:["水","哪来","来源"],r:"yes"},{kw:["自来水","水龙头","下雨"],r:"no"},{kw:["淹死","溺"],r:"maybe"}],
+    solve:[["冰"],["冻"]] },
+  { q:"她笑着看完了整场演出，回到家却发现自己其实『看不见』。为什么？",
+    a:"她是盲人，去『听』演出（音乐会/相声）。她能享受声音带来的快乐，『看完』只是习惯用语；真正打动她的是听觉。（脑筋急转弯式）",
+    hints:["她是怎么『看』演出的？","她的感官和常人不同"],
+    facts:[{kw:["盲","看不见","眼睛","失明"],r:"yes"},{kw:["听","声音","音乐","耳朵"],r:"yes"},{kw:["电视","录像"],r:"no"}],
+    solve:[["盲"],["听"],["失明"]] },
+];
+const SOUP={ cur:null, hintI:0, log:[], solved:false };
+function soupNew(){ let i=Math.floor(Math.random()*SOUP_PUZZLES.length); if(SOUP.cur && SOUP_PUZZLES.length>1){ while(SOUP_PUZZLES[i]===SOUP.cur) i=Math.floor(Math.random()*SOUP_PUZZLES.length); }
+  SOUP.cur=SOUP_PUZZLES[i]; SOUP.hintI=0; SOUP.log=[]; SOUP.solved=false; soupRender(); }
+function soupRender(){ const s=document.getElementById("soupSurface"); if(s) s.textContent="🐢 "+SOUP.cur.q;
+  const box=document.getElementById("soupLog"); if(box){ box.innerHTML=SOUP.log.map(r=>`<div style="margin:3px 0"><span style="color:#8fb0ff">你：</span>${r.q} <span style="color:${r.c}">→ ${r.a}</span></div>`).join(""); box.scrollTop=box.scrollHeight; } }
+function soupAns(q){ const P=SOUP.cur; const t=(q||"").toLowerCase().replace(/\s|？|\?|吗|呢|。|，|,/g,"");
+  for(const grp of P.solve){ let all=true; for(const k of grp){ if(!t.includes(k)){ all=false; break; } } if(all) return {a:"🎉 你猜到汤底了！",c:"#31e07a",win:true}; }
+  for(const f of P.facts){ for(const k of f.kw){ if(t.includes(k)){ return f.r==="yes"?{a:"是 ✅",c:"#31e07a"}:f.r==="no"?{a:"不是 ❌",c:"#ff8f8f"}:{a:"算是吧 🤔",c:"#ffcf3a"}; } } }
+  return {a:"无关 / 不确定 ➖",c:"#93a0c4"}; }
+function soupAsk(){ const inp=document.getElementById("soupInput"); if(!inp) return; const q=inp.value.trim(); if(!q) return; inp.value="";
+  const r=soupAns(q); SOUP.log.push({q,a:r.a,c:r.c}); if(r.win && !SOUP.solved){ SOUP.solved=true; SOUP.log.push({q:"",a:"🥣 汤底：「"+SOUP.cur.a+"」",c:"#ffd76a"}); }
+  soupRender(); }
+function soupHint(){ if(SOUP.hintI>=SOUP.cur.hints.length){ SOUP.log.push({q:"",a:"（没有更多提示了，试试『揭晓汤底』）",c:"#93a0c4"}); } else { SOUP.log.push({q:"",a:"💡 提示"+(SOUP.hintI+1)+"："+SOUP.cur.hints[SOUP.hintI],c:"#ffcf3a"}); SOUP.hintI++; } soupRender(); }
+function soupReveal(){ SOUP.log.push({q:"",a:"🥣 汤底：「"+SOUP.cur.a+"」",c:"#ffd76a"}); SOUP.solved=true; soupRender(); }
+function openSoup(){ if(!SOUP.cur) soupNew(); else soupRender(); document.getElementById("startOv").classList.add("hidden"); document.getElementById("soupOv").classList.remove("hidden"); }
 function buildTalents(){ const box=document.getElementById("talentList"); if(!box) return; const coins=loadCoins();
   const cc=document.getElementById("talentCoins"); if(cc) cc.textContent=fmt(coins);
   box.innerHTML=TALENTS.map(t=>{ const l=talentLvl(t.id), cost=talentCost(t), maxed=cost==null, afford=!maxed&&coins>=cost;
@@ -1364,6 +1486,7 @@ function startGame(mode, sizeId, classId, asZombie){ applyMapSize(sizeId||mapSiz
   const go=document.getElementById("gunOv"); if(go) go.classList.add("hidden");
   const ho=document.getElementById("helpOv"); if(ho) ho.classList.add("hidden");
   const to=document.getElementById("talentOv"); if(to) to.classList.add("hidden");
+  const so=document.getElementById("soupOv"); if(so) so.classList.add("hidden");
   G=freshG(mode);
   if(mode==="virus"){ if(asZombie){ applyClass(G,"civilian"); seedVirusPeople(true); turnPlayerZombie(classId); } else { applyClass(G, classId||"civilian"); seedVirusPeople(); } }
   else if(mode==="gunfight"){ seedGunfight(classId||"chaos", "blue"); }
@@ -1434,5 +1557,6 @@ if(typeof window!=="undefined") window.__ne={ get G(){return G;}, startGame, upd
   seedShelters, inShelter, SHELTER_ZSLOW, updateBot,
   seedGunItems, teamSpawn, hurtPlayerGun, pointInObstacle, GV_TYPES, TANK_WEAPON, GF_HP, BULLET_SLOW,
   TALENTS, loadTalents, saveTalents, talentLvl, talentCost, buyTalent, applyTalents, loadCoins, saveCoins,
-  seedHorror, horrorStep, spawnMonster, seedIdentity, identityStep, updateIdBot, isTeamMode, isShootMode, HORROR_DUR, ID_MACHINES };
+  seedHorror, horrorStep, spawnMonster, seedIdentity, identityStep, updateIdBot, isTeamMode, isShootMode, HORROR_DUR, ID_MACHINES,
+  SOUP_PUZZLES, SOUP, soupNew, soupAns, openSoup, dangerBeat };
 </script>
