@@ -855,18 +855,20 @@ function updateBot(b,dt){ const p=G.player; b.t-=dt; if(b.t<=0){ b.t=1+Math.rand
         else { ax=dx/d*0.8; ay=dy/d*0.8; }
       }
     }
-    else {   // 人类：躲丧尸 + 靠近士兵(安全) + 往人少的方向
-      let ax2=0,ay2=0, sf=null,sfd=1e9, cx=0,cy=0,cn=0;
-      const grid=G._grid, bcx=Math.floor(b.x/NBR_CELL), bcy=Math.floor(b.y/NBR_CELL);   // 只扫描邻近网格
-      if(grid) for(let gx=bcx-1;gx<=bcx+1;gx++) for(let gy=bcy-1;gy<=bcy+1;gy++){ const arr=grid.get(gx*4096+gy); if(!arr) continue;
-        for(const o of arr){ if(o===b) continue; const ex=b.x-o.x, ey=b.y-o.y, ed=hyp(ex,ey); if(ed<=0) continue;
-          if(o.zombie){ if(ed<340){ ax2+=ex/ed*1.7; ay2+=ey/ed*1.7; } }
-          else { if(o.fighter && ed<360 && ed<sfd){ sfd=ed; sf=o; } if(ed<200){ cx+=o.x; cy+=o.y; cn++; } } } }
-      if(G.zombie){ const ex=b.x-p.x,ey=b.y-p.y,ed=hyp(ex,ey); if(ed<360&&ed>0){ ax2+=ex/ed*1.7; ay2+=ey/ed*1.7; } }   // 躲玩家丧尸
-      if(sf){ const ex=sf.x-b.x,ey=sf.y-b.y,ed=hyp(ex,ey)||1; ax2+=ex/ed*0.9; ay2+=ey/ed*0.9; }   // 往士兵靠
-      if(cn){ const mx=cx/cn,my=cy/cn, ex=b.x-mx,ey=b.y-my, ed=hyp(ex,ey)||1; ax2+=ex/ed*0.5; ay2+=ey/ed*0.5; }   // 往人少处
-      if(ax2||ay2){ ax=ax2; ay=ay2; }
-      if(b.fighter && G.alarm && G.time<G.alarm.t){ const ex=G.alarm.x-b.x, ey=G.alarm.y-b.y, ed=hyp(ex,ey)||1; if(ed>b.r+40){ ax=ex/ed*2; ay=ey/ed*2; } }   // 🚨警报：所有警察赶往袭击点
+    else {   // 人类：躲丧尸 + 靠近士兵(安全) + 往人少的方向（转向每~0.13秒重算一次，节省性能）
+      if(b._stNext==null || G.time>=b._stNext){ b._stNext=G.time+0.10+Math.random()*0.06;
+        let ax2=0,ay2=0, sf=null,sfd=1e9, cx=0,cy=0,cn=0;
+        const grid=G._grid, bcx=Math.floor(b.x/NBR_CELL), bcy=Math.floor(b.y/NBR_CELL);   // 只扫描邻近网格
+        if(grid) for(let gx=bcx-1;gx<=bcx+1;gx++) for(let gy=bcy-1;gy<=bcy+1;gy++){ const arr=grid.get(gx*4096+gy); if(!arr) continue;
+          for(const o of arr){ if(o===b) continue; const ex=b.x-o.x, ey=b.y-o.y, ed=hyp(ex,ey); if(ed<=0) continue;
+            if(o.zombie){ if(ed<340){ ax2+=ex/ed*1.7; ay2+=ey/ed*1.7; } }
+            else { if(o.fighter && ed<360 && ed<sfd){ sfd=ed; sf=o; } if(ed<200){ cx+=o.x; cy+=o.y; cn++; } } } }
+        if(G.zombie){ const ex=b.x-p.x,ey=b.y-p.y,ed=hyp(ex,ey); if(ed<360&&ed>0){ ax2+=ex/ed*1.7; ay2+=ey/ed*1.7; } }   // 躲玩家丧尸
+        if(sf){ const ex=sf.x-b.x,ey=sf.y-b.y,ed=hyp(ex,ey)||1; ax2+=ex/ed*0.9; ay2+=ey/ed*0.9; }   // 往士兵靠
+        if(cn){ const mx=cx/cn,my=cy/cn, ex=b.x-mx,ey=b.y-my, ed=hyp(ex,ey)||1; ax2+=ex/ed*0.5; ay2+=ey/ed*0.5; }   // 往人少处
+        if(b.fighter && G.alarm && G.time<G.alarm.t){ const ex=G.alarm.x-b.x, ey=G.alarm.y-b.y, ed=hyp(ex,ey)||1; if(ed>b.r+40){ ax2=ex/ed*2; ay2=ey/ed*2; } }   // 🚨警报：所有警察赶往袭击点
+        b._sx=ax2; b._sy=ay2; }
+      if(b._sx||b._sy){ ax=b._sx; ay=b._sy; }
     }
   }
   else if(b.toRoom && G.room && G.room.active){ const rx=G.room.cx-b.x, ry=G.room.cy-b.y, rd=hyp(rx,ry)||1; ax=rx/rd*1.7; ay=ry/rd*1.7; }
@@ -1270,8 +1272,8 @@ function bindInput(){
     clearTimeout(G._spT); G._spT=setTimeout(()=>{ if(G&&G._joy) G.sprint=true; },320); },{passive:false});   // 长按加速
   cv.addEventListener("touchmove",e=>{ e.preventDefault(); if(!G._joy) return;
     for(const t of e.changedTouches){ if(t.identifier===G._joy.id){ G._joy.x=t.clientX; G._joy.y=t.clientY; break; } }
-    const dx=G._joy.x-G._joy.ox, dy=G._joy.y-G._joy.oy, mag=Math.hypot(dx,dy)||1, R=64, s=Math.min(1,mag/R);
-    G.keyx=dx/mag*s; G.keyy=dy/mag*s; },{passive:false});
+    const dx=G._joy.x-G._joy.ox, dy=G._joy.y-G._joy.oy, mag=Math.hypot(dx,dy)||1, R=64, DZ=9;   // 死区，防手指微动漂移
+    if(mag<DZ){ G.keyx=0; G.keyy=0; } else { const s=Math.min(1,(mag-DZ)/(R-DZ)); G.keyx=dx/mag*s; G.keyy=dy/mag*s; } },{passive:false});
   cv.addEventListener("touchend",e=>{ e.preventDefault();
     for(const t of e.changedTouches){ if(G._joy && t.identifier===G._joy.id){ G._joy=null; G.keyx=0; G.keyy=0; G.moving=false; G.sprint=false; clearTimeout(G._spT); } } },{passive:false});
   window.addEventListener("keydown",e=>{ if(!G) return; const k=e.key.toLowerCase();
