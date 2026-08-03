@@ -1,23 +1,24 @@
 <!-- 《数字吞噬 / Number Eater》 —— agar 式吞噬成长 · 中/EN · 单文件 · 本地存档 -->
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <title>数字吞噬 · Number Eater</title>
 <style>
-  :root{ --ink:#eef4ff; --muted:#93a0c4; --line:#26305a; --gold:#ffcf3a; --green:#31e07a; --red:#ff5b6e; --blue:#4a90ff; --mag:#c46bff; }
+  :root{ --ink:#eef4ff; --muted:#93a0c4; --line:#26305a; --gold:#ffcf3a; --green:#31e07a; --red:#ff5b6e; --blue:#4a90ff; --mag:#c46bff;
+    --sat:env(safe-area-inset-top,0px); --sar:env(safe-area-inset-right,0px); --sab:env(safe-area-inset-bottom,0px); --sal:env(safe-area-inset-left,0px); }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;height:100%;overflow:hidden;background:#070a16;color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;-webkit-user-select:none;user-select:none;touch-action:none;}
   #cv{display:block;position:fixed;inset:0;width:100%;height:100%;}
   /* HUD */
-  #hud{position:fixed;top:0;left:0;right:0;display:flex;align-items:flex-start;justify-content:space-between;padding:8px 10px;pointer-events:none;gap:8px;}
+  #hud{position:fixed;top:0;left:0;right:0;display:flex;align-items:flex-start;justify-content:space-between;padding:calc(8px + var(--sat)) calc(10px + var(--sar)) 8px calc(10px + var(--sal));pointer-events:none;gap:8px;}
   .panel{background:rgba(12,16,34,.72);border:1px solid var(--line);border-radius:12px;padding:7px 11px;backdrop-filter:blur(4px);}
   #bignum{font-family:ui-monospace,monospace;font-weight:900;font-size:26px;line-height:1;color:#fff;text-shadow:0 0 14px rgba(74,144,255,.5);}
   #bigsub{font-size:11px;color:var(--muted);margin-top:3px;font-weight:700;}
   .lvpill{display:inline-block;background:var(--blue);color:#04122e;font-weight:900;font-size:11px;padding:1px 7px;border-radius:7px;}
   #rightHud{text-align:right;font-size:12px;font-weight:800;line-height:1.6;}
   #rightHud .co{color:var(--gold);} #rightHud .bt{color:var(--muted);font-weight:700;}
-  #combo{position:fixed;top:70px;left:50%;transform:translateX(-50%);font-family:ui-monospace,monospace;font-weight:900;
+  #combo{position:fixed;top:calc(70px + var(--sat));left:50%;transform:translateX(-50%);font-family:ui-monospace,monospace;font-weight:900;
     font-size:34px;color:var(--gold);text-shadow:0 2px 12px rgba(0,0,0,.6);opacity:0;transition:opacity .15s, transform .15s;pointer-events:none;}
   #combo.show{opacity:1;}
   /* skills */
@@ -29,7 +30,7 @@
   .sk.ready{border-color:var(--green);box-shadow:0 0 12px -2px var(--green);}
   .sk.active{border-color:var(--gold);box-shadow:0 0 14px -1px var(--gold);}
   /* corner buttons */
-  #corner{position:fixed;bottom:16px;right:10px;display:flex;flex-direction:column;gap:7px;pointer-events:auto;}
+  #corner{position:fixed;bottom:calc(16px + var(--sab));right:calc(10px + var(--sar));display:flex;flex-direction:column;gap:7px;pointer-events:auto;}
   .cbtn{background:rgba(14,18,38,.85);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-size:18px;padding:7px 10px;cursor:pointer;}
   #topleftBtns{position:fixed;top:8px;left:50%;transform:translateX(-50%);display:none;}
   /* overlays */
@@ -55,10 +56,11 @@
   .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #2b5cab;}
   .foot{position:fixed;bottom:6px;left:0;right:0;text-align:center;font-size:10px;color:#4a5480;pointer-events:none;}
   .tiny{background:rgba(14,18,38,.85);border:1px solid var(--line);border-radius:9px;color:var(--ink);font-size:12px;font-weight:800;padding:6px 11px;cursor:pointer;}
-  #langBtn{position:fixed;top:8px;right:10px;z-index:22;}
+  #langBtn{position:fixed;top:calc(8px + var(--sat));right:calc(10px + var(--sar));z-index:22;}
 </style>
 
 <canvas id="cv"></canvas>
+<div id="safeProbe" style="position:fixed;top:0;left:0;width:0;height:var(--sat);pointer-events:none;visibility:hidden"></div>
 
 <div id="hud">
   <div class="panel">
@@ -352,7 +354,7 @@ const ZCLASSES=[
 ];
 
 /* ==================== 状态 ==================== */
-let G=null, cv, ctx, DPR=1, VW=0, VH=0, raf=0, lastT=0;
+let G=null, cv, ctx, DPR=1, VW=0, VH=0, raf=0, lastT=0, SAFE_TOP=0;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const hyp=(x,y)=>Math.sqrt(x*x+y*y);   // 比 Math.hypot 快约10倍（大量距离计算的热点）
 function freshG(mode){ return {
@@ -1021,7 +1023,8 @@ function gameOver(cause){ if(G.over) return; G.over=true; G.running=false; G.dea
 
 /* ==================== 渲染 ==================== */
 function resize(){ DPR=Math.min(window.devicePixelRatio||1,2); VW=window.innerWidth; VH=window.innerHeight;
-  cv.width=VW*DPR; cv.height=VH*DPR; cv.style.width=VW+"px"; cv.style.height=VH+"px"; ctx.setTransform(DPR,0,0,DPR,0,0); }
+  cv.width=VW*DPR; cv.height=VH*DPR; cv.style.width=VW+"px"; cv.style.height=VH+"px"; ctx.setTransform(DPR,0,0,DPR,0,0);
+  try{ const pr=document.getElementById("safeProbe"); SAFE_TOP=Math.min(90, Math.max(0, pr?pr.getBoundingClientRect().height:0)); }catch(e){ SAFE_TOP=0; } }
 function colorFor(b){ const p=G.player;
   if(b.zombie) return "#4caf50";   // 丧尸绿
   if(b.fighter) return "#2f6df0";   // 攻击兵种：醒目蓝
@@ -1187,15 +1190,15 @@ function render(){ if(!G) return; const p=G.player;
   if(G.hurtFlash>0){ ctx.fillStyle="rgba(255,40,70,"+Math.min(0.4,G.hurtFlash*0.7)+")"; ctx.fillRect(0,0,VW,VH); }
   // 🧟 准备期倒计时
   if(G.mode==="virus" && G.time<(G.graceUntil||0)){ const left=Math.ceil(G.graceUntil-G.time);
-    ctx.textAlign="center"; ctx.fillStyle="#7bbf5a"; ctx.font="900 30px ui-monospace,monospace"; ctx.fillText("🧟 "+left, VW/2, 64);
-    ctx.fillStyle="rgba(180,220,180,.85)"; ctx.font="800 13px ui-monospace,monospace"; ctx.fillText(tr("丧尸出动倒计时·快准备"), VW/2, 88); }
+    ctx.textAlign="center"; ctx.fillStyle="#7bbf5a"; ctx.font="900 30px ui-monospace,monospace"; ctx.fillText("🧟 "+left, VW/2, 64+SAFE_TOP);
+    ctx.fillStyle="rgba(180,220,180,.85)"; ctx.font="800 13px ui-monospace,monospace"; ctx.fillText(tr("丧尸出动倒计时·快准备"), VW/2, 88+SAFE_TOP); }
   // 隐藏房间：箭头引导 + 倒计时
   if(R){ const inside=isInRoom(p), left=Math.ceil(R.closeAt-G.time);
     if(!inside){ const ang=Math.atan2(R.cy-p.y,R.cx-p.x), rad=Math.min(VW,VH)*0.3;
       ctx.save(); ctx.translate(VW/2+Math.cos(ang)*rad, VH/2+Math.sin(ang)*rad); ctx.rotate(ang);
       ctx.fillStyle="#ffcf3a"; ctx.beginPath(); ctx.moveTo(20,0); ctx.lineTo(-12,-12); ctx.lineTo(-12,12); ctx.closePath(); ctx.fill(); ctx.restore(); }
     ctx.fillStyle=(inside&&left<=ROOM_WARN)?"#ff5b6e":"#ffcf3a"; ctx.font="900 14px ui-monospace,monospace"; ctx.textAlign="center";
-    ctx.fillText("🚪 "+tr("隐藏房间")+" "+left+"s"+((inside&&left<=ROOM_WARN)?" · "+tr("快离开！"):""), VW/2, 40); }
+    ctx.fillText("🚪 "+tr("隐藏房间")+" "+left+"s"+((inside&&left<=ROOM_WARN)?" · "+tr("快离开！"):""), VW/2, 40+SAFE_TOP); }
   // 小地图
   { const mw=112, mh=Math.max(46,Math.round(mw*WORLD_H/WORLD_W)), mx=10, my=VH-mh-14, sx=mw/WORLD_W, sy=mh/WORLD_H;
     ctx.fillStyle="rgba(10,14,30,.72)"; ctx.fillRect(mx,my,mw,mh); ctx.strokeStyle="rgba(150,195,255,.7)"; ctx.lineWidth=1.5; ctx.strokeRect(mx,my,mw,mh);
