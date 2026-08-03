@@ -234,6 +234,7 @@ const TR={
   "你被击倒！等队友救援":"You're down! Wait for a rescue","被队友救起！":"Rescued by a teammate!",
   "海龟汤":"Turtle Soup","AI汤主出题·你问是非题推理真相（和朋友一起玩）":"AI host sets a riddle · ask yes/no questions to deduce the truth (play with friends)","提示":"Hint","揭晓汤底":"Reveal","换一题":"New riddle",
   "王者峡谷":"MOBA Rift","推塔MOBA·小兵/防御塔/草丛/野怪·摧毁敌方水晶获胜（王者荣耀式）":"Tower-push MOBA · minions/towers/bushes/jungle · destroy the enemy crystal to win","阵亡·5秒后回城复活":"Slain — respawning at base in 5s",
+  "胜利奖励":"Victory bonus",
   "🔦 你撑过来了！":"🔦 YOU SURVIVED!","🚪 逃出生天！":"🚪 ESCAPED!","👺 你被抓住了…":"👺 You were caught…",
   "移速 +5%/级":"Move speed +5%/lvl","最大血量 +12%/级":"Max HP +12%/lvl","吞噬吸收 +4%/级":"Absorb +4%/lvl","金币 +15%/级":"Coins +15%/lvl","感染掉血 -8%/级":"Infection −8%/lvl","子弹伤害 +8%/级":"Bullet damage +8%/lvl","技能冷却 -6%/级":"Skill cooldown −6%/lvl","解药更常出现 +20%/级":"More cures +20%/lvl",
   "免疫尾迹感染":"Immune to trail infection","移动速度 +35%":"Move speed +35%","血上限120·感染掉血 -30%":"120 max HP · infection −30%",
@@ -790,11 +791,11 @@ function updateIdBot(b,dt){ if(b.gone) return; const p=G.player; b.t-=dt; if(b.t
     let ax=Math.cos(b.dir), ay=Math.sin(b.dir); if(tx!=null){ const ex=tx-b.x,ey=ty-b.y,ed=hyp(ex,ey)||1; ax=ex/ed; ay=ey/ed; }
     if(td<210 && G.time>=b.lungeCd){ b.lungeUntil=G.time+0.45; b.lungeCd=G.time+2.2; }
     const ms=GF_BOT_SPD*b.mspd*(G.time<b.lungeUntil?1.8:1); b.vx+=(ax*ms-b.vx)*0.12; b.vy+=(ay*ms-b.vy)*0.12; b.x+=b.vx*dt; b.y+=b.vy*dt; clampEntity(b,10); collideObstacles(b);
-    if(!G.playerDead&&!G.escaped&&!G.playerDown&&hyp(p.x-b.x,p.y-b.y)<p.r+b.r+8 && G.time>=(G.spawnProtect||0)){ G.hp-=46*dt; G.hurtFlash=0.4; }
-    if(G.playerDown&&hyp(p.x-b.x,p.y-b.y)<p.r+b.r+10) G.playerDead=true;   // 补刀倒地玩家
+    if(!G.playerDead&&!G.escaped&&!G.playerDown&&hyp(p.x-b.x,p.y-b.y)<p.r+b.r+20 && G.time>=(G.spawnProtect||0)){ G.hp-=48*dt; G.hurtFlash=0.4; }
+    if(G.playerDown&&hyp(p.x-b.x,p.y-b.y)<p.r+b.r+22) G.playerDead=true;   // 补刀倒地玩家
     for(const s of G.bots){ if(!s.survivor||s.gone) continue; const d=hyp(s.x-b.x,s.y-b.y);
-      if(!s.downed && d<s.r+b.r+8){ s.hp-=46*dt; if(s.hp<=0){ s.downed=true; s.downT=G.time; s.rev=0; } }
-      else if(s.downed && d<s.r+b.r+10){ s.gone=true; } }   // 补刀倒地队友
+      if(!s.downed && d<s.r+b.r+20){ s.hp-=48*dt; if(s.hp<=0){ s.downed=true; s.downT=G.time; s.rev=0; } }
+      else if(s.downed && d<s.r+b.r+22){ s.gone=true; } }   // 补刀倒地队友
     return; }
   if(b.downed){ b.vx*=0.8; b.vy*=0.8; if(G.time-b.downT>16) b.gone=true; return; }   // 倒地16秒无人救→淘汰
   const hunter=G.bots.find(z=>z.hunter);
@@ -1135,7 +1136,9 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
   ensureBots();
 }
 
+const WIN_BONUS={basu:200, domination:300, cleared:350, gf_win:280, survived:320, escaped:340};   // 每个模式胜利的金币奖励
 function gameOver(cause){ if(G.over) return; G.over=true; G.running=false; G.deathCause=cause;
+  const winBonus=WIN_BONUS[cause]||0; if(winBonus){ G.coins=(G.coins||0)+winBonus; toast("🏆 "+tr("胜利奖励")+" +"+winBonus+" 🪙"); }
   const v=G.player.val; const nb=v>loadBest(); saveBest(v); saveBoard(v,G.mode); saveCoins(loadCoins()+G.coins);
   document.getElementById("finalNum").textContent=fmt(v);
   document.getElementById("finalLv").textContent=G.level;
@@ -1530,6 +1533,36 @@ const SOUP_PUZZLES=[
     hints:["她是怎么『看』演出的？","她的感官和常人不同"],
     facts:[{kw:["盲","看不见","眼睛","失明"],r:"yes"},{kw:["听","声音","音乐","耳朵"],r:"yes"},{kw:["电视","录像"],r:"no"}],
     solve:[["盲"],["听"],["失明"]] },
+  { q:"一个住在公寓 30 楼的男人，每天早上都坐电梯直接下到一楼去上班。可是每天下班回来，他只坐电梯到 25 楼，然后走楼梯爬上剩下的五层；只有在下雨天、或电梯里刚好有别人的时候，他才会一路坐到 30 楼。这是为什么？",
+    a:"这个男人是个侏儒（身材非常矮小）。电梯里的楼层按钮，他只够得到最低的那排——早上下楼按『1 楼』没问题；晚上回来他想按『30』却够不着，最高只能按到 25，于是只好走上去。下雨天他带着伞，能用伞尖顶到 30 的按钮；电梯里有别人时，他就请人帮忙按。",
+    hints:["和这个男人的『身体』有关","关键在于他能不能『够到』某样东西","下雨天他手里多了一样东西"],
+    facts:[{kw:["矮","侏儒","身高","个子","够不到","够不着","按钮","按不到"],r:"yes"},{kw:["伞","下雨","雨伞","顶"],r:"yes"},{kw:["别人","帮忙","请人","帮按"],r:"yes"},{kw:["害怕","恐高","锻炼","减肥","运动"],r:"no"},{kw:["电梯坏","故障","坏了"],r:"no"},{kw:["鬼","超自然"],r:"no"}],
+    solve:[["矮"],["侏儒"],["个子"],["够不","按钮"]] },
+  { q:"茫茫沙漠的正中央，躺着一具男人的尸体。他身上没有伤口，附近没有脚印，也没有车辙，只有他背上背着的一个背包——而那个背包，从来没有被打开过。他到底是怎么死的？",
+    a:"那个『背包』其实是降落伞。他从飞机上跳下时，降落伞没能打开（故障或忘记拉），于是他直直坠落，摔死在沙漠中央。这也解释了为什么周围没有脚印、没有车辙——他是从天上掉下来的。",
+    hints:["注意那个『背包』到底是什么","他不是走着或开车进沙漠的","为什么周围没有任何痕迹？"],
+    facts:[{kw:["降落伞","伞","跳伞","飞机","坠落","摔","天上","高空","没打开","没开"],r:"yes"},{kw:["脚印","痕迹","车","走进来"],r:"no"},{kw:["渴死","饿死","中暑","晒死","缺水"],r:"no"},{kw:["他杀","凶手","被杀","毒"],r:"no"},{kw:["背包","打开"],r:"yes"}],
+    solve:[["降落伞"],["跳伞"],["伞","没开"],["伞","没打开"],["飞机","摔"]] },
+  { q:"马戏团的深夜彩排，一个女人在高高的钢丝上表演。全场熄灯，只有一束追光打在她身上，音乐缓缓响起。表演进行到一半，音乐突然毫无预兆地停了下来——几秒钟后，女人从钢丝上坠落身亡。为什么音乐一停，她就死了？",
+    a:"这名女演员是个盲人（或蒙着眼表演）。她在钢丝上看不见任何东西，全靠背景音乐的节奏与旋律来判断自己走到了哪一步、什么时候该转身、什么时候快到终点。音乐突然中断，她瞬间失去了唯一的参照，慌乱中失去平衡，坠落而死。",
+    hints:["她是靠什么在钢丝上保持方向的？","她其实『看不见』","音乐对她来说不只是气氛"],
+    facts:[{kw:["盲","看不见","蒙眼","失明","眼睛"],r:"yes"},{kw:["音乐","节奏","旋律","声音","靠听","判断"],r:"yes"},{kw:["失去","参照","方向","位置","不知道"],r:"yes"},{kw:["害怕","分心","吓","心脏病"],r:"no"},{kw:["有人","凶手","害","推"],r:"no"},{kw:["钢丝断","绳子断"],r:"no"}],
+    solve:[["盲"],["看不见","音乐"],["蒙眼"],["失明"],["靠","音乐"]] },
+  { q:"一对恩爱的夫妻开车去郊外野餐。回程的路上，两人有说有笑。可一进家门，丈夫却一言不发地拿起刀，把妻子杀了。警方调查后，认为妻子确实『该死』。他们在路上到底看到了什么？",
+    a:"他们在半路经过一处车祸/山难现场，看到救援人员正处理一起事故。丈夫由此得知：多年前他们全家出游遭遇雪崩（或翻船），当时食物耗尽，是妻子谎称找到了食物给孩子吃——其实她杀了他们的孩子充饥，只骗丈夫说孩子走失了。今天的场景让丈夫拼凑出真相，愤而杀妻。（经典残酷向汤底）",
+    hints:["和这对夫妻的『过去』有关","他们曾经历过一次可怕的灾难","那次灾难里，还有别的家人"],
+    facts:[{kw:["过去","以前","从前","多年前","当年"],r:"yes"},{kw:["灾难","事故","车祸","雪崩","翻船","遇难","饿"],r:"yes"},{kw:["孩子","家人","别人","真相","隐瞒","骗"],r:"yes"},{kw:["出轨","第三者","外遇"],r:"no"},{kw:["精神病","疯","无缘无故"],r:"no"},{kw:["食物中毒","过敏"],r:"no"}],
+    solve:[["孩子","真相"],["孩子","吃"],["当年","孩子"],["隐瞒","孩子"]] },
+  { q:"男人收到医院打来的电话，说他的检查结果出来了。听完电话，他长长松了一口气，露出了笑容——然后，他毫不犹豫地跳楼自杀了。明明是好消息，他为什么反而自杀？",
+    a:"他此前以为自己得了绝症、活不久了，于是为了给家人留下一大笔保险赔偿金，精心策划、还买了高额保险，打算『假装意外身故』。就在他准备赴死前，医院来电告知：检查结果是误诊，他其实很健康。他松了口气是因为『没病真好』，但也意味着他若现在死于疾病的伪装已不成立、或保险/计划已无法回头——最经典版本：他为了骗保早已安排好一切、甚至已对家人交代后事，得知没病反而计划全盘皆输、无法收场，只能按原计划赴死。",
+    hints:["电话带来的是『没病』的好消息","他早就为『死』做好了准备","和钱/保险有关"],
+    facts:[{kw:["绝症","癌","病","以为","误诊","没病","健康"],r:"yes"},{kw:["保险","赔偿","骗保","钱","理赔"],r:"yes"},{kw:["计划","安排","准备","打算","早就"],r:"yes"},{kw:["坏消息","真的有病","确诊"],r:"no"},{kw:["失恋","感情","破产"],r:"no"}],
+    solve:[["保险"],["骗保"],["误诊","保险"],["以为","病","保险"]] },
+  { q:"半夜，一个独自住在高层公寓里的男人被『笃笃笃』的敲门声惊醒。他走到门口，透过猫眼往外看——门外的走廊空无一人。他愣了几秒，随即脸色惨白，连夜收拾行李搬走了，再也没回来。他到底看到（或意识到）了什么？",
+    a:"敲门声并不是从『门』传来的，而是从『窗户』传来的。他住在高层，窗外根本不该有人能敲窗。当他意识到那『笃笃』声来自窗户方向、而窗外是几十层楼的高空时，明白有某种不该存在的东西在窗外——吓得连夜逃走。",
+    hints:["注意那个『敲』声，真的是门发出的吗？","他住在很高的楼层","问题出在『窗户』"],
+    facts:[{kw:["窗","窗户","窗外","不是门"],r:"yes"},{kw:["高","楼层","高层","几十层","不可能有人"],r:"yes"},{kw:["门外","猫眼","走廊"],r:"yes"},{kw:["邻居","小孩","恶作剧","送快递"],r:"no"},{kw:["做梦","幻觉","耳鸣"],r:"no"}],
+    solve:[["窗"],["窗户"],["敲","窗"]] },
 ];
 const SOUP={ cur:null, hintI:0, log:[], solved:false };
 function soupNew(){ let i=Math.floor(Math.random()*SOUP_PUZZLES.length); if(SOUP.cur && SOUP_PUZZLES.length>1){ while(SOUP_PUZZLES[i]===SOUP.cur) i=Math.floor(Math.random()*SOUP_PUZZLES.length); }
