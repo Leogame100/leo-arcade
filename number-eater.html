@@ -115,6 +115,7 @@
     <div id="popSel" style="display:flex;gap:8px;justify-content:center;margin-bottom:8px"></div>
     <div class="modes" id="modeList"></div>
     <div style="display:flex;gap:8px;margin:2px 0 6px">
+      <button class="tiny" style="flex:1" onclick="goHome()">🏠 <span data-i18n="返回游戏厅">返回游戏厅</span></button>
       <button class="tiny" style="flex:1" onclick="openTalents()">🌳 <span data-i18n="天赋树">天赋树</span></button>
       <button class="tiny" style="flex:1" onclick="openHelp()">📖 <span data-i18n="说明书">说明书</span></button>
     </div>
@@ -223,7 +224,7 @@ const TR={
   "说明书":"How to Play","庇护所":"Shelter","拖动移动 · 空格/长按=加速 · 点击屏幕=开火 · 数字键换武器":"Drag to move · Space/hold = sprint · tap screen = fire · number keys switch weapon",
   "单挑":"Duel","我要打十个":"Fight Ten","拳击台1v1·四周有观众（可打观众）":"1v1 boxing ring · spectators around (you can hit them)","你 vs 10个敌人·全灭获胜":"You vs 10 foes · wipe them all",
   "上载具！子弹打载具·防护你":"Boarded! Bullets hit the vehicle, not you","医疗包！回血":"Medkit! Healed","载具被摧毁！":"Vehicle destroyed!",
-  "准备！丧尸8秒后出动":"Get ready! Zombies release in 8s","丧尸出动了！":"The zombies are loose!","丧尸出动倒计时·快准备":"Zombies release in… get ready",
+  "返回游戏厅":"Arcade","你有8秒无敌·丧尸已开始感染":"8s invincible — zombies are already infecting","无敌结束，小心被感染！":"Invincibility over — watch out!","无敌准备中·丧尸已在感染":"Invincible — zombies already spreading",
   "天赋树":"Talents","金币不足":"Not enough coins",
   "恐怖模式":"Horror","庄园逃生":"Manor Escape","黑暗中怪物追杀·用枪械撑够90秒（怪会不断出现）":"Monsters hunt you in the dark — survive 90s with guns (they keep coming)","破译5台密码机·开大门逃生·躲开监管者（第五人格式）":"Decode 5 cipher machines, open a gate & escape — dodge the Hunter (Identity-V style)",
   "密码机破译完成！":"Cipher machine decoded!","大门已通电，快逃！":"Gates powered — RUN!","撑住":"Hold","开门啦":"open",
@@ -520,7 +521,10 @@ function placeObstacle(shape){ if(!G||G.over||G.paused||!G.architect) return; if
 function seedObstacles(n){ n=n||9; const p=G.player; let tries=0;   // 开局随机障碍物（分散摆放）
   const gap=Math.max(150, Math.min(WORLD_W,WORLD_H)/7);   // 障碍物之间的最小间距（分散一点）
   while(G.obstacles.length<n && tries<n*30){ tries++;
-    const hw=38+Math.random()*80, hh=38+Math.random()*80;
+    let hw,hh;
+    if(Math.random()<0.45){ const long=120+Math.random()*220, thin=12+Math.random()*10;   // 细长墙：横或竖
+      if(Math.random()<0.5){ hw=long; hh=thin; } else { hw=thin; hh=long; } }
+    else { hw=38+Math.random()*80; hh=38+Math.random()*80; }
     const cx=clamp(60+Math.random()*(WORLD_W-120), hw+16, WORLD_W-hw-16), cy=clamp(60+Math.random()*(WORLD_H-120), hh+16, WORLD_H-hh-16);
     if(hyp(cx-p.x,cy-p.y) < 300) continue;   // 别压在出生点
     let clash=false; for(const o of G.obstacles){ if(hyp(o.cx-cx,o.cy-cy) < gap+Math.max(o.hw,o.hh)+Math.max(hw,hh)){ clash=true; break; } }
@@ -743,7 +747,7 @@ function seedHorror(){ G.team="blue"; G.maxHp=220; G.hp=220; G.weapon="pistol"; 
   for(let i=0;i<6;i++){ const s=freeXY(16); G.items.push({type:"med",x:s.x,y:s.y,r:16}); }
 }
 function spawnMonster(){ const a=Math.random()*Math.PI*2, R=Math.min(WORLD_W,WORLD_H)*0.46, cx=WORLD_W/2, cy=WORLD_H/2;
-  G.bots.push({team:"red", melee:true, monster:true, ico:"👹", x:clamp(cx+Math.cos(a)*R,30,WORLD_W-30), y:clamp(cy+Math.sin(a)*R,30,WORLD_H-30), vx:0,vy:0, r:radiusOf(8), val:8, hp:520, dead:false, weapon:null, mspd:1.05+Math.random()*0.25, t:Math.random()*3, dir:Math.random()*6.28, fighter:false, zombie:false}); }
+  G.bots.push({team:"red", melee:true, monster:true, ico:"👹", x:clamp(cx+Math.cos(a)*R,30,WORLD_W-30), y:clamp(cy+Math.sin(a)*R,30,WORLD_H-30), vx:0,vy:0, r:64+Math.random()*8, val:8, hp:520, dead:false, weapon:null, mspd:1.05+Math.random()*0.25, t:Math.random()*3, dir:Math.random()*6.28, fighter:false, zombie:false}); }   // 👹 大只
 function dangerBeat(danger){ if(danger<=0.06) { G._terror=Math.max(0,(G._terror||0)-0.06); return; }   // 心跳随危险加快加响
   G._terror=danger;
   if(G.time>=(G._beatNext||0)){ G._beatNext=G.time+Math.max(0.32,1.15-danger*0.85); sfx.beat(0.4+danger*0.95); } }
@@ -752,9 +756,10 @@ function horrorStep(dt){ const p=G.player;
   if(G.bots.some(b=>b.gone)) G.bots=G.bots.filter(b=>!b.gone);
   let near=1e9;
   for(const b of G.bots){ if(b.dead||b.team===G.team) continue; const d=hyp(b.x-p.x,b.y-p.y); if(d<near) near=d;
-    if(d<p.r+b.r+8 && G.time>=(G.spawnProtect||0)){ G.hp-=48*dt; G.hurtFlash=0.3; if(!SND._scared){ SND._scared=true; sfx.scare(); } } }
+    if(d<p.r+b.r+8 && G.time>=(G.spawnProtect||0)){ G.hp-=48*dt; G.hurtFlash=0.3; } }
   dangerBeat(clamp(1-near/640,0,1));
-  if(near<300 && G.time>=(G._growlNext||0)){ G._growlNext=G.time+1.4+Math.random(); sfx.growl(); }
+  if(near<340 && G.time>=(G._scareNext||0)){ G._scareNext=G.time+6; sfx.scare(); }   // 👹 遇到鬼：恐怖音效
+  if(near<320 && G.time>=(G._growlNext||0)){ G._growlNext=G.time+1.4+Math.random(); sfx.growl(); }
   const mon=G.bots.filter(b=>!b.dead&&!b.gone).length;
   if(mon<HORROR_MONSTERS && G.time>=(G._monNext||0)){ spawnMonster(); G._monNext=G.time+4; }   // 怪物不断补充
   if(G.hp<=0) return gameOver("caught");
@@ -766,7 +771,7 @@ function seedIdentity(){ G.team="blue"; G.maxHp=110; G.hp=110; G.playerDead=fals
   const P=G.player; P.x=WORLD_W*0.5; P.y=WORLD_H*0.8; P.val=5; P.r=radiusOf(5); P.vx=P.vy=0;
   for(let i=0;i<ID_MACHINES;i++){ const s=freeXY(20); G.machines.push({x:s.x,y:s.y,r:62,prog:0,done:false}); }
   for(let i=0;i<ID_SURVIVORS;i++){ const s=freeXY(20); G.bots.push({team:"blue", survivor:true, ico:"🙂", x:s.x,y:s.y, vx:0,vy:0, r:radiusOf(5), val:5, hp:110, dead:false, downed:false, downT:0, rev:0, t:Math.random()*3, dir:Math.random()*6.28, fighter:false, zombie:false}); }
-  G.bots.push({team:"red", melee:true, hunter:true, ico:"👺", x:WORLD_W*0.5, y:WORLD_H*0.08, vx:0,vy:0, r:radiusOf(10), val:10, hp:9999, dead:false, weapon:null, mspd:1.22, lungeUntil:0, lungeCd:0, t:0, dir:0, fighter:false, zombie:false});   // 监管者
+  G.bots.push({team:"red", melee:true, hunter:true, ico:"👺", x:WORLD_W*0.5, y:WORLD_H*0.08, vx:0,vy:0, r:66, val:10, hp:9999, dead:false, weapon:null, mspd:1.22, lungeUntil:0, lungeCd:0, t:0, dir:0, fighter:false, zombie:false});   // 👺 监管者（大只）
   G.gates.push({x:46, y:WORLD_H*0.5, r:72, open:false}); G.gates.push({x:WORLD_W-46, y:WORLD_H*0.5, r:72, open:false});
 }
 function idSurvivorsLeft(){ let n=(G.playerDead||G.escaped)?0:1; for(const b of G.bots){ if(b.survivor&&!b.gone) n++; } return n; }
@@ -806,7 +811,7 @@ function identityStep(dt){ const p=G.player;
   if(G.bots.some(b=>b.gone)) G.bots=G.bots.filter(b=>!b.gone);
   const hunter=G.bots.find(z=>z.hunter);
   const hdist=hunter?hyp(hunter.x-p.x,hunter.y-p.y):1e9, danger=clamp(1-hdist/560,0,1); dangerBeat(danger);   // 恐怖气氛：心跳/红屏
-  if(danger>0.72 && !SND._scared){ SND._scared=true; sfx.scare(); } if(danger<0.4) SND._scared=false;
+  if(hdist<340 && G.time>=(G._scareNext||0)){ G._scareNext=G.time+6; sfx.scare(); }   // 👺 遇到鬼：恐怖音效
   if(hunter && hdist<340 && G.time>=(G._growlNext||0)){ G._growlNext=G.time+1.6+Math.random(); sfx.growl(); }
   // 玩家破译（未倒地、站密码机上、监管者不在旁）
   if(!G.playerDead&&!G.escaped&&!G.playerDown) for(const m of G.machines){ if(m.done) continue; if(hyp(m.x-p.x,m.y-p.y)<m.r){ if(!hunter||hyp(hunter.x-m.x,hunter.y-m.y)>m.r){ const b4=m.prog; m.prog=Math.min(100,m.prog+dt*15); if(Math.floor(m.prog/20)>Math.floor(b4/20)) sfx.decode(); } } }
@@ -829,8 +834,8 @@ function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
   if(G.quarantine && G.time>=G.quarantine.closeAt){ G.quarantine=null; G.quarantineAt=G.time+30; toast("🛡️ "+tr("隔离带关闭了")); }
   const Q=G.quarantine, inQ=!!(Q && !G.zombie && hyp(p.x-Q.x,p.y-Q.y)<Q.r-p.r*0.4), immune=(G.time<G.cureImmuneUntil)||inQ||(G.riding&&!G.zombie);
   const grace=G.time<(G.graceUntil||0);   // 🧟 开局8秒准备期：丧尸不感染、不追人
-  if(grace && !G._graceMsg){ G._graceMsg=true; toast("🧟 "+tr("准备！丧尸8秒后出动")); }
-  if(!grace && G._graceMsg===true){ G._graceMsg="done"; toast("🧟 "+tr("丧尸出动了！")); }
+  if(grace && !G._graceMsg){ G._graceMsg=true; toast("🛡️ "+tr("你有8秒无敌·丧尸已开始感染")); }
+  if(!grace && G._graceMsg===true){ G._graceMsg="done"; toast("🛡️ "+tr("无敌结束，小心被感染！")); }
   if(G.smoke && G.time>=G.smoke.until) G.smoke=null;   // 烟雾散去
   stepBullets(dt);   // 武器弹药：子弹 / 火箭 / 手雷 / 烟雾弹
 
@@ -846,7 +851,7 @@ function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
     if(G.time>3 && !G.bots.some(b=>b.zombie)) return gameOver("cleared");   // 🎉 消灭所有丧尸 → 胜利
   } else {          // ===== 玩家是丧尸 =====
     if(p.val>G.best) G.best=p.val;
-    if(!grace) for(let i=G.bots.length-1;i>=0;i--){ const h=G.bots[i]; if(h.zombie) continue; const d=hyp(h.x-p.x,h.y-p.y);
+    for(let i=G.bots.length-1;i>=0;i--){ const h=G.bots[i]; if(h.zombie) continue; const d=hyp(h.x-p.x,h.y-p.y);
       if(d < p.r+h.r+6 || (G.zInfR && d<G.zInfR+h.r)){ if(h.fighter) G.hp-=FIGHTER_DPS*dt; if(!h.inf){ h.inf=true; raiseAlarm(h.x,h.y); } } }   // 感染人类（渐进）；士兵会反伤但也会被感染
     if(G.hp<=0){ G.hp=0; return gameOver("killed"); }   // 被士兵击杀才算死
     if(!G.bots.some(b=>!b.zombie)){ return gameOver("domination"); }   // 全城沦陷 → 胜利
@@ -857,7 +862,7 @@ function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
   for(const t of G.trails) t.t+=dt; if(G.trails.length>600) G.trails=G.trails.slice(-600);
   if(G.trails.length && G.trails[0].t>=TRAIL_LIFE) G.trails=G.trails.filter(t=>t.t<TRAIL_LIFE);
   // 数字之间：丧尸感染人类（可范围）；碰到士兵人类 → 士兵造成伤害（丧尸互不吞噬、丧尸不因感染掉血）
-  if(!grace) for(let i=G.bots.length-1;i>=0;i--){ const z=G.bots[i]; if(!z.zombie) continue; const rng=z.infR||0;
+  for(let i=G.bots.length-1;i>=0;i--){ const z=G.bots[i]; if(!z.zombie) continue; const rng=z.infR||0;
     for(const h of G.bots){ if(h.zombie) continue; const d=hyp(h.x-z.x,h.y-z.y);
       if(d < z.r+h.r+6 || (rng && d<rng+h.r)){ if(!h.inf){ h.inf=true; raiseAlarm(h.x,h.y); } if(h.fighter){ z.hp=(z.hp||100)-FIGHTER_DPS*dt; if(z.hp<=0){ z.dead=true; break; } } } } }   // 士兵反伤丧尸，但也会被感染
   if(G.bots.some(x=>x.dead)) G.bots=G.bots.filter(x=>!x.dead);
@@ -904,8 +909,7 @@ function updateBot(b,dt){ const p=G.player; b.t-=dt; if(b.t<=0){ b.t=1+Math.rand
   const dx=p.x-b.x, dy=p.y-b.y, d=hyp(dx,dy)||1;
   if(G.mode==="virus"){
     if(b.zombie){
-      if(G.time<(G.graceUntil||0)){ ax=Math.cos(b.dir)*0.25; ay=Math.sin(b.dir)*0.25; }   // 🧟准备期：丧尸原地徘徊，不追人
-      else if(inSmoke(b.x,b.y)){ ax=Math.cos(b.dir); ay=Math.sin(b.dir); }   // 💨烟雾里：看不见人类，乱走
+      if(inSmoke(b.x,b.y)){ ax=Math.cos(b.dir); ay=Math.sin(b.dir); }   // 💨烟雾里：看不见人类，乱走
       else if(b.infR){   // 范围感染丧尸（剧毒/尸王）：围猎——扑向人群密集处，靠光环成片感染
         let cx=0,cy=0,cn=0; for(const h of G.bots){ if(!h.zombie){ const ed=hyp(h.x-b.x,h.y-b.y); if(ed<820){ cx+=h.x; cy+=h.y; cn++; } } }
         if(!G.zombie){ const ed=hyp(p.x-b.x,p.y-b.y); if(ed<820){ cx+=p.x; cy+=p.y; cn++; } }
@@ -1107,12 +1111,12 @@ function render(){ if(!G) return; const p=G.player;
   ctx.setTransform(DPR*zoom,0,0,DPR*zoom,-camx*DPR*zoom,-camy*DPR*zoom);
   ctx.clearRect(camx-20,camy-20,VW/zoom+40,VH/zoom+40);
   ctx.textAlign="center"; ctx.textBaseline="middle";
-  // 地面（新风格：暗青绿末日地表 + 点阵网格）
+  // 地面（暗紫夜色地表 + 点阵网格）
   const x0=Math.max(0,camx-20), y0=Math.max(0,camy-20), x1=Math.min(WORLD_W,camx+VW/zoom+20), y1=Math.min(WORLD_H,camy+VH/zoom+20);
   const gg=ctx.createLinearGradient?ctx.createLinearGradient(0,y0,0,y1):null;
-  if(gg&&gg.addColorStop){ gg.addColorStop(0,"#0f1a1c"); gg.addColorStop(1,"#0b1220"); ctx.fillStyle=gg; } else ctx.fillStyle="#0d151c";
+  if(gg&&gg.addColorStop){ gg.addColorStop(0,"#1b1233"); gg.addColorStop(1,"#0d0a1e"); ctx.fillStyle=gg; } else ctx.fillStyle="#140f28";
   ctx.fillRect(x0,y0,Math.max(0,x1-x0),Math.max(0,y1-y0));
-  const gs=96; ctx.fillStyle="rgba(94,168,132,.16)";   // 点阵
+  const gs=96; ctx.fillStyle="rgba(176,126,214,.17)";   // 点阵（淡紫）
   for(let x=Math.floor(camx/gs)*gs;x<camx+VW/zoom+gs;x+=gs){ if(x<0||x>WORLD_W) continue;
     for(let y=Math.floor(camy/gs)*gs;y<camy+VH/zoom+gs;y+=gs){ if(y<0||y>WORLD_H) continue; ctx.fillRect(x-1.5,y-1.5,3,3); } }
   // border（发光边框；房间开启时右侧留开口）
@@ -1259,10 +1263,10 @@ function render(){ if(!G) return; const p=G.player;
   if((G.mode==="identity"||G.mode==="horror") && (G._terror||0)>0.25){ const pulse=0.5+0.5*Math.sin(G.time*7); const a=(G._terror-0.25)*0.5*(0.5+0.5*pulse);
     ctx.fillStyle="rgba(180,10,30,"+a.toFixed(3)+")"; ctx.fillRect(0,0,VW,VH); }
   if(G.mode==="identity" && (G.playerDown||G.playerDead)){ ctx.fillStyle="rgba(120,0,20,.28)"; ctx.fillRect(0,0,VW,VH); }
-  // 🧟 准备期倒计时
-  if(G.mode==="virus" && G.time<(G.graceUntil||0)){ const left=Math.ceil(G.graceUntil-G.time);
-    ctx.textAlign="center"; ctx.fillStyle="#7bbf5a"; ctx.font="900 30px ui-monospace,monospace"; ctx.fillText("🧟 "+left, VW/2, 64+SAFE_TOP);
-    ctx.fillStyle="rgba(180,220,180,.85)"; ctx.font="800 13px ui-monospace,monospace"; ctx.fillText(tr("丧尸出动倒计时·快准备"), VW/2, 88+SAFE_TOP); }
+  // 🛡️ 开局无敌倒计时（丧尸已自由感染NPC，你暂时免疫）
+  if(G.mode==="virus" && !G.zombie && G.time<(G.graceUntil||0)){ const left=Math.ceil(G.graceUntil-G.time);
+    ctx.textAlign="center"; ctx.fillStyle="#7fd0ff"; ctx.font="900 30px ui-monospace,monospace"; ctx.fillText("🛡️ "+left, VW/2, 64+SAFE_TOP);
+    ctx.fillStyle="rgba(180,210,255,.85)"; ctx.font="800 13px ui-monospace,monospace"; ctx.fillText(tr("无敌准备中·丧尸已在感染"), VW/2, 88+SAFE_TOP); }
   // 隐藏房间：箭头引导 + 倒计时
   if(R){ const inside=isInRoom(p), left=Math.ceil(R.closeAt-G.time);
     if(!inside){ const ang=Math.atan2(R.cy-p.y,R.cx-p.x), rad=Math.min(VW,VH)*0.3;
