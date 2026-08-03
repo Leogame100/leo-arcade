@@ -166,6 +166,13 @@
   <div class="modes" id="classList"></div>
   <button class="tiny" style="margin-top:4px" onclick="document.getElementById('classOv').classList.add('hidden');document.getElementById('startOv').classList.remove('hidden')" data-i18n="返回">返回</button>
 </div></div>
+<!-- ⚔️ 王者峡谷 英雄选择 -->
+<div class="ov hidden" id="mobaOv"><div class="card" style="max-height:calc(100vh - 20px);display:flex;flex-direction:column">
+  <h1 data-i18n="选择英雄">选择英雄</h1>
+  <div class="en">CHOOSE A HERO · ⚔️</div>
+  <div class="modes" id="heroList" style="flex:1 1 auto;min-height:0;overflow-y:auto;touch-action:pan-y"></div>
+  <button class="tiny" style="margin-top:4px" onclick="document.getElementById('mobaOv').classList.add('hidden');document.getElementById('startOv').classList.remove('hidden')" data-i18n="返回">返回</button>
+</div></div>
 <!-- gunfight submode picker -->
 <div class="ov hidden" id="gunOv"><div class="card">
   <h1 data-i18n="枪战模式">枪战模式</h1>
@@ -234,7 +241,10 @@ const TR={
   "你被击倒！等队友救援":"You're down! Wait for a rescue","被队友救起！":"Rescued by a teammate!",
   "海龟汤":"Turtle Soup","AI汤主出题·你问是非题推理真相（和朋友一起玩）":"AI host sets a riddle · ask yes/no questions to deduce the truth (play with friends)","提示":"Hint","揭晓汤底":"Reveal","换一题":"New riddle",
   "王者峡谷":"MOBA Rift","推塔MOBA·小兵/防御塔/草丛/野怪·摧毁敌方水晶获胜（王者荣耀式）":"Tower-push MOBA · minions/towers/bushes/jungle · destroy the enemy crystal to win","阵亡·5秒后回城复活":"Slain — respawning at base in 5s",
-  "胜利奖励":"Victory bonus",
+  "胜利奖励":"Victory bonus","选择英雄":"Choose a Hero",
+  "神射手":"Marksman","狂战士":"Warrior","大法师":"Mage","刺客":"Assassin","坦克":"Tank",
+  "狙击":"Snipe","火球术":"Fireball","爆发":"Blast","风暴":"Storm","闪现":"Flash","护盾":"Shield","治疗":"Heal",
+  "单杀":"KILL","双杀":"DOUBLE KILL","三杀":"TRIPLE KILL","四杀":"QUADRA","五杀":"PENTA KILL","无双":"UNSTOPPABLE","超神":"GODLIKE",
   "🔦 你撑过来了！":"🔦 YOU SURVIVED!","🚪 逃出生天！":"🚪 ESCAPED!","👺 你被抓住了…":"👺 You were caught…",
   "移速 +5%/级":"Move speed +5%/lvl","最大血量 +12%/级":"Max HP +12%/lvl","吞噬吸收 +4%/级":"Absorb +4%/lvl","金币 +15%/级":"Coins +15%/lvl","感染掉血 -8%/级":"Infection −8%/lvl","子弹伤害 +8%/级":"Bullet damage +8%/lvl","技能冷却 -6%/级":"Skill cooldown −6%/lvl","解药更常出现 +20%/级":"More cures +20%/lvl",
   "免疫尾迹感染":"Immune to trail infection","移动速度 +35%":"Move speed +35%","血上限120·感染掉血 -30%":"120 max HP · infection −30%",
@@ -248,7 +258,7 @@ const TR={
 function tr(s){ return LANG==="en"?(TR[s]||s):s; }
 function nm(o){ return o?(LANG==="en"?(o.en||o.zh):o.zh):""; }   // 职业/对象名（按语言）
 function applyLang(){ document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=tr(el.getAttribute("data-i18n")));
-  document.getElementById("langBtn").textContent=LANG==="en"?"中":"EN"; buildMapSel(); buildPopSel(); buildModes(); buildClasses(); buildGunfight(); buildWeaponBar(); buildHelp(); buildTalents(); renderBoard(); if(G) hud(); }
+  document.getElementById("langBtn").textContent=LANG==="en"?"中":"EN"; buildMapSel(); buildPopSel(); buildModes(); buildClasses(); buildGunfight(); buildMobaHeroes(); buildWeaponBar(); buildHelp(); buildTalents(); renderBoard(); if(G) hud(); }
 function toggleLang(){ LANG=LANG==="en"?"zh":"en"; try{localStorage.setItem("neLang",LANG);}catch(e){} applyLang(); }
 
 /* ==================== 数字格式化（近乎无限）==================== */
@@ -284,6 +294,22 @@ const HORROR_DUR=90, HORROR_MONSTERS=6, HORROR_LIGHT=280;   // 撑90秒获胜；
 const ID_MACHINES=5, ID_SURVIVORS=4, ID_LIGHT=440;   // 5台密码机、4个求生者、视野
 // ⚔️ 王者峡谷（王者荣耀式推塔 MOBA）
 const MOBA_CRYSTAL_HP=2600, MOBA_TOWER_HP=1400, MOBA_MINION_HP=140, MOBA_HERO_HP=340, MOBA_WAVE=13;
+const HERO_SKILLS={
+  snipe:  {ico:"🎯", zh:"狙击",   en:"Snipe",    cd:5,  fn:()=>heroSnipe(280)},
+  fireball:{ico:"🔥",zh:"火球术", en:"Fireball", cd:6,  fn:()=>heroRocket(320)},
+  blast:  {ico:"💥", zh:"爆发",   en:"Blast",    cd:8,  fn:()=>heroBlast(210,230)},
+  storm:  {ico:"🌀", zh:"风暴",   en:"Storm",    cd:9,  fn:()=>heroBlast(250,190)},
+  dash:   {ico:"💨", zh:"闪现",   en:"Flash",    cd:6,  fn:()=>{ G.dashUntil=G.time+0.55; }},
+  shield: {ico:"🛡️", zh:"护盾",   en:"Shield",   cd:12, fn:()=>{ G.invUntil=G.time+2.6; }},
+  heal:   {ico:"🩹", zh:"治疗",   en:"Heal",     cd:10, fn:()=>{ G.hp=Math.min(G.maxHp,G.hp+G.maxHp*0.42); }},
+};
+const HEROES=[
+  {id:"marks",   zh:"神射手", en:"Marksman", ico:"🏹", hp:320, spd:1.05, atk:"rifle",  skills:["snipe","dash","blast"]},
+  {id:"warrior", zh:"狂战士", en:"Warrior",  ico:"⚔️", hp:500, spd:1.0,  atk:"smg",    skills:["storm","shield","dash"]},
+  {id:"mage",    zh:"大法师", en:"Mage",     ico:"🔮", hp:280, spd:0.95, atk:"rpg",    skills:["fireball","blast","dash"]},
+  {id:"assassin",zh:"刺客",   en:"Assassin", ico:"🗡️", hp:300, spd:1.22, atk:"pistol", skills:["dash","blast","heal"]},
+  {id:"tank",    zh:"坦克",   en:"Tank",     ico:"🛡️", hp:660, spd:0.9,  atk:"smg",    skills:["shield","storm","dash"]},
+];
 // 🔫 枪战模式：红蓝双方各 50 人
 const GF_TEAM_SIZE=50, GF_BOT_SPD=150, GF_HP=480, BULLET_SLOW=0.6;   // 血量×2；子弹速度-40%
 const GF_SUBMODES=[
@@ -581,14 +607,15 @@ function currentWeapon(){ return WEAPONS.find(w=>w.id===G.weapon)||WEAPONS[0]; }
 function selectWeapon(id){ if(!G||(!G.fighter && G.mode!=="gunfight")) return; if(WEAPONS.some(w=>w.id===id)){ G.weapon=id; const w=currentWeapon(); toast(w.ico+" "+nm(w)); if(typeof buildWeaponBar==="function") buildWeaponBar(); } }
 function inSmoke(x,y){ const s=G.smoke; return !!(s && G.time<s.until && hyp(x-s.x,y-s.y)<s.r); }
 function hurtPlayerGun(dmg){ const p=G.player;   // 玩家受伤：乘载具时伤害载具，否则扣血
+  if(G.time<(G.invUntil||0)) return;   // 🛡️护盾无敌
   if(G.gv){ G.gv.hp-=dmg; popup(p.x,p.y-p.r,"🛡−","#ffd76a"); if(G.gv.hp<=0){ G.gv=null; toast("💥 "+tr("载具被摧毁！")); explodeAt(p.x,p.y,190,380,"__ALL__"); } }
   else { G.hp-=dmg; G.hurtFlash=0.3; } }
-function explodeAt(x,y,r,dmg,team){ G.flashes.push({x,y,t:0,boom:true,br:r*2.6}); sfx.boom();   // 爆炸：范围伤害
+function explodeAt(x,y,r,dmg,team,owner){ G.flashes.push({x,y,t:0,boom:true,br:r*2.6}); sfx.boom();   // 爆炸：范围伤害
   if(team==="__ALL__"){   // 🧨炸药包：无差别范围伤害
     for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(z.dead) continue; if(hyp(z.x-x,z.y-y)<r+z.r){ z.hp=(z.hp||100)-dmg; if(z.hp<=0) killGunBot(z); } }
     const p=G.player; if(!G.playerDead && G.time>=(G.spawnProtect||0) && hyp(p.x-x,p.y-y)<r+p.r) hurtPlayerGun(dmg);
   } else if(team!=null){   // 🔫枪战：伤害敌方
-    for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(z.dead||z.team===team) continue; if(hyp(z.x-x,z.y-y)<r+z.r){ z.hp=(z.hp||100)-dmg; if(z.hp<=0) killGunBot(z); } }
+    for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(z.dead||z.team===team) continue; if(hyp(z.x-x,z.y-y)<r+z.r){ z.hp=(z.hp||100)-dmg; if(z.hp<=0){ killGunBot(z); if(owner==="P") onPlayerKill(); } } }
     const p=G.player; if(G.team && G.team!==team && !G.playerDead && G.time>=(G.spawnProtect||0) && hyp(p.x-x,p.y-y)<r+p.r) hurtPlayerGun(dmg);
   } else {   // 🦠病毒：伤害丧尸
     for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(!z.zombie) continue; if(hyp(z.x-x,z.y-y)<r+z.r){ z.hp=(z.hp||100)-dmg; if(z.hp<=0){ G.bots.splice(j,1); popup(z.x,z.y,"💥","#ffcf3a"); } } }
@@ -607,7 +634,7 @@ function fireGun(){ if(!G||G.over||G.paused) return; const gf=isShootMode(); if(
   let best=null,bd=1e9; for(const b of G.bots){ if(gf?(b.dead||b.crowd||b.team===G.team):!b.zombie) continue; const dd=hyp(b.x-p.x,b.y-p.y); if(dd<bd){bd=dd;best=b;} }
   let ax,ay; if(best){ ax=best.x-p.x; ay=best.y-p.y; } else { ax=G.aimX-p.x; ay=G.aimY-p.y; if(hyp(ax,ay)<1){ax=p.vx;ay=p.vy;} if(hyp(ax,ay)<1){ax=1;ay=0;} }
   const d=hyp(ax,ay)||1; ax/=d; ay/=d; const rr=(G.gv?G.gv.r:p.r);
-  spawnProjectile(p.x+ax*(rr+6), p.y+ay*(rr+6), ax, ay, w, gf?G.team:null, G.dmgMul||1);
+  const pj=spawnProjectile(p.x+ax*(rr+6), p.y+ay*(rr+6), ax, ay, w, gf?G.team:null, G.dmgMul||1); if(pj) pj.owner="P";   // 玩家子弹（用于计击杀）
   popup(p.x+ax*rr, p.y+ay*rr, w.ico, "#ffd76a"); sfx.shoot(); }
 function collideObstacles(e){ if(!G.obstacles||!G.obstacles.length) return; for(const o of G.obstacles){
     const nx=clamp(e.x,o.cx-o.hw,o.cx+o.hw), ny=clamp(e.y,o.cy-o.hh,o.cy+o.hh), dx=e.x-nx, dy=e.y-ny, d2=dx*dx+dy*dy;
@@ -636,11 +663,11 @@ function stepBullets(dt){ if(!G.bullets.length) return; const gf=isShootMode(), 
     else if(bl.aoe){ let boom=(G.time>=(bl.fuse||1e9))||bl.life<=0||oob||wall;
       if(!boom && bl.rocket){ if(gf){ for(const z of G.bots){ if(!z.dead && z.team!==bl.team && !z.crowd && hyp(z.x-bl.x,z.y-bl.y)<z.r+6){ boom=true; break; } } if(!boom && G.team&&G.team!==bl.team&&!G.playerDead && hyp(p.x-bl.x,p.y-bl.y)<(G.gv?G.gv.r:p.r)+6) boom=true; }
         else { for(const z of G.bots){ if(z.zombie && hyp(z.x-bl.x,z.y-bl.y)<z.r+6){ boom=true; break; } } } }
-      if(boom){ explodeAt(bl.x,bl.y,bl.aoe,bl.aoeDmg,gf?bl.team:null); gone=true; } }
+      if(boom){ explodeAt(bl.x,bl.y,bl.aoe,bl.aoeDmg,gf?bl.team:null,bl.owner); gone=true; } }
     else if(gf){   // 直射子弹（枪战）：命中敌方
       if(wall) gone=true;
       else if(!oob){ let hit=false;
-        for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(z.dead||z.team===bl.team) continue; if(hyp(z.x-bl.x,z.y-bl.y)<z.r+4){ z.hp=(z.hp||100)-bl.dmg; if(z.hp<=0) killGunBot(z); else popup(bl.x,bl.y,"−","#ffe37a"); hit=true; break; } }
+        for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(z.dead||z.team===bl.team) continue; if(hyp(z.x-bl.x,z.y-bl.y)<z.r+4){ z.hp=(z.hp||100)-bl.dmg; if(z.hp<=0){ killGunBot(z); if(bl.owner==="P") onPlayerKill(); } else popup(bl.x,bl.y,"−","#ffe37a"); hit=true; break; } }
         if(!hit){ for(const it of G.items){ if(it.type==="boom" && hyp(it.x-bl.x,it.y-bl.y)<it.r+4){ it.hp-=bl.dmg; if(it.hp<=0){ it.gone=true; explodeAt(it.x,it.y,210,650,"__ALL__"); } hit=true; break; } } }   // 🧨炸药包
         if(!hit && G.team&&G.team!==bl.team&&!G.playerDead && hyp(p.x-bl.x,p.y-bl.y)<(G.gv?G.gv.r:p.r)+4){ if(G.time>=(G.spawnProtect||0)) hurtPlayerGun(bl.dmg); hit=true; }
         if(hit) gone=true; }
@@ -834,7 +861,21 @@ function identityStep(dt){ const p=G.player;
 }
 /* -------- ⚔️ 王者峡谷（推塔 MOBA） -------- */
 function inBush(x,y){ if(!G.bushes) return false; for(const b of G.bushes){ if(hyp(x-b.x,y-b.y)<b.r) return true; } return false; }
-function seedMoba(){ G.team="blue"; G.maxHp=MOBA_HERO_HP; G.hp=MOBA_HERO_HP; G.weapon="rifle"; G.playerDead=false; G.spawnProtect=2;
+function mobaNearestForPlayer(){ let best=null,bd=1e9; const p=G.player; for(const b of G.bots){ if(b.dead||b.gone||b.team===G.team) continue; const d=hyp(b.x-p.x,b.y-p.y); if(d<bd){bd=d;best=b;} } return best; }
+function heroAim(){ const p=G.player, e=mobaNearestForPlayer(); let ax,ay; if(e){ ax=e.x-p.x; ay=e.y-p.y; } else { ax=G.aimX-p.x; ay=G.aimY-p.y; if(hyp(ax,ay)<1){ax=p.vx;ay=p.vy;} if(hyp(ax,ay)<1){ax=1;ay=0;} } const d=hyp(ax,ay)||1; return {ax:ax/d,ay:ay/d}; }
+function heroSnipe(dmg){ const p=G.player,a=heroAim(); const proj=spawnProjectile(p.x+a.ax*(p.r+6),p.y+a.ay*(p.r+6),a.ax,a.ay,{spd:1400,dmg:dmg,type:"bullet"},G.team,1); if(proj) proj.owner="P"; sfx.shoot(); }
+function heroRocket(dmg){ const p=G.player,a=heroAim(); const proj=spawnProjectile(p.x+a.ax*(p.r+6),p.y+a.ay*(p.r+6),a.ax,a.ay,{spd:640,type:"rocket",aoe:190,aoeDmg:dmg},G.team,1); if(proj) proj.owner="P"; sfx.shoot(); }
+function heroBlast(r,dmg){ const p=G.player; G.flashes.push({x:p.x,y:p.y,t:0,boom:true,br:r*2.4}); sfx.boom();
+  for(let j=G.bots.length-1;j>=0;j--){ const z=G.bots[j]; if(z.dead||z.gone||z.team===G.team) continue; if(hyp(z.x-p.x,z.y-p.y)<r+z.r){ z.hp=(z.hp||100)-dmg; if(z.hp<=0){ killGunBot(z); onPlayerKill(); } } } }
+function applyHero(id){ const h=HEROES.find(x=>x.id===id)||HEROES[0]; G.heroId=h.id; G.maxHp=h.hp; G.hp=h.hp; G.player.speedMul*=h.spd; G.weapon=h.atk;
+  G.heroSkills=h.skills.map(s=>HERO_SKILLS[s]); G.skillCool=[0,0,0]; }
+function castSkill(i){ if(!G||G.mode!=="moba"||G.playerDead||!G.heroSkills||!G.heroSkills[i]) return; if(G.time<(G.skillCool[i]||0)) return;
+  const s=G.heroSkills[i]; s.fn(); G.skillCool[i]=G.time+s.cd; if(typeof buildWeaponBar==="function") buildWeaponBar(); }
+function onPlayerKill(){ if(G.mode!=="moba") return; if(G.time>(G.killComboT||0)) G.killCombo=0; G.killCombo=(G.killCombo||0)+1; G.killStreak=(G.killStreak||0)+1; G.killComboT=G.time+3.5;
+  const names={1:"单杀",2:"双杀",3:"三杀",4:"四杀",5:"五杀"}; const t=names[G.killCombo]||(G.killCombo>5?"无双":null); if(t) announceKill(t,"#ffcf3a");
+  if(G.killStreak===6) announceKill("超神","#c46bff"); }
+function announceKill(txt,col){ G.killMsg={txt:tr(txt),en:txt,col:col||"#ffcf3a",t:0}; sfx.win(); }
+function seedMoba(hero){ G.team="blue"; G.maxHp=MOBA_HERO_HP; G.hp=MOBA_HERO_HP; G.weapon="rifle"; G.playerDead=false; G.spawnProtect=2; G.killCombo=0; G.killStreak=0; G.killComboT=0; G.killMsg=null;
   G.bots=[]; G.items=[]; G.bushes=[]; G.jbuffs=[]; G.obstacles=[]; G.waveNext=G.time+3;
   const bx=WORLD_W*0.12, by=WORLD_H*0.88, rx=WORLD_W*0.88, ry=WORLD_H*0.12;   // 蓝(左下) / 红(右上) 基地
   G.bases={ blue:{x:bx,y:by}, red:{x:rx,y:ry} };
@@ -852,6 +893,7 @@ function seedMoba(){ G.team="blue"; G.maxHp=MOBA_HERO_HP; G.hp=MOBA_HERO_HP; G.w
     if(hyp(x-bx,y-by)<300||hyp(x-rx,y-ry)<300) continue; const hw=30+Math.random()*40,hh=30+Math.random()*40; G.obstacles.push({cx:x,cy:y,hw,hh,rock:true}); }
   // 野怪水晶（buff：踩到加速+火力）
   for(let i=0;i<5;i++){ const x=140+Math.random()*(WORLD_W-280),y=140+Math.random()*(WORLD_H-280); G.jbuffs.push({x,y,r:24,taken:0}); }
+  applyHero(hero||"marks");   // 选定英雄：血量/移速/普攻/技能
 }
 function spawnMinionWave(){ for(const tm of ["blue","red"]){ const B=G.bases[tm], E=G.bases[tm==="blue"?"red":"blue"];
   for(let i=0;i<4;i++){ const a=Math.atan2(E.y-B.y,E.x-B.x)+(Math.random()-0.5)*0.4, off=40+i*26;
@@ -885,7 +927,7 @@ function mobaStep(dt){ const p=G.player;
   for(const j of G.jbuffs){ if(G.time<j.taken) continue; if(!G.playerDead && hyp(j.x-p.x,j.y-p.y)<p.r+j.r){ j.taken=G.time+25; p.boostUntil=G.time+12; G.dmgMul=G._baseDmg*1.6; G._buffUntil=G.time+12; popup(j.x,j.y,"💠BUFF","#7fd0ff"); sfx.decode(); } }
   if(G._buffUntil && G.time>G._buffUntil){ G.dmgMul=G._baseDmg; G._buffUntil=0; }
   // 玩家阵亡→回城复活
-  if(!G.playerDead && G.hp<=0){ G.playerDead=true; G.respawnAt=G.time+5; sfx.lose(); popup(p.x,p.y,"💀","#fff"); toast("💀 "+tr("阵亡·5秒后回城复活")); }
+  if(!G.playerDead && G.hp<=0){ G.playerDead=true; G.respawnAt=G.time+5; G.killStreak=0; sfx.lose(); popup(p.x,p.y,"💀","#fff"); toast("💀 "+tr("阵亡·5秒后回城复活")); }
   if(G.playerDead && G.time>=G.respawnAt){ G.playerDead=false; G.hp=G.maxHp; G.spawnProtect=G.time+2; const B=G.bases[G.team]; p.x=B.x; p.y=B.y+30; p.vx=p.vy=0; }
   // 胜负：摧毁敌方水晶
   const rc=G.bots.find(b=>b.role==="crystal"&&b.team==="red"), bc=G.bots.find(b=>b.role==="crystal"&&b.team==="blue");
@@ -1347,6 +1389,11 @@ function render(){ if(!G) return; const p=G.player;
   if(G.mode==="virus" && !G.zombie && G.time<(G.graceUntil||0)){ const left=Math.ceil(G.graceUntil-G.time);
     ctx.textAlign="center"; ctx.fillStyle="#7fd0ff"; ctx.font="900 30px ui-monospace,monospace"; ctx.fillText("🛡️ "+left, VW/2, 64+SAFE_TOP);
     ctx.fillStyle="rgba(180,210,255,.85)"; ctx.font="800 13px ui-monospace,monospace"; ctx.fillText(tr("无敌准备中·丧尸已在感染"), VW/2, 88+SAFE_TOP); }
+  // ⚔️ 击杀播报（单杀/双杀/三杀/超神）
+  if(G.killMsg){ const m=G.killMsg, k=Math.min(1,m.t/0.18), sc=k<1?0.5+k*0.6:(1.1-Math.min(0.1,(m.t-1.6)*1)); ctx.save(); ctx.textAlign="center";
+    ctx.translate(VW/2, VH*0.32+SAFE_TOP); ctx.scale(sc,sc); ctx.globalAlpha=Math.max(0,Math.min(1,(1.8-m.t)/0.4));
+    ctx.font="900 46px ui-monospace,monospace"; ctx.lineWidth=6; ctx.strokeStyle="rgba(0,0,0,.6)"; ctx.strokeText(m.txt,0,0); ctx.fillStyle=m.col; ctx.fillText(m.txt,0,0);
+    ctx.globalAlpha=1; ctx.restore(); }
   // 隐藏房间：箭头引导 + 倒计时
   if(R){ const inside=isInRoom(p), left=Math.ceil(R.closeAt-G.time);
     if(!inside){ const ang=Math.atan2(R.cy-p.y,R.cx-p.x), rad=Math.min(VW,VH)*0.3;
@@ -1412,12 +1459,15 @@ function hud(){ if(!G) return; document.getElementById("bignum").textContent=fmt
   const fbar=document.getElementById("fireBar"); if(fbar) fbar.style.display=showFight?"block":"none";
   const wbar=document.getElementById("weaponBar"); if(wbar) wbar.style.display=showFight?"flex":"none";
   const fbtn=document.getElementById("fireBtn"); if(fbtn && showFight) fbtn.textContent=currentWeapon().ico;
+  if(G.mode==="moba" && G.heroSkills){ for(let i=0;i<G.heroSkills.length;i++){ const btn=document.getElementById("hskill"+i); if(!btn) continue; const cd=btn.querySelector(".cd"); const rem=Math.max(0,(G.skillCool[i]||0)-G.time);
+    if(cd){ cd.textContent=rem>0?Math.ceil(rem):""; cd.style.display=rem>0?"flex":"none"; } } }
 }
 
 /* ==================== 循环 ==================== */
 function loop(t){ raf=requestAnimationFrame(loop); if(!lastT) lastT=t; let dt=(t-lastT)/1000; lastT=t; if(dt>0.05) dt=0.05;
   for(const f of G.flashes) f.t+=dt; G.flashes=G.flashes.filter(f=>f.t<1);
   for(const q of G.popups) q.t+=dt; G.popups=G.popups.filter(q=>q.t<0.9);
+  if(G.killMsg){ G.killMsg.t+=dt; if(G.killMsg.t>1.8) G.killMsg=null; }
   update(dt); render(); hud(); }
 
 /* ==================== 控制 ==================== */
@@ -1444,7 +1494,8 @@ function bindInput(){
   window.addEventListener("keydown",e=>{ if(!G) return; const k=e.key.toLowerCase();
     if(k==="a"||k==="arrowleft") G.keyx=-1; else if(k==="d"||k==="arrowright") G.keyx=1;
     else if(k==="w"||k==="arrowup") G.keyy=-1; else if(k==="s"||k==="arrowdown") G.keyy=1;
-    else if(k>="1"&&k<="9"){ if(G.fighter||isShootMode()){ const idx=+k-1; if(WEAPONS[idx]) selectWeapon(WEAPONS[idx].id); }   // 攻击兵种/枪战/恐怖：1-9 换武器
+    else if(k>="1"&&k<="9"){ if(G.mode==="moba"){ if(k>="1"&&k<="3") castSkill(+k-1); }   // 王者峡谷：1/2/3 放技能
+      else if(G.fighter||isShootMode()){ const idx=+k-1; if(WEAPONS[idx]) selectWeapon(WEAPONS[idx].id); }   // 攻击兵种/枪战/恐怖：1-9 换武器
       else if(k==="1") useSkill("dash"); else if(k==="2") useSkill("magnet"); else if(k==="3") useSkill("shield"); }   // 其他模式：1/2/3 技能
     else if(k==="q"){ if(G.fighter||isShootMode()) fireGun(); else placeObstacle("square"); } else if(k==="e") placeObstacle("rect");
     else if(k===" "){ G.sprint=true; e.preventDefault(); } });     // 空格 = 加速（按住）
@@ -1469,7 +1520,12 @@ const MODES=[
 function buildModes(){ const box=document.getElementById("modeList"); if(!box) return; box.innerHTML="";
   MODES.forEach(m=>{ const el=document.createElement("div"); el.className="mode"+(m.pri?" pri":"");
     el.innerHTML=`<div class="mi">${m.ico}</div><div class="mt"><div class="mn">${LANG==="en"?m.en:m.zh}</div><div class="md">${tr(m.d)}</div></div>`;
-    el.onclick=()=> m.id==="virus"?openClassPicker():(m.id==="gunfight"?openGunPicker():(m.id==="soup"?openSoup():startGame(m.id, mapSizeId))); box.appendChild(el); }); }
+    el.onclick=()=> m.id==="virus"?openClassPicker():(m.id==="gunfight"?openGunPicker():(m.id==="soup"?openSoup():(m.id==="moba"?openMobaPicker():startGame(m.id, mapSizeId)))); box.appendChild(el); }); }
+function buildMobaHeroes(){ const box=document.getElementById("heroList"); if(!box) return; box.innerHTML="";
+  HEROES.forEach(h=>{ const sk=h.skills.map(s=>HERO_SKILLS[s].ico).join(""); const el=document.createElement("div"); el.className="mode";
+    el.innerHTML=`<div class="mi">${h.ico}</div><div class="mt"><div class="mn">${LANG==="en"?h.en:h.zh}</div><div class="md">❤️${h.hp} · 🏃${h.spd} · ${ {rifle:"🎯",smg:"💥",rpg:"🚀",pistol:"🔫"}[h.atk] } · 技能 ${sk}</div></div>`;
+    el.onclick=()=>startGame("moba", mapSizeId, h.id); box.appendChild(el); }); }
+function openMobaPicker(){ document.getElementById("startOv").classList.add("hidden"); buildMobaHeroes(); document.getElementById("mobaOv").classList.remove("hidden"); }
 function helpHTML(){ const en=LANG==="en";
   const H=t=>`<div style="font-weight:900;color:var(--gold);margin:11px 0 3px">${t}</div>`;
   const L=rows=>rows.map(r=>`<div style="margin:2px 0;color:#cdd6ee">• ${r}</div>`).join("");
@@ -1607,12 +1663,13 @@ function startGame(mode, sizeId, classId, asZombie){ applyMapSize(sizeId||mapSiz
   const ho=document.getElementById("helpOv"); if(ho) ho.classList.add("hidden");
   const to=document.getElementById("talentOv"); if(to) to.classList.add("hidden");
   const so=document.getElementById("soupOv"); if(so) so.classList.add("hidden");
+  const mo=document.getElementById("mobaOv"); if(mo) mo.classList.add("hidden");
   G=freshG(mode);
   if(mode==="virus"){ if(asZombie){ applyClass(G,"civilian"); seedVirusPeople(true); turnPlayerZombie(classId); } else { applyClass(G, classId||"civilian"); seedVirusPeople(); } }
   else if(mode==="gunfight"){ seedGunfight(classId||"chaos", "blue"); }
   else if(mode==="horror"){ seedHorror(); }
   else if(mode==="identity"){ seedIdentity(); }
-  else if(mode==="moba"){ seedMoba(); }
+  else if(mode==="moba"){ seedMoba(classId); }
   else ensureBots();
   if(mode!=="moba") seedObstacles(mode==="virus"?11:(mode==="gunfight"?14:(mode==="horror"?12:(mode==="identity"?16:8))));   // 障碍物/掩体（moba自带石头）
   if(!isTeamMode()) seedVehicles(mode==="virus"?7:5);      // 🚗 车辆（战斗模式除外）
@@ -1649,6 +1706,11 @@ function buildPopSel(){ const box=document.getElementById("popSel"); if(!box) re
     el.innerHTML=(LANG==="en"?m.en:m.zh)+"<br><small style='font-weight:600;opacity:.7;font-size:9px'>"+m.n+"</small>";
     el.onclick=()=>{ popId=m.id; try{localStorage.setItem("nePop",m.id);}catch(e){} buildPopSel(); }; box.appendChild(el); }); }
 function buildWeaponBar(){ const box=document.getElementById("weaponBar"); if(!box) return; box.innerHTML="";
+  if(G && G.mode==="moba" && G.heroSkills){   // 🎯 技能栏（王者峡谷）
+    G.heroSkills.forEach((s,i)=>{ const b=document.createElement("button"); b.className="cbtn"; b.id="hskill"+i;
+      b.style.cssText="width:52px;height:52px;font-size:22px;position:relative;";
+      b.innerHTML=s.ico+"<span style='position:absolute;top:1px;left:4px;font-size:9px;opacity:.75'>"+(i+1)+"</span><span class='cd' style='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;background:rgba(0,0,0,.55);border-radius:9px'></span>";
+      b.title=nm(s); b.onclick=()=>castSkill(i); box.appendChild(b); }); return; }
   WEAPONS.forEach((w,i)=>{ const on=G&&G.weapon===w.id; const b=document.createElement("button"); b.className="cbtn";
     b.style.cssText="width:46px;height:46px;font-size:20px;position:relative;"+(on?"outline:3px solid var(--gold);background:rgba(255,207,58,.25)":"");
     b.innerHTML=w.ico+"<span style='position:absolute;top:0;left:3px;font-size:9px;opacity:.7'>"+(i+1)+"</span>";
@@ -1680,5 +1742,6 @@ if(typeof window!=="undefined") window.__ne={ get G(){return G;}, startGame, upd
   TALENTS, loadTalents, saveTalents, talentLvl, talentCost, buyTalent, applyTalents, loadCoins, saveCoins,
   seedHorror, horrorStep, spawnMonster, seedIdentity, identityStep, updateIdBot, isTeamMode, isShootMode, HORROR_DUR, ID_MACHINES,
   SOUP_PUZZLES, SOUP, soupNew, soupAns, openSoup, dangerBeat,
-  seedMoba, mobaStep, spawnMinionWave, updateMobaBot, inBush, MOBA_CRYSTAL_HP, MOBA_TOWER_HP };
+  seedMoba, mobaStep, spawnMinionWave, updateMobaBot, inBush, MOBA_CRYSTAL_HP, MOBA_TOWER_HP,
+  HEROES, HERO_SKILLS, applyHero, castSkill, onPlayerKill, heroBlast };
 </script>
