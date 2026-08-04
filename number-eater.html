@@ -220,6 +220,7 @@ const TR={
   "病毒模式":"Virus","末日丧尸：躲避感染、抢解药、进隔离带，选职业求生":"Zombie apocalypse: dodge infection, grab cures, reach quarantine — pick a class",
   "选择职业":"Choose a Class","隔离带":"Quarantine","感染中":"infected","存活":"Survived","你变成了丧尸！":"YOU TURNED INTO A ZOMBIE!",
   "隔离带出现！20秒内进去回血":"Quarantine open! 20s to heal inside","隔离带关闭了":"Quarantine closed","解药！变回人类·满血":"Cure! Back to human, full HP",
+  "城市圈":"City Zone","县城圈":"County Zone","人":" ppl",
   "普通人":"Civilian","运动员":"Athlete","医生":"Doctor","军人":"Soldier","科学家":"Scientist","幸存者":"Survivor",
   "警察":"Police","士兵":"Trooper","猎人":"Hunter","消防员":"Firefighter","忍者":"Ninja","神父":"Priest",
   "均衡：解药免疫更久":"Balanced · longer cure immunity","移动速度 +25%":"Move speed +25%","感染掉血减半":"Infection drains 50% slower",
@@ -376,6 +377,9 @@ const VIRUS_DRAIN=4.2, TRAIL_LIFE=3, TRAIL_INFECT=2, QUARANTINE_AT=50, ZOMBIE_SP
 const INCUBATE_TICK=0.2, INCUBATE_MUL=0.62, INCUBATE_NORMAL=1.5;   // 🧟 普通人潜伏期约1.5秒
 // 人群体质：强壮45%(潜伏4秒)、防护20%(碰到50%感染·潜伏6秒)、医生12%(碰丧尸30%治愈/10%感染·潜伏2秒)
 const ARCH_STRONG=0.45, ARCH_GUARD=0.20, ARCH_DOCTOR=0.12;
+// 🏙️ 城市圈(>150人) / 🏘️ 县城圈(>80人)：圈内丧尸+20%速、人类逃跑+10%、载具刷新↑、攻击兵种加成
+const CITY_POP=150, COUNTY_POP=80;
+const ZONE={ city:{fSpd:1.5,fAtk:1.8,fDmg:1.5,veh:0.020,ico:"🏙️",zh:"城市圈"}, county:{fSpd:1.4,fAtk:1.6,fDmg:1.4,veh:0.015,ico:"🏘️",zh:"县城圈"} };
 const CLASSES=[
   {id:"civilian",   zh:"普通人", en:"Civilian",   ico:"🧑",   d:"均衡：解药免疫更久"},
   {id:"athlete",    zh:"运动员", en:"Athlete",    ico:"🏃",   d:"移动速度 +25%"},
@@ -455,7 +459,7 @@ function freshG(mode){ return {
   items:[], gvehicles:[], gv:null,   // 🔫 枪战：医疗包/炸药包 · 坦克/装甲车 · 当前所乘载具
   machines:[], gates:[], horrorEnd:0, escaped:false,   // 🔦恐怖 / 🎭庄园逃生
   bushes:[], jbuffs:[], waveNext:0,   // ⚔️王者峡谷：草丛 / 野怪水晶 / 兵线
-  mazeExit:null,   // 🧩迷宫出口
+  mazeExit:null, cityZone:null,   // 🧩迷宫出口 / 🏙️城市圈
   zombie:false, zcls:null, zspd:1, zInfR:0, zMax:0,   // 玩家变丧尸后的状态
   bots:[], coins:0, best:loadBest(), combo:0, comboMax:0, comboT:0, eats:0, bossKills:0, level:1,
   aimX:WORLD_W/2, aimY:WORLD_H/2-1, moving:false, keyx:0, keyy:0,
@@ -602,6 +606,7 @@ function seedShelters(n){ n=n||2; const p=G.player; let tries=0;   // 🏠 开�
     if(clash) continue;
     G.shelters.push({x,y,r:SHELTER_R}); } }
 function inShelter(x,y){ if(!G.shelters) return false; for(const s of G.shelters){ if(hyp(x-s.x,y-s.y)<s.r) return true; } return false; }
+function inZone(x,y){ const z=G.cityZone; return (z && hyp(x-z.x,y-z.y)<z.r) ? z : null; }   // 城市/县城圈
 function separateVirus(){ const bots=G.bots, p=G.player, n=bots.length; if(!n) return;   // 人类/丧尸互不重叠
   const cell=150, grid=new Map();
   for(let i=0;i<n;i++){ const b=bots[i]; const k=(Math.floor(b.x/cell))*4096+Math.floor(b.y/cell); let a=grid.get(k); if(!a){a=[];grid.set(k,a);} a.push(i); }
@@ -649,11 +654,12 @@ function spawnProjectile(x,y,ax,ay,w,team,dmgMul){ const sp=w.spd*BULLET_SLOW, d
 function fireGun(){ if(!G||G.over||G.paused) return; const gf=isShootMode(); if(G.mode!=="virus" && !gf) return;
   if(!gf && !G.fighter) return; if(gf && G.playerDead) return; const p=G.player;
   const w=(gf&&G.gv)?(G.gv.type==="tank"?TANK_WEAPON:(WEAPONS.find(x=>x.id===GV_TYPES[G.gv.type].wep)||currentWeapon())):currentWeapon();   // 载具用专属武器
-  if(G.time<(G.shootCool||0)) return; G.shootCool=G.time+w.cd;
+  let atkMul=1, dmgZ=1; if(G.mode==="virus" && G.fighter){ const pz=inZone(p.x,p.y); if(pz){ atkMul=ZONE[pz.tier].fAtk; dmgZ=ZONE[pz.tier].fDmg; } }   // 🏙️圈内玩家士兵攻速/伤害加成
+  if(G.time<(G.shootCool||0)) return; G.shootCool=G.time+w.cd/atkMul;
   let best=null,bd=1e9; for(const b of G.bots){ if(gf?(b.dead||b.crowd||b.team===G.team):!b.zombie) continue; const dd=hyp(b.x-p.x,b.y-p.y); if(dd<bd){bd=dd;best=b;} }
   let ax,ay; if(best){ ax=best.x-p.x; ay=best.y-p.y; } else { ax=G.aimX-p.x; ay=G.aimY-p.y; if(hyp(ax,ay)<1){ax=p.vx;ay=p.vy;} if(hyp(ax,ay)<1){ax=1;ay=0;} }
   const d=hyp(ax,ay)||1; ax/=d; ay/=d; const rr=(G.gv?G.gv.r:p.r);
-  const pj=spawnProjectile(p.x+ax*(rr+6), p.y+ay*(rr+6), ax, ay, w, gf?G.team:null, G.dmgMul||1); if(pj) pj.owner="P";   // 玩家子弹（用于计击杀）
+  const pj=spawnProjectile(p.x+ax*(rr+6), p.y+ay*(rr+6), ax, ay, w, gf?G.team:null, (G.dmgMul||1)*dmgZ); if(pj) pj.owner="P";   // 玩家子弹（用于计击杀）
   popup(p.x+ax*rr, p.y+ay*rr, w.ico, "#ffd76a"); sfx.shoot(); }
 function collideObstacles(e){ if(!G.obstacles||!G.obstacles.length) return; for(const o of G.obstacles){
     const nx=clamp(e.x,o.cx-o.hw,o.cx+o.hw), ny=clamp(e.y,o.cy-o.hh,o.cy+o.hh), dx=e.x-nx, dy=e.y-ny, d2=dx*dx+dy*dy;
@@ -991,10 +997,16 @@ function mazeStep(dt){ const p=G.player; let near=1e9;
 function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
   separateVirus();   // 人类/丧尸互不重叠
   rideStep(dt);      // 🚗 车辆：上车/加速/碾压丧尸
-  if(G.time>=(G._hotNext||0)){ G._hotNext=G.time+1.2;   // 🔥 丧尸热点：人群密集处，供兵种/工程人员响应
-    const cell=460, m=new Map(); let best=null,bestN=0;   // 用 3x3 邻域统计，避免边界漏算
+  if(G.time>=(G._hotNext||0)){ G._hotNext=G.time+1.2;   // 🔥 丧尸热点：人群密集处，供工程人员封路
+    const cell=460, m=new Map(); let best=null,bestN=0;
     for(const z of G.bots){ if(!z.zombie) continue; const k=Math.floor(z.x/cell)*4096+Math.floor(z.y/cell); let e=m.get(k); if(!e){e={n:0,sx:0,sy:0};m.set(k,e);} e.n++; e.sx+=z.x; e.sy+=z.y; if(e.n>bestN){bestN=e.n;best=e;} }
-    G.zHotspot=(best&&bestN>=4)?{x:best.sx/best.n,y:best.sy/best.n,n:bestN,t:G.time+6}:null; }
+    G.zHotspot=(best&&bestN>=7)?{x:best.sx/best.n,y:best.sy/best.n,n:bestN,t:G.time+6}:null;
+    // 🏙️ 城市/县城圈：按存活人数与聚集范围形成（核心区+边缘）
+    let n=0,sx=0,sy=0; for(const b of G.bots){ if(!b.zombie){ n++; sx+=b.x; sy+=b.y; } }
+    if(n>COUNTY_POP){ const cx=sx/n, cy=sy/n; let sd=0; for(const b of G.bots){ if(!b.zombie) sd+=hyp(b.x-cx,b.y-cy); }
+      const r=clamp((sd/n)*1.6,320,Math.min(WORLD_W,WORLD_H)*0.62), tier=n>CITY_POP?"city":"county";
+      G.cityZone={x:cx,y:cy,r,coreR:r*0.52,tier,n}; }
+    else G.cityZone=null; }
   // 隔离带：只持续 20 秒，关闭后 30 秒再出现
   if(!G.quarantine && G.time>=G.quarantineAt){ const qr=Math.min(WORLD_W,WORLD_H)*0.17;
     G.quarantine={x:clamp(p.x,qr+40,WORLD_W-qr-40),y:clamp(p.y,qr+40,WORLD_H-qr-40),r:qr,closeAt:G.time+QUARANTINE_DUR}; toast("🛡️ "+tr("隔离带出现！20秒内进去回血")); }
@@ -1032,12 +1044,15 @@ function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
   for(let i=G.bots.length-1;i>=0;i--){ const z=G.bots[i]; if(!z.zombie) continue; const rng=z.infR||0;
     for(const h of G.bots){ if(h.zombie) continue; const d=hyp(h.x-z.x,h.y-z.y);
       if(d < z.r+h.r+6 || (rng && d<rng+h.r)){ tryInfect(h,z); if(!z.zombie) break;   // 被医生治愈则该丧尸退出
-        if(h.fighter){ z.hp=(z.hp||100)-FIGHTER_DPS*dt; if(z.hp<=0){ z.dead=true; break; } } } } }   // 士兵反伤丧尸
+        if(h.fighter){ const fz=inZone(h.x,h.y); const fm=fz?ZONE[fz.tier].fAtk*ZONE[fz.tier].fDmg:1; z.hp=(z.hp||100)-FIGHTER_DPS*fm*dt; if(z.hp<=0){ z.dead=true; break; } } } } }   // 士兵反伤丧尸；🏙️圈内攻速×伤害加成
   if(G.bots.some(x=>x.dead)) G.bots=G.bots.filter(x=>!x.dead);
   // 被感染者：到达各自潜伏期就变丧尸（强壮4秒/防护6秒/医生2秒/普通1.5秒）
   for(const h of G.bots){ if(h.zombie || !h.inf) continue; if(G.time>=(h.turnAt||0)) infectBot(h); }
   // 隔离带排斥丧尸
   if(Q){ for(const b of G.bots){ if(b.zombie){ const ddx=b.x-Q.x, ddy=b.y-Q.y, dd=hyp(ddx,ddy)||1; if(dd<Q.r+b.r){ const push=(Q.r+b.r-dd); b.x+=ddx/dd*push; b.y+=ddy/dd*push; } } } }
+  // 🚗 城市/县城圈内载具刷新率大幅提高（城+300% / 县+200%）
+  if(G.cityZone && G.vehicles.length<12 && Math.random()<ZONE[G.cityZone.tier].veh){ const z=G.cityZone, a=Math.random()*6.28, rr=Math.random()*z.r*0.8;
+    G.vehicles.push({x:clamp(z.x+Math.cos(a)*rr,40,WORLD_W-40), y:clamp(z.y+Math.sin(a)*rr,40,WORLD_H-40), r:30}); }
   // 解药：玩家(人类)吃→回人满血；丧尸吃→变回人类
   if(Math.random()<0.010*G.cureRateMul && G.cures.length<3){ const s=freeXY(18); G.cures.push({x:s.x,y:s.y,r:18}); }
   for(let i=G.cures.length-1;i>=0;i--){ const c=G.cures[i];
@@ -1104,9 +1119,13 @@ function updateBot(b,dt){ const p=G.player; b.t-=dt; if(b.t<=0){ b.t=1+Math.rand
         if(cn){ const mx=cx/cn,my=cy/cn, ex=b.x-mx,ey=b.y-my, ed=hyp(ex,ey)||1; ax2+=ex/ed*0.5; ay2+=ey/ed*0.5; }   // 往人少处
         b._sx=ax2; b._sy=ay2; }
       if(b._sx||b._sy){ ax=b._sx; ay=b._sy; }
-      // ⚔️ 攻击兵种：奔赴丧尸热点（人群多/告警处）消灭丧尸
-      if(b.fighter){ const rally=G.zHotspot||(G.alarm&&G.time<G.alarm.t?G.alarm:null);
-        if(rally){ const ex=rally.x-b.x,ey=rally.y-b.y,ed=hyp(ex,ey)||1; if(ed>b.r+40){ ax=ex/ed*2; ay=ey/ed*2; } } }
+      // ⚔️ 攻击兵种：优先前往更大的城市救援，其次奔赴感染/告警点；已在城内则扑向最近丧尸消灭
+      if(b.fighter){ const cz=G.cityZone;
+        if(cz && hyp(b.x-cz.x,b.y-cz.y)>=cz.r){ const ex=cz.x-b.x,ey=cz.y-b.y,ed=hyp(ex,ey)||1; ax=ex/ed*2; ay=ey/ed*2; }   // 城外 → 奔向城市
+        else { let tz=null,td=1e9; const grid=G._grid, bcx=Math.floor(b.x/NBR_CELL), bcy=Math.floor(b.y/NBR_CELL);   // 城内/无城 → 扑向最近丧尸
+          if(grid) for(let gx=bcx-2;gx<=bcx+2;gx++) for(let gy=bcy-2;gy<=bcy+2;gy++){ const arr=grid.get(gx*4096+gy); if(arr) for(const o of arr){ if(o.zombie){ const dd=hyp(o.x-b.x,o.y-b.y); if(dd<td){td=dd;tz=o;} } } }
+          const rally=tz||G.zHotspot||(G.alarm&&G.time<G.alarm.t?G.alarm:null);
+          if(rally){ const ex=rally.x-b.x,ey=rally.y-b.y,ed=hyp(ex,ey)||1; if(ed>b.r+30){ ax=ex/ed*2; ay=ey/ed*2; } } } }
       // 🚧 工程人员：赶到热点外围封路（放一道墙挡住丧尸扩散）
       else if(b.engineer && G.zHotspot){ const h=G.zHotspot, ex=h.x-b.x, ey=h.y-b.y, ed=hyp(ex,ey)||1;
         if(ed>210){ ax=ex/ed*1.6; ay=ey/ed*1.6; }
@@ -1118,7 +1137,8 @@ function updateBot(b,dt){ const p=G.player; b.t-=dt; if(b.t<=0){ b.t=1+Math.rand
   else if(b.toRoom && G.room && G.room.active){ const rx=G.room.cx-b.x, ry=G.room.cy-b.y, rd=hyp(rx,ry)||1; ax=rx/rd*1.7; ay=ry/rd*1.7; }
   else if(d<400){ if(b.val<p.val){ ax-=dx/d*1.5; ay-=dy/d*1.5; } else if(b.val>p.val){ ax+=dx/d*0.7; ay+=dy/d*0.7; } }
   if(G.frozenUntil>G.time){ ax*=0.03; ay*=0.03; }
-  const spd=(b.boss?46:66)*(1-Math.min(0.4,Math.log10(b.val+1)*0.05))*BOT_SPEED_MUL*((b.boostUntil||0)>G.time?SPEED_BOOST:1)*(b.zombie?ZOMBIE_SPEED*(b.zspd||1):1)*(b.zombie&&inShelter(b.x,b.y)?SHELTER_ZSLOW:1);   // 丧尸更快 + 职业加成；🏠庇护所内丧尸减速80%
+  let zoneMul=1; if(G.mode==="virus"){ const zz=inZone(b.x,b.y); if(zz){ zoneMul = b.zombie?1.2 : (b.fighter?ZONE[zz.tier].fSpd : 1.1); } }   // 🏙️圈内：丧尸+20% / 攻击兵种+50/40% / 人类逃跑+10%
+  const spd=(b.boss?46:66)*(1-Math.min(0.4,Math.log10(b.val+1)*0.05))*BOT_SPEED_MUL*((b.boostUntil||0)>G.time?SPEED_BOOST:1)*(b.zombie?ZOMBIE_SPEED*(b.zspd||1):1)*(b.zombie&&inShelter(b.x,b.y)?SHELTER_ZSLOW:1)*zoneMul;   // 丧尸更快 + 职业加成；🏠庇护所内丧尸减速80%
   b.vx+=(ax*spd-b.vx)*0.06; b.vy+=(ay*spd-b.vy)*0.06;
   if(G.magnetUntil>G.time && b.val<p.val && d<330){ b.vx+=dx/d*260*dt; b.vy+=dy/d*260*dt; }
   b.x+=b.vx*dt; b.y+=b.vy*dt; clampEntity(b,10); collideObstacles(b);
@@ -1346,6 +1366,18 @@ function render(){ if(!G) return; const p=G.player;
       ctx.font="34px sans-serif"; ctx.fillText("🏠",s.x,s.y); ctx.fillStyle="rgba(150,235,180,.95)"; ctx.font="900 13px ui-monospace,monospace"; ctx.fillText("🏠 "+tr("庇护所"),s.x,s.y-s.r-12); }
     for(const c of G.cures){ if(c.x<camx-40||c.x>camx+VW/zoom+40||c.y<camy-40||c.y>camy+VH/zoom+40) continue;
       ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,7); ctx.fillStyle="#31e07a"; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle="#fff"; ctx.stroke(); ctx.font="16px sans-serif"; ctx.fillText("💊",c.x,c.y); }
+    if(G.cityZone){ const z=G.cityZone, isCity=z.tier==="city", col=isCity?"90,170,255":"120,200,140";   // 🏙️城市圈 / 🏘️县城圈
+      ctx.save();
+      ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,7); ctx.fillStyle="rgba("+col+",.06)"; ctx.fill();   // 边缘区
+      ctx.setLineDash([16,10]); ctx.lineWidth=3; ctx.strokeStyle="rgba("+col+",.5)"; ctx.stroke();
+      ctx.beginPath(); ctx.arc(z.x,z.y,z.coreR,0,7); ctx.fillStyle="rgba("+col+",.10)"; ctx.fill();   // 核心区
+      ctx.setLineDash([6,6]); ctx.lineWidth=2.5; ctx.strokeStyle="rgba("+col+",.75)"; ctx.stroke();
+      ctx.setLineDash([]);
+      const lbl=(isCity?"🏙️ ":"🏘️ ")+tr(ZONE[z.tier].zh)+" · "+z.n+tr("人");
+      ctx.font="bold 26px sans-serif"; ctx.textAlign="center";
+      ctx.lineWidth=4; ctx.strokeStyle="rgba(0,0,0,.55)"; ctx.strokeText(lbl,z.x,z.y-z.r-14);
+      ctx.fillStyle="rgba("+col+",1)"; ctx.fillText(lbl,z.x,z.y-z.r-14);
+      ctx.restore(); }
     if(G.zHotspot){ const h=G.zHotspot, pr=90+((G.time*2)%1)*30; ctx.beginPath(); ctx.arc(h.x,h.y,pr,0,7); ctx.strokeStyle="rgba(255,140,50,.55)"; ctx.lineWidth=3; ctx.stroke(); ctx.font="22px sans-serif"; ctx.fillText("🔥",h.x,h.y-pr-6); }   // 🔥丧尸热点
   }
   // 🔫 枪战：拳击台 / 出生点 / 旗子 / 医疗包·炸药包 / 载具
