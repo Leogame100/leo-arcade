@@ -241,6 +241,7 @@ const TR={
   "你被击倒！等队友救援":"You're down! Wait for a rescue","被队友救起！":"Rescued by a teammate!",
   "海龟汤":"Turtle Soup","AI汤主出题·你问是非题推理真相（和朋友一起玩）":"AI host sets a riddle · ask yes/no questions to deduce the truth (play with friends)","提示":"Hint","揭晓汤底":"Reveal","换一题":"New riddle",
   "王者峡谷":"MOBA Rift","推塔MOBA·小兵/防御塔/草丛/野怪·摧毁敌方水晶获胜（王者荣耀式）":"Tower-push MOBA · minions/towers/bushes/jungle · destroy the enemy crystal to win","阵亡·5秒后回城复活":"Slain — respawning at base in 5s",
+  "迷宫模式":"Maze","黑暗迷宫中被丧尸追逐·找到出口逃生（别被抓）":"Zombies chase you through a dark maze — find the exit to escape (don't get caught)","找出口":"Find the exit","出口在这个方向":"Exit is this way",
   "胜利奖励":"Victory bonus","选择英雄":"Choose a Hero",
   "神射手":"Marksman","狂战士":"Warrior","大法师":"Mage","刺客":"Assassin","坦克":"Tank",
   "狙击":"Snipe","火球术":"Fireball","爆发":"Blast","风暴":"Storm","闪现":"Flash","护盾":"Shield","治疗":"Heal",
@@ -292,6 +293,8 @@ const SHELTER_R=175, SHELTER_ZSLOW=0.2;   // 🏠庇护所：半径 / 丧尸进�
 // 🔦 恐怖模式 / 🎭 庄园逃生
 const HORROR_DUR=90, HORROR_MONSTERS=6, HORROR_LIGHT=280;   // 撑90秒获胜；6只怪；手电视野
 const ID_MACHINES=5, ID_SURVIVORS=4, ID_LIGHT=440;   // 5台密码机、4个求生者、视野
+// 🧩 迷宫模式
+const MAZE_CELL=200, MAZE_WT=16, MAZE_LIGHT=360;
 // ⚔️ 王者峡谷（王者荣耀式推塔 MOBA）
 const MOBA_CRYSTAL_HP=2600, MOBA_TOWER_HP=1400, MOBA_MINION_HP=140, MOBA_HERO_HP=340, MOBA_WAVE=13;
 const HERO_SKILLS={
@@ -452,6 +455,7 @@ function freshG(mode){ return {
   items:[], gvehicles:[], gv:null,   // 🔫 枪战：医疗包/炸药包 · 坦克/装甲车 · 当前所乘载具
   machines:[], gates:[], horrorEnd:0, escaped:false,   // 🔦恐怖 / 🎭庄园逃生
   bushes:[], jbuffs:[], waveNext:0,   // ⚔️王者峡谷：草丛 / 野怪水晶 / 兵线
+  mazeExit:null,   // 🧩迷宫出口
   zombie:false, zcls:null, zspd:1, zInfR:0, zMax:0,   // 玩家变丧尸后的状态
   bots:[], coins:0, best:loadBest(), combo:0, comboMax:0, comboT:0, eats:0, bossKills:0, level:1,
   aimX:WORLD_W/2, aimY:WORLD_H/2-1, moving:false, keyx:0, keyy:0,
@@ -533,7 +537,8 @@ function seedVirusPeople(noPZ){ G.bots=[]; const POP=popCount();   // 开局人�
     if(ar<ARCH_STRONG){ arch="strong"; incub=4; archIco="💪"; }
     else if(ar<ARCH_STRONG+ARCH_GUARD){ arch="guard"; infChance=0.5; incub=6; archIco="🦺"; }
     else if(ar<ARCH_STRONG+ARCH_GUARD+ARCH_DOCTOR){ arch="doctor"; doctor=true; infChance=0.1; incub=2; archIco="🩺"; }
-    G.bots.push({val,x,y,vx:0,vy:0,kind:"normal",boss:false,r:radiusOf(val),t:Math.random()*3,dir:Math.random()*Math.PI*2,zombie:false,fighter,fico,hp:100,inf:false,arch,infChance,incub,doctor,archIco,nextRoll:0,turnAt:0}); }
+    const engineer = !fighter && Math.random()<0.09; if(engineer) archIco="👷";   // 🚧 工程人员：奔赴热点封路
+    G.bots.push({val,x,y,vx:0,vy:0,kind:"normal",boss:false,r:radiusOf(val),t:Math.random()*3,dir:Math.random()*Math.PI*2,zombie:false,fighter,fico,hp:100,inf:false,arch,infChance,incub,doctor,archIco,engineer,wallCd:0,nextRoll:0,turnAt:0}); }
   if(!noPZ && G.bots.length) infectBot(G.bots[Math.floor(Math.random()*G.bots.length)], "king");   // 零号感染者 = 尸王👑
 }
 function ensureBots(){
@@ -947,10 +952,49 @@ function mobaStep(dt){ const p=G.player;
   const rc=G.bots.find(b=>b.role==="crystal"&&b.team==="red"), bc=G.bots.find(b=>b.role==="crystal"&&b.team==="blue");
   if(!rc || rc.gone) return gunOver("blue"); if(!bc || bc.gone) return gunOver("red");
 }
+/* -------- 🧩 迷宫模式（被丧尸追逐·找出口） -------- */
+function seedMaze(){ G.team=null; G.maxHp=150; G.hp=150; G.playerDead=false; G.spawnProtect=1.5; SND._scared=false;
+  G.bots=[]; G.obstacles=[]; const cell=MAZE_CELL, wt=MAZE_WT;
+  const cols=Math.max(6,Math.floor((WORLD_W-40)/cell)), rows=Math.max(5,Math.floor((WORLD_H-40)/cell));
+  const ox=(WORLD_W-cols*cell)/2, oy=(WORLD_H-rows*cell)/2;
+  const V=[]; for(let r=0;r<rows;r++){ V.push([]); for(let c=0;c<cols;c++) V[r].push({N:1,E:1,S:1,W:1,v:0}); }
+  const stack=[[0,0]]; V[0][0].v=1; const OPP={N:"S",S:"N",E:"W",W:"E"};   // 深度优先挖迷宫
+  while(stack.length){ const cur=stack[stack.length-1], r=cur[0], c=cur[1], nb=[];
+    if(r>0&&!V[r-1][c].v) nb.push(["N",r-1,c]); if(r<rows-1&&!V[r+1][c].v) nb.push(["S",r+1,c]);
+    if(c>0&&!V[r][c-1].v) nb.push(["W",r,c-1]); if(c<cols-1&&!V[r][c+1].v) nb.push(["E",r,c+1]);
+    if(!nb.length){ stack.pop(); continue; }
+    const pick=nb[Math.floor(Math.random()*nb.length)], dir=pick[0], nr=pick[1], nc=pick[2];
+    V[r][c][dir]=0; V[nr][nc][OPP[dir]]=0; V[nr][nc].v=1; stack.push([nr,nc]); }
+  const wallH=(x,y)=>G.obstacles.push({cx:x+cell/2,cy:y,hw:cell/2+wt/2,hh:wt/2});
+  const wallV=(x,y)=>G.obstacles.push({cx:x,cy:y+cell/2,hw:wt/2,hh:cell/2+wt/2});
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){ const x=ox+c*cell, y=oy+r*cell; if(V[r][c].N) wallH(x,y); if(V[r][c].W) wallV(x,y); }
+  for(let c=0;c<cols;c++) wallH(ox+c*cell, oy+rows*cell); for(let r=0;r<rows;r++) wallV(ox+cols*cell, oy+r*cell);
+  const P=G.player; P.x=ox+cell/2; P.y=oy+cell/2; P.val=5; P.r=22; P.vx=P.vy=0;
+  G.mazeExit={x:ox+(cols-0.5)*cell, y:oy+(rows-0.5)*cell, r:cell*0.34};
+  const nz=Math.min(7,Math.max(3,Math.round(cols*rows/16)));   // 追逐的丧尸
+  let placed=0,tries=0; while(placed<nz && tries++<200){ const rc=Math.floor(Math.random()*rows), cc=Math.floor(Math.random()*cols);
+    if((rc+cc) < (rows+cols)*0.5) continue;   // 别太靠近起点
+    G.bots.push({zombie:true, maze:true, ico:"🧟", x:ox+(cc+0.5)*cell, y:oy+(rc+0.5)*cell, vx:0,vy:0, r:24, val:6, hp:100, zcls:"walker", t:0, dir:Math.random()*6.28}); placed++; } }
+function mazeStep(dt){ const p=G.player; let near=1e9;
+  for(const z of G.bots){ if(!z.zombie) continue; const dx=p.x-z.x, dy=p.y-z.y, d=hyp(dx,dy)||1; if(d<near) near=d;
+    z.t-=dt; let ax=dx/d, ay=dy/d;
+    if(hyp(z.vx,z.vy)<12){ if(z.t<=0){ z.t=0.5+Math.random(); z.dir=Math.atan2(dy,dx)+(Math.random()-0.5)*2.2; } ax=Math.cos(z.dir); ay=Math.sin(z.dir); }   // 卡墙时换方向绕行
+    const spd=118; z.vx+=(ax*spd-z.vx)*0.1; z.vy+=(ay*spd-z.vy)*0.1; z.x+=z.vx*dt; z.y+=z.vy*dt; clampEntity(z,10); collideObstacles(z);
+    if(hyp(z.x-p.x,z.y-p.y)<p.r+z.r+6 && G.time>=(G.spawnProtect||0)){ G.hp-=42*dt; G.hurtFlash=0.4; } }
+  dangerBeat(clamp(1-near/520,0,1));
+  if(near<300 && G.time>=(G._scareNext||0)){ G._scareNext=G.time+6; sfx.scare(); }
+  if(near<300 && G.time>=(G._growlNext||0)){ G._growlNext=G.time+1.6+Math.random(); sfx.growl(); }
+  if(G.hp<=0) return gameOver("caught");
+  if(hyp(p.x-G.mazeExit.x,p.y-G.mazeExit.y)<G.mazeExit.r) return gameOver("escaped");
+}
 /* -------- 🦠 病毒模式 -------- */
 function virusStep(dt){ const p=G.player; G.survTime=(G.survTime||0)+dt;
   separateVirus();   // 人类/丧尸互不重叠
   rideStep(dt);      // 🚗 车辆：上车/加速/碾压丧尸
+  if(G.time>=(G._hotNext||0)){ G._hotNext=G.time+1.2;   // 🔥 丧尸热点：人群密集处，供兵种/工程人员响应
+    const cell=460, m=new Map(); let best=null,bestN=0;   // 用 3x3 邻域统计，避免边界漏算
+    for(const z of G.bots){ if(!z.zombie) continue; const k=Math.floor(z.x/cell)*4096+Math.floor(z.y/cell); let e=m.get(k); if(!e){e={n:0,sx:0,sy:0};m.set(k,e);} e.n++; e.sx+=z.x; e.sy+=z.y; if(e.n>bestN){bestN=e.n;best=e;} }
+    G.zHotspot=(best&&bestN>=4)?{x:best.sx/best.n,y:best.sy/best.n,n:bestN,t:G.time+6}:null; }
   // 隔离带：只持续 20 秒，关闭后 30 秒再出现
   if(!G.quarantine && G.time>=G.quarantineAt){ const qr=Math.min(WORLD_W,WORLD_H)*0.17;
     G.quarantine={x:clamp(p.x,qr+40,WORLD_W-qr-40),y:clamp(p.y,qr+40,WORLD_H-qr-40),r:qr,closeAt:G.time+QUARANTINE_DUR}; toast("🛡️ "+tr("隔离带出现！20秒内进去回血")); }
@@ -1058,9 +1102,17 @@ function updateBot(b,dt){ const p=G.player; b.t-=dt; if(b.t<=0){ b.t=1+Math.rand
         if(G.zombie){ const ex=b.x-p.x,ey=b.y-p.y,ed=hyp(ex,ey); if(ed<360&&ed>0){ ax2+=ex/ed*1.7; ay2+=ey/ed*1.7; } }   // 躲玩家丧尸
         if(sf){ const ex=sf.x-b.x,ey=sf.y-b.y,ed=hyp(ex,ey)||1; ax2+=ex/ed*0.9; ay2+=ey/ed*0.9; }   // 往士兵靠
         if(cn){ const mx=cx/cn,my=cy/cn, ex=b.x-mx,ey=b.y-my, ed=hyp(ex,ey)||1; ax2+=ex/ed*0.5; ay2+=ey/ed*0.5; }   // 往人少处
-        if(b.fighter && G.alarm && G.time<G.alarm.t){ const ex=G.alarm.x-b.x, ey=G.alarm.y-b.y, ed=hyp(ex,ey)||1; if(ed>b.r+40){ ax2=ex/ed*2; ay2=ey/ed*2; } }   // 🚨警报：所有警察赶往袭击点
         b._sx=ax2; b._sy=ay2; }
       if(b._sx||b._sy){ ax=b._sx; ay=b._sy; }
+      // ⚔️ 攻击兵种：奔赴丧尸热点（人群多/告警处）消灭丧尸
+      if(b.fighter){ const rally=G.zHotspot||(G.alarm&&G.time<G.alarm.t?G.alarm:null);
+        if(rally){ const ex=rally.x-b.x,ey=rally.y-b.y,ed=hyp(ex,ey)||1; if(ed>b.r+40){ ax=ex/ed*2; ay=ey/ed*2; } } }
+      // 🚧 工程人员：赶到热点外围封路（放一道墙挡住丧尸扩散）
+      else if(b.engineer && G.zHotspot){ const h=G.zHotspot, ex=h.x-b.x, ey=h.y-b.y, ed=hyp(ex,ey)||1;
+        if(ed>210){ ax=ex/ed*1.6; ay=ey/ed*1.6; }
+        else if(G.time>=(b.wallCd||0) && G.obstacles.length<90){ b.wallCd=G.time+3.5;
+          const nx=ex/ed, ny=ey/ed, wx=b.x+nx*44, wy=b.y+ny*44;
+          G.obstacles.push(Math.abs(nx)>=Math.abs(ny)?{cx:wx,cy:wy,hw:14,hh:74}:{cx:wx,cy:wy,hw:74,hh:14}); popup(wx,wy,"🚧","#ffcf3a"); } }
     }
   }
   else if(b.toRoom && G.room && G.room.active){ const rx=G.room.cx-b.x, ry=G.room.cy-b.y, rd=hyp(rx,ry)||1; ax=rx/rd*1.7; ay=ry/rd*1.7; }
@@ -1125,6 +1177,7 @@ function update(dt){ if(!G||G.over||G.paused) return; G.time+=dt; G._dt=dt;
   if(G.mode==="horror"){ G._grid=buildBotGrid(); for(const b of G.bots) updateGunBot(b,dt); horrorStep(dt); if(G.over) return; return; }
   if(G.mode==="identity"){ G._grid=buildBotGrid(); identityStep(dt); if(G.over) return; return; }
   if(G.mode==="moba"){ G._grid=buildBotGrid(); mobaStep(dt); if(G.over) return; return; }
+  if(G.mode==="maze"){ mazeStep(dt); if(G.over) return; return; }
   if(G.architect && G.brickMax) G.bricks=Math.min(G.brickMax,(G.bricks||0)+dt*0.28);   // 砖块回充
   // 加速/爆炸方块随机刷新（病毒模式免除）
   if(!virus){
@@ -1293,6 +1346,7 @@ function render(){ if(!G) return; const p=G.player;
       ctx.font="34px sans-serif"; ctx.fillText("🏠",s.x,s.y); ctx.fillStyle="rgba(150,235,180,.95)"; ctx.font="900 13px ui-monospace,monospace"; ctx.fillText("🏠 "+tr("庇护所"),s.x,s.y-s.r-12); }
     for(const c of G.cures){ if(c.x<camx-40||c.x>camx+VW/zoom+40||c.y<camy-40||c.y>camy+VH/zoom+40) continue;
       ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,7); ctx.fillStyle="#31e07a"; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle="#fff"; ctx.stroke(); ctx.font="16px sans-serif"; ctx.fillText("💊",c.x,c.y); }
+    if(G.zHotspot){ const h=G.zHotspot, pr=90+((G.time*2)%1)*30; ctx.beginPath(); ctx.arc(h.x,h.y,pr,0,7); ctx.strokeStyle="rgba(255,140,50,.55)"; ctx.lineWidth=3; ctx.stroke(); ctx.font="22px sans-serif"; ctx.fillText("🔥",h.x,h.y-pr-6); }   // 🔥丧尸热点
   }
   // 🔫 枪战：拳击台 / 出生点 / 旗子 / 医疗包·炸药包 / 载具
   if(G.mode==="gunfight"){
@@ -1322,6 +1376,7 @@ function render(){ if(!G) return; const p=G.player;
     for(const g of G.gates){ ctx.font="34px sans-serif"; ctx.globalAlpha=g.open?1:0.4; ctx.fillText(g.open?"🚪":"🔒",g.x,g.y); ctx.globalAlpha=1;
       ctx.beginPath(); ctx.arc(g.x,g.y,g.r,0,7); ctx.strokeStyle=g.open?"#31e07a":"rgba(255,90,120,.5)"; ctx.lineWidth=3; ctx.setLineDash([8,6]); ctx.stroke(); ctx.setLineDash([]); } }
   if(G.mode==="horror"||G.mode==="identity"){ for(const it of G.items){ if(it.type!=="med") continue; ctx.beginPath(); ctx.arc(it.x,it.y,it.r,0,7); ctx.fillStyle="#eef6ff"; ctx.fill(); ctx.font="18px sans-serif"; ctx.fillText("🩹",it.x,it.y); } }
+  if(G.mode==="maze" && G.mazeExit){ const e=G.mazeExit; ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,7); ctx.fillStyle="rgba(49,224,122,.18)"; ctx.fill(); ctx.strokeStyle="#31e07a"; ctx.lineWidth=4; ctx.setLineDash([10,7]); ctx.stroke(); ctx.setLineDash([]); ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.font="34px sans-serif"; ctx.fillText("🏁",e.x,e.y); }
   // 食物
   for(const f of G.foods){ if(f.x<camx-40||f.x>camx+VW/zoom+40||f.y<camy-40||f.y>camy+VH/zoom+40) continue;
     ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,7); ctx.fillStyle=f.col; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle="#fff"; ctx.stroke();
@@ -1383,8 +1438,8 @@ function render(){ if(!G) return; const p=G.player;
     else { ctx.beginPath(); ctx.arc(p.x,p.y,p.r+f.t*160,0,7); ctx.strokeStyle="rgba(255,207,58,"+(0.6-f.t*0.6)+")"; ctx.lineWidth=4; ctx.stroke(); } }
   // popups
   for(const q of G.popups){ ctx.globalAlpha=Math.max(0,1-q.t/0.9); ctx.fillStyle=q.col; ctx.font="900 15px ui-monospace,monospace"; ctx.fillText(q.txt,q.x,q.y-q.t*40); ctx.globalAlpha=1; }
-  // 🔦 黑暗：手电视野，视野外看不见（恐怖/庄园逃生）
-  if((G.mode==="horror"||G.mode==="identity") && ctx.createRadialGradient){ const lr=(G.mode==="horror"?HORROR_LIGHT:ID_LIGHT)*(G.riding?1.3:1);
+  // 🔦 黑暗：手电视野，视野外看不见（恐怖/庄园逃生/迷宫）
+  if((G.mode==="horror"||G.mode==="identity"||G.mode==="maze") && ctx.createRadialGradient){ const lr=(G.mode==="horror"?HORROR_LIGHT:G.mode==="maze"?MAZE_LIGHT:ID_LIGHT)*(G.riding?1.3:1);
     const rg=ctx.createRadialGradient(p.x,p.y,lr*0.4,p.x,p.y,lr);
     rg.addColorStop(0,"rgba(3,4,10,0)"); rg.addColorStop(0.72,"rgba(3,4,10,0.5)"); rg.addColorStop(1,"rgba(2,3,7,0.97)");
     ctx.fillStyle=rg; ctx.fillRect(camx-40,camy-40,VW/zoom+80,VH/zoom+80); }
@@ -1417,6 +1472,11 @@ function render(){ if(!G) return; const p=G.player;
       ctx.fillStyle="#ffcf3a"; ctx.beginPath(); ctx.moveTo(20,0); ctx.lineTo(-12,-12); ctx.lineTo(-12,12); ctx.closePath(); ctx.fill(); ctx.restore(); }
     ctx.fillStyle=(inside&&left<=ROOM_WARN)?"#ff5b6e":"#ffcf3a"; ctx.font="900 14px ui-monospace,monospace"; ctx.textAlign="center";
     ctx.fillText("🚪 "+tr("隐藏房间")+" "+left+"s"+((inside&&left<=ROOM_WARN)?" · "+tr("快离开！"):""), VW/2, 40+SAFE_TOP); }
+  // 🧩 迷宫出口指引箭头
+  if(G.mode==="maze" && G.mazeExit){ const e=G.mazeExit, ang=Math.atan2(e.y-p.y,e.x-p.x), rad=Math.min(VW,VH)*0.28;
+    ctx.save(); ctx.translate(VW/2+Math.cos(ang)*rad, VH/2+Math.sin(ang)*rad+SAFE_TOP*0.3); ctx.rotate(ang);
+    ctx.fillStyle="#31e07a"; ctx.beginPath(); ctx.moveTo(22,0); ctx.lineTo(-13,-13); ctx.lineTo(-13,13); ctx.closePath(); ctx.fill(); ctx.restore();
+    ctx.fillStyle="#31e07a"; ctx.font="900 14px ui-monospace,monospace"; ctx.textAlign="center"; ctx.fillText("🏁 "+tr("出口在这个方向"), VW/2, 40+SAFE_TOP); }
   // 小地图
   { const mw=112, mh=Math.max(46,Math.round(mw*WORLD_H/WORLD_W)), mx=10, my=VH-mh-14, sx=mw/WORLD_W, sy=mh/WORLD_H;
     ctx.fillStyle="rgba(10,14,30,.72)"; ctx.fillRect(mx,my,mw,mh); ctx.strokeStyle="rgba(150,195,255,.7)"; ctx.lineWidth=1.5; ctx.strokeRect(mx,my,mw,mh);
@@ -1467,6 +1527,10 @@ function hud(){ if(!G) return; document.getElementById("bignum").textContent=fmt
     const bc=G.bots.find(b=>b.role==="crystal"&&b.team==="blue"), rc=G.bots.find(b=>b.role==="crystal"&&b.team==="red");
     const pct=c=>c?Math.max(0,Math.round(c.hp/c.maxhp*100)):0;
     document.getElementById("hpTxt").textContent=(G.playerDead?"💀 ":"🦸 ")+Math.ceil(Math.max(0,G.hp))+"/"+G.maxHp+" · 💎🔵"+pct(bc)+"% vs 💎🔴"+pct(rc)+"%"+(G._buffUntil>G.time?" · 💠BUFF":"");
+  } else if(G.mode==="maze"){ hw.style.display="block"; const frac=Math.max(0,G.hp/G.maxHp);
+    document.getElementById("hpFill").style.width=(frac*100)+"%"; document.getElementById("hpFill").style.background="linear-gradient(90deg,#ff5b6e,#ff9f3a)";
+    const mons=G.bots.filter(b=>b.zombie).length;
+    document.getElementById("hpTxt").textContent="❤️ "+Math.ceil(Math.max(0,G.hp))+"/"+G.maxHp+" · 🏁"+tr("找出口")+" · 🧟"+mons;
   } else hw.style.display="none";
   const bb=document.getElementById("buildBar");
   if(G.mode==="virus" && G.architect){ bb.style.display="flex"; document.getElementById("brickTxt").textContent="🧱 "+Math.floor(G.bricks)+"/"+G.brickMax; }
@@ -1532,6 +1596,7 @@ const MODES=[
   {id:"identity",ico:"🎭", zh:"庄园逃生", en:"Manor Escape", d:"破译5台密码机·开大门逃生·躲开监管者（第五人格式）"},
   {id:"soup",    ico:"🐢", zh:"海龟汤", en:"Turtle Soup", d:"AI汤主出题·你问是非题推理真相（和朋友一起玩）"},
   {id:"moba",    ico:"⚔️", zh:"王者峡谷", en:"MOBA Rift", d:"推塔MOBA·小兵/防御塔/草丛/野怪·摧毁敌方水晶获胜（王者荣耀式）"},
+  {id:"maze",    ico:"🧩", zh:"迷宫模式", en:"Maze", d:"黑暗迷宫中被丧尸追逐·找到出口逃生（别被抓）"},
 ];
 function buildModes(){ const box=document.getElementById("modeList"); if(!box) return; box.innerHTML="";
   MODES.forEach(m=>{ const el=document.createElement("div"); el.className="mode"+(m.pri?" pri":"");
@@ -1777,9 +1842,10 @@ function startGame(mode, sizeId, classId, asZombie){ applyMapSize(sizeId||mapSiz
   else if(mode==="horror"){ seedHorror(); }
   else if(mode==="identity"){ seedIdentity(); }
   else if(mode==="moba"){ seedMoba(classId); }
+  else if(mode==="maze"){ seedMaze(); }
   else ensureBots();
-  if(mode!=="moba") seedObstacles(mode==="virus"?11:(mode==="gunfight"?14:(mode==="horror"?12:(mode==="identity"?16:8))));   // 障碍物/掩体（moba自带石头）
-  if(!isTeamMode()) seedVehicles(mode==="virus"?7:5);      // 🚗 车辆（战斗模式除外）
+  if(mode!=="moba" && mode!=="maze") seedObstacles(mode==="virus"?11:(mode==="gunfight"?14:(mode==="horror"?12:(mode==="identity"?16:8))));   // 障碍物/掩体（moba/迷宫自带）
+  if(!isTeamMode() && mode!=="maze") seedVehicles(mode==="virus"?7:5);      // 🚗 车辆
   if(mode==="virus") seedShelters(2);   // 🏠 庇护所
   applyTalents(G);   // 🌳 天赋加成
   buildWeaponBar();
@@ -1851,5 +1917,6 @@ if(typeof window!=="undefined") window.__ne={ get G(){return G;}, startGame, upd
   seedHorror, horrorStep, spawnMonster, seedIdentity, identityStep, updateIdBot, isTeamMode, isShootMode, HORROR_DUR, ID_MACHINES,
   SOUP_PUZZLES, SOUP, soupNew, soupAns, openSoup, dangerBeat,
   seedMoba, mobaStep, spawnMinionWave, updateMobaBot, inBush, MOBA_CRYSTAL_HP, MOBA_TOWER_HP,
-  HEROES, HERO_SKILLS, applyHero, castSkill, onPlayerKill, heroBlast };
+  HEROES, HERO_SKILLS, applyHero, castSkill, onPlayerKill, heroBlast,
+  seedMaze, mazeStep, MAZE_CELL };
 </script>
