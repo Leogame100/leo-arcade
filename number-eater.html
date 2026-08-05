@@ -411,7 +411,7 @@ const WEAPONS=[   // 武器菜单（仅攻击兵种）
   {id:"grenade", zh:"手雷",     en:"Grenade",  ico:"💣", cd:1.1,  dmg:0,   spd:520,  type:"grenade", aoe:175, aoeDmg:560, fuse:0.9},
   {id:"smoke",   zh:"烟雾弹",   en:"Smoke",    ico:"💨", cd:6.0,  dmg:0,   spd:460,  type:"smoke",   r:300, dur:6, fuse:0.5},
 ];
-const ZOMBIE_HP_MUL=3, FIGHTER_DPS=200;   // 丧尸血量 ×3；士兵对丧尸每秒伤害
+const ZOMBIE_HP_MUL=3, FIGHTER_DPS=115;   // 丧尸血量 ×3；士兵对丧尸每秒伤害（削弱人类：丧尸没那么快被清）
 const ZCLASSES=[
   {id:"walker",  zh:"普通丧尸", en:"Walker",       ico:"🧟",  spd:1,   hp:1,   infR:0,   d:"均衡"},
   {id:"runner",  zh:"疾行丧尸", en:"Runner",       ico:"🏃",  spd:1.4, hp:0.8, infR:0,   d:"速度快·血略少"},
